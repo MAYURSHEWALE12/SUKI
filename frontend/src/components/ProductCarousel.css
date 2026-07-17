@@ -1,0 +1,85 @@
+.product-carousel-section {
+  padding: 4rem 0;
+  background-color: var(--color-bg);
+}
+
+@media (max-width: 768px) {
+  .product-carousel-section {
+    padding: 2rem 0;
+  }
+}
+
+.carousel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.carousel-header .section-title {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.carousel-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.carousel-control-btn {
+  background-color: white;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #555;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.carousel-control-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background-color: white;
+  transform: scale(1.05);
+}
+
+.carousel-track-container {
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+  padding-bottom: 1rem;
+}
+
+.carousel-track-container::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-track {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.carousel-slide {
+  flex: 0 0 265px;
+}
+
+.carousel-loading {
+  text-align: center;
+  padding: 4rem 0;
+  font-family: var(--font-body);
+  color: var(--color-text-secondary);
+}
+
+/* Ensure the product card fits nicely in the carousel slide */
+.carousel-slide .product-card {
+  width: 100%;
+}

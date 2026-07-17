@@ -1,0 +1,10 @@
+/* 
+  Search specific styles.
+  Currently utilizing the shared category layout imported in page.tsx 
+*/
+
+.search-title {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
