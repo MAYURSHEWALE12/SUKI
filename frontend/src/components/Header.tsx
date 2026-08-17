@@ -14,11 +14,9 @@ interface SearchSuggestion {
 export default function Header() {
   const pathname = usePathname();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  
-  useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem('suki_token'));
-  }, []);
+  const [isLoggedIn, setIsLoggedIn] = useState(() =>
+    typeof window !== 'undefined' ? !!localStorage.getItem('suki_token') : false
+  );
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
