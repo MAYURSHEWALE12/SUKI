@@ -7,18 +7,29 @@ const Order = require('../models/Order');
 // @access  Public
 exports.getProducts = async (req, res) => {
   try {
-    const { category, minPrice, maxPrice, minRating, sort, keyword } = req.query;
+    const { category, minPrice, maxPrice, minRating, sort, keyword, inStock, limit } = req.query;
     const filter = {};
-    
+
+    // Escape regex metacharacters so user input is matched literally (prevents
+    // malformed queries and accidental wildcard matches).
+    const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     if (keyword) {
-      filter.$or = [
-        { name: { $regex: keyword, $options: 'i' } },
-        { description: { $regex: keyword, $options: 'i' } }
-      ];
+      const pattern = escapeRegex(keyword.trim());
+      if (pattern) {
+        filter.$or = [
+          { name: { $regex: pattern, $options: 'i' } },
+          { description: { $regex: pattern, $options: 'i' } }
+        ];
+      }
     }
-    
+
     if (category) {
-      filter.category = { $regex: new RegExp(`^${category}$`, 'i') };
+      filter.category = { $regex: new RegExp(`^${escapeRegex(category.trim())}$`, 'i') };
+    }
+
+    if (inStock === 'true') {
+      filter.countInStock = { $gt: 0 };
     }
 
     if (minPrice || maxPrice) {
@@ -30,7 +41,7 @@ exports.getProducts = async (req, res) => {
     if (minRating) {
       filter.rating = { $gte: Number(minRating) };
     }
-    
+
     let sortObj = {};
     if (sort === 'price_asc') {
       sortObj.price = 1;
@@ -42,7 +53,13 @@ exports.getProducts = async (req, res) => {
       sortObj.rating = -1;
     }
 
-    const products = await Product.find(filter).sort(sortObj);
+    const parsedLimit = Number(limit);
+    let query = Product.find(filter).sort(sortObj);
+    if (Number.isInteger(parsedLimit) && parsedLimit > 0) {
+      query = query.limit(Math.min(parsedLimit, 100));
+    }
+
+    const products = await query;
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
