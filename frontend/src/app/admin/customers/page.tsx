@@ -1,8 +1,18 @@
 "use client";
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+
+interface Customer {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  totalOrders: number;
+  totalSpend: number;
+  createdAt: string;
+}
 
 export default function AdminCustomersPage() {
-  const [customers, setCustomers] = useState([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Features State
@@ -10,30 +20,36 @@ export default function AdminCustomersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
-
-  const fetchCustomers = async () => {
-    try {
+  const fetchCustomers = useCallback(() => {
+    const req = async () => {
       const token = localStorage.getItem('suki_admin_token');
       const res = await fetch('/api/auth/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      if (res.ok) {
-        setCustomers(data);
-      }
-    } catch (error) {
-      console.error('Error fetching customers:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { ok: res.ok, customers: data };
+    };
+    req()
+      .then(({ ok, customers }) => {
+        if (ok) {
+          setCustomers(customers);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching customers:', error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
 
   // Filter and Pagination Logic
   const filteredCustomers = useMemo(() => {
-    return customers.filter((c: any) => {
+    return customers.filter((c: Customer) => {
       const searchStr = searchTerm.toLowerCase();
       const nameMatch = (c.name || '').toLowerCase().includes(searchStr);
       const emailMatch = (c.email || '').toLowerCase().includes(searchStr);
@@ -74,7 +90,7 @@ export default function AdminCustomersPage() {
             </tr>
           </thead>
           <tbody>
-            {currentCustomers.map((customer: any) => (
+            {currentCustomers.map((customer: Customer) => (
               <tr key={customer._id}>
                 <td style={{ paddingLeft: '1.5rem', fontWeight: 600, color: '#111' }}>{customer.name}</td>
                 <td style={{ color: '#4b5563' }}>{customer.email}</td>

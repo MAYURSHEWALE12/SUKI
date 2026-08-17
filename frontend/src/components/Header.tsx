@@ -6,10 +6,17 @@ import { useCart } from '@/context/CartContext';
 import PromoStrip from './PromoStrip';
 import LoginModal from './LoginModal';
 
+interface SearchSuggestion {
+  _id: string;
+  name: string;
+}
+
 export default function Header() {
   const pathname = usePathname();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() =>
+    typeof window !== 'undefined' ? !!localStorage.getItem('suki_token') : false
+  );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
@@ -30,12 +37,6 @@ export default function Header() {
   }, [dropdownRef]);
 
   useEffect(() => {
-    // Check auth status
-    const token = localStorage.getItem('suki_token');
-    if (token) {
-      setIsLoggedIn(true);
-    }
-
     // Global listener to open login modal
     const handleOpenLogin = () => setIsLoginModalOpen(true);
     window.addEventListener('openLoginModal', handleOpenLogin);
@@ -66,9 +67,11 @@ export default function Header() {
       const timeout = setTimeout(() => setIsDeleting(true), typingSpeed);
       return () => clearTimeout(timeout);
     } else if (isDeleting && placeholder === '') {
-      setIsDeleting(false);
-      setTermIndex((prev) => (prev + 1) % searchTerms.length);
-      return;
+      const timeout = setTimeout(() => {
+        setIsDeleting(false);
+        setTermIndex((prev) => (prev + 1) % searchTerms.length);
+      }, typingSpeed);
+      return () => clearTimeout(timeout);
     }
 
     const timeout = setTimeout(() => {
@@ -82,28 +85,30 @@ export default function Header() {
     return () => clearTimeout(timeout);
   }, [placeholder, isDeleting, termIndex, searchTerms]);
 
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSuggestions([]);
-      return;
-    }
-
-    const delayDebounceFn = setTimeout(async () => {
-      setIsSearching(true);
-      try {
-        const res = await fetch(`/api/products?keyword=${encodeURIComponent(searchQuery.trim())}&inStock=true&limit=5`);
-        if (res.ok) {
-          const data = await res.json();
-          setSuggestions(data);
-        }
-      } catch (error) {
-        console.error('Error fetching suggestions:', error);
-      } finally {
-        setIsSearching(false);
+    const delayDebounceFn = setTimeout(() => {
+      if (!searchQuery.trim()) {
+        setSuggestions([]);
+        return;
       }
+
+      setIsSearching(true);
+      (async () => {
+        try {
+          const res = await fetch(`/api/products?keyword=${encodeURIComponent(searchQuery.trim())}&inStock=true&limit=5`);
+          if (res.ok) {
+            const data = await res.json();
+            setSuggestions(data);
+          }
+        } catch (error) {
+          console.error('Error fetching suggestions:', error);
+        } finally {
+          setIsSearching(false);
+        }
+      })();
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);

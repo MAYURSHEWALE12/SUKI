@@ -11,10 +11,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     // Exclude login page from auth check layout
-    if (pathname === '/admin/login') {
-      setIsAuthorized(true);
-      return;
-    }
+    if (pathname === '/admin/login') return;
 
     const verifyAdmin = async () => {
       const token = localStorage.getItem('suki_admin_token');
@@ -36,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         } else {
           router.push('/admin/login');
         }
-      } catch (err) {
+      } catch {
         router.push('/admin/login');
       }
     };
@@ -44,7 +41,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     verifyAdmin();
   }, [pathname, router]);
 
-  if (!isAuthorized) {
+  if (!isAuthorized && pathname !== '/admin/login') {
     return <div className="admin-loading-screen">Authenticating Secure Connection...</div>;
   }
 

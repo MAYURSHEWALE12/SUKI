@@ -2,13 +2,23 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
+interface Order {
+  totalPrice: number;
+  createdAt?: string;
+}
+
+interface ChartDatum {
+  name: string;
+  revenue: number;
+}
+
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState({
     totalOrders: 0,
     totalRevenue: 0,
     totalProducts: 0
   });
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<ChartDatum[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,7 +36,7 @@ export default function AdminDashboardPage() {
         const products = await productsRes.json();
 
         if (ordersRes.ok && productsRes.ok) {
-          const revenue = orders.reduce((acc: number, order: any) => acc + order.totalPrice, 0);
+          const revenue = orders.reduce((acc: number, order: Order) => acc + order.totalPrice, 0);
           setStats({
             totalOrders: orders.length,
             totalRevenue: revenue,
@@ -43,7 +53,7 @@ export default function AdminDashboardPage() {
           const revenueByDate: Record<string, number> = {};
           last7Days.forEach(date => revenueByDate[date] = 0);
 
-          orders.forEach((order: any) => {
+          orders.forEach((order: Order) => {
             if (order.createdAt) {
               const date = order.createdAt.split('T')[0];
               if (revenueByDate[date] !== undefined) {
@@ -116,7 +126,7 @@ export default function AdminDashboardPage() {
               <Tooltip 
                 cursor={{ fill: '#f3f4f6' }}
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                formatter={(value: any) => [`₹${Number(value).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 'Revenue']}
+                formatter={(value) => [`₹${Number(value).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 'Revenue']}
               />
               <Bar dataKey="revenue" fill="#111111" radius={[4, 4, 0, 0]} maxBarSize={50} />
             </BarChart>

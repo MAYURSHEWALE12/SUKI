@@ -102,7 +102,8 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
   }, [category, priceFilter, ratingFilter, sort]);
 
   useEffect(() => {
-    setMobileFiltersOpen(false);
+    const timeout = setTimeout(() => setMobileFiltersOpen(false), 0);
+    return () => clearTimeout(timeout);
   }, [category]);
 
   const renderFilterGroup = (
@@ -288,7 +289,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
           ) : products.length > 0 ? (
             <div className="product-grid">
               {products.map((product) => (
-                <ProductCard key={product._id} product={product as any} />
+                <ProductCard key={product._id} product={product} />
               ))}
             </div>
           ) : (

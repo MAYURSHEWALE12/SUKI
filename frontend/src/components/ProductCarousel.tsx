@@ -95,7 +95,7 @@ export default function ProductCarousel({ title, filterNewArrivals = false }: { 
           <div className="carousel-track">
             {products.map((product) => (
               <div className="carousel-slide" key={product._id}>
-                <ProductCard product={product as any} />
+                <ProductCard product={product} />
               </div>
             ))}
           </div>

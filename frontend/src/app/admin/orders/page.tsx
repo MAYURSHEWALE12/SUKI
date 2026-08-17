@@ -1,9 +1,35 @@
 "use client";
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import jsPDF from 'jspdf';
 
+interface OrderItem {
+  name: string;
+  image?: string;
+  price: number;
+  quantity: number;
+}
+
+interface Order {
+  _id: string;
+  createdAt: string;
+  totalPrice: number;
+  status: string;
+  user?: { name?: string; phone?: string; email?: string };
+  shippingAddress: {
+    fullName?: string;
+    address: string;
+    city: string;
+    postalCode: string;
+    country: string;
+    phone?: string;
+  };
+  orderItems: OrderItem[];
+  trackingLink?: string;
+  adminNotes?: string;
+}
+
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
@@ -18,7 +44,7 @@ export default function AdminOrdersPage() {
   const [trackingLinks, setTrackingLinks] = useState<Record<string, string>>({});
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
 
-  const downloadPDFLabel = (order: any) => {
+  const downloadPDFLabel = (order: Order) => {
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'in',
@@ -61,7 +87,7 @@ export default function AdminOrdersPage() {
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     let currentY = lineY + 0.55;
-    order.orderItems.forEach((item: any) => {
+    order.orderItems.forEach((item: OrderItem) => {
       const itemText = `${item.quantity}x ${item.name}`;
       const splitItem = doc.splitTextToSize(itemText, 3.5);
       doc.text(splitItem, 0.25, currentY);
@@ -75,36 +101,42 @@ export default function AdminOrdersPage() {
     doc.save(`suki-label-${order._id.substring(0,8).toUpperCase()}.pdf`);
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
-    try {
+  const fetchOrders = useCallback(() => {
+    const req = async () => {
       const token = localStorage.getItem('suki_admin_token');
       const res = await fetch('/api/orders', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      if (res.ok) {
-        setOrders(data);
-        
-        // Initialize tracking/notes state
-        const initialTracking: Record<string, string> = {};
-        const initialNotes: Record<string, string> = {};
-        data.forEach((o: any) => {
-          initialTracking[o._id] = o.trackingLink || '';
-          initialNotes[o._id] = o.adminNotes || '';
-        });
-        setTrackingLinks(initialTracking);
-        setAdminNotes(initialNotes);
-      }
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { ok: res.ok, orders: data };
+    };
+    req()
+      .then(({ ok, orders }) => {
+        if (ok) {
+          setOrders(orders);
+
+          // Initialize tracking/notes state
+          const initialTracking: Record<string, string> = {};
+          const initialNotes: Record<string, string> = {};
+          orders.forEach((o: Order) => {
+            initialTracking[o._id] = o.trackingLink || '';
+            initialNotes[o._id] = o.adminNotes || '';
+          });
+          setTrackingLinks(initialTracking);
+          setAdminNotes(initialNotes);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching orders:', error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     setUpdating(orderId);
@@ -157,7 +189,7 @@ export default function AdminOrdersPage() {
 
   const toggleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedOrders(new Set(currentOrders.map((o: any) => o._id)));
+      setSelectedOrders(new Set(currentOrders.map((o: Order) => o._id)));
     } else {
       setSelectedOrders(new Set());
     }
@@ -172,7 +204,7 @@ export default function AdminOrdersPage() {
 
   // Filter and Pagination Logic
   const filteredOrders = useMemo(() => {
-    return orders.filter((o: any) => {
+    return orders.filter((o: Order) => {
       const searchStr = searchTerm.toLowerCase();
       const customerName = (o.user?.name || o.shippingAddress?.fullName || '').toLowerCase();
       const idMatch = o._id.toLowerCase().includes(searchStr);
@@ -234,7 +266,7 @@ export default function AdminOrdersPage() {
             </tr>
           </thead>
           <tbody>
-            {currentOrders.map((order: any) => (
+            {currentOrders.map((order: Order) => (
               <React.Fragment key={order._id}>
                 <tr style={{ borderBottom: expandedOrderId === order._id ? 'none' : '1px solid #f3f4f6', backgroundColor: selectedOrders.has(order._id) ? '#f0f9ff' : 'transparent' }}>
                   <td style={{ paddingLeft: '1.5rem' }}>
@@ -285,7 +317,7 @@ export default function AdminOrdersPage() {
                               ⬇️ Download PDF Label
                             </button>
                           </div>
-                          {order.orderItems.map((item: any, idx: number) => (
+                          {order.orderItems.map((item: OrderItem, idx: number) => (
                             <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                               <img src={item.image} alt={item.name} style={{ width: '50px', height: '60px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #e5e7eb' }} />
                               <div>

@@ -1,43 +1,55 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+
+interface Subscriber {
+  _id: string;
+  email: string;
+  createdAt: string;
+  active: boolean;
+}
 
 export default function AdminSubscribersPage() {
   const router = useRouter();
-  const [subscribers, setSubscribers] = useState<any[]>([]);
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchSubscribers();
-  }, []);
-
-  const fetchSubscribers = async () => {
-    try {
+  const fetchSubscribers = useCallback(() => {
+    const req = async () => {
       const token = localStorage.getItem('suki_admin_token');
       if (!token) {
         router.push('/admin/login');
-        return;
+        return null;
       }
 
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
       const res = await fetch(`${API_URL}/subscribers`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
       const data = await res.json();
-      
-      if (res.ok) {
-        setSubscribers(data);
-      } else {
-        setError(data.message || 'Failed to fetch subscribers');
-      }
-    } catch (err) {
-      setError('Network error');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { ok: res.ok, data };
+    };
+    req()
+      .then((result) => {
+        if (!result) return;
+        if (result.ok) {
+          setSubscribers(result.data);
+        } else {
+          setError(result.data?.message || 'Failed to fetch subscribers');
+        }
+      })
+      .catch(() => {
+        setError('Network error');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [router]);
+
+  useEffect(() => {
+    fetchSubscribers();
+  }, [fetchSubscribers]);
 
   return (
     <div className="admin-page">
@@ -65,7 +77,7 @@ export default function AdminSubscribersPage() {
                 </tr>
               </thead>
               <tbody>
-                {subscribers.map((sub: any) => (
+                {subscribers.map((sub: Subscriber) => (
                   <tr key={sub._id}>
                     <td>
                       <div style={{ fontWeight: 500, color: '#222' }}>{sub.email}</div>

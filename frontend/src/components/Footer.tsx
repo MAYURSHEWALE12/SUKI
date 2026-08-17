@@ -77,7 +77,7 @@ export default function Footer() {
       } else {
         setStatus({ type: 'error', message: data.message || 'Subscription failed.' });
       }
-    } catch (error) {
+    } catch {
       setStatus({ type: 'error', message: 'Network error. Try again later.' });
     } finally {
       setLoading(false);
@@ -107,7 +107,7 @@ export default function Footer() {
               <span className="logo-brand">suki</span>
               <span className="logo-sub" style={{ marginTop: '4px', marginLeft: '10px' }}>ETHNIC</span>
             </Link>
-            <p className="tagline">"Where tradition meets modern elegance."</p>
+            <p className="tagline">&quot;Where tradition meets modern elegance.&quot;</p>
             <p className="description">
               Discover handcrafted sarees, lehengas and festive wear that celebrate the spirit of India.
             </p>

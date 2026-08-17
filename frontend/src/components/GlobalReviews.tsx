@@ -4,19 +4,27 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import './GlobalReviews.css';
 
+interface Review {
+  _id?: string;
+  name: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  images?: string[];
+  product?: {
+    _id: string;
+    name: string;
+    image: string;
+  };
+}
+
 export default function GlobalReviews() {
   const [isOpen, setIsOpen] = useState(false);
-  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all');
-  const [previewReview, setPreviewReview] = useState<any | null>(null);
+  const [previewReview, setPreviewReview] = useState<Review | null>(null);
   const [previewImageIndex, setPreviewImageIndex] = useState(0);
-
-  useEffect(() => {
-    if (isOpen && reviews.length === 0) {
-      fetchReviews();
-    }
-  }, [isOpen]);
 
   const fetchReviews = async () => {
     try {
@@ -30,6 +38,13 @@ export default function GlobalReviews() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isOpen && reviews.length === 0) {
+      const timeout = setTimeout(fetchReviews, 0);
+      return () => clearTimeout(timeout);
+    }
+  }, [isOpen]);
 
   return (
     <>
@@ -145,12 +160,12 @@ export default function GlobalReviews() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
           
-          {previewReview.images.length > 1 && (
+          {(previewReview.images?.length ?? 0) > 1 && (
             <button 
               className="global-review-preview-nav prev"
               onClick={(e) => {
                 e.stopPropagation();
-                setPreviewImageIndex((prev) => prev > 0 ? prev - 1 : previewReview.images.length - 1);
+                setPreviewImageIndex((prev) => prev > 0 ? prev - 1 : (previewReview.images?.length ?? 1) - 1);
               }}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -158,7 +173,7 @@ export default function GlobalReviews() {
           )}
 
           <div className="global-review-preview-content" onClick={(e) => e.stopPropagation()}>
-            <img src={previewReview.images[previewImageIndex]} alt="Review preview" />
+            <img src={previewReview.images?.[previewImageIndex]} alt="Review preview" />
             
             <div className="global-review-preview-info">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
@@ -180,12 +195,12 @@ export default function GlobalReviews() {
             </div>
           </div>
 
-          {previewReview.images.length > 1 && (
+          {(previewReview.images?.length ?? 0) > 1 && (
             <button 
               className="global-review-preview-nav next"
               onClick={(e) => {
                 e.stopPropagation();
-                setPreviewImageIndex((prev) => prev < previewReview.images.length - 1 ? prev + 1 : 0);
+                setPreviewImageIndex((prev) => prev < (previewReview.images?.length ?? 1) - 1 ? prev + 1 : 0);
               }}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>

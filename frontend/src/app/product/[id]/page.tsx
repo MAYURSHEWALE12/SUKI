@@ -9,6 +9,15 @@ import GlobalReviews from '@/components/GlobalReviews';
 import Draggable from 'react-draggable';
 
 
+interface Review {
+  _id?: string;
+  name: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  images?: string[];
+}
+
 interface Product {
   _id: string;
   name: string;
@@ -21,13 +30,33 @@ interface Product {
   rating?: number;
   numReviews?: number;
   countInStock: number;
-  reviews?: any[];
+  reviews?: Review[];
   material?: string;
   video?: string;
   shortDescription?: string;
   highlights?: string;
   careInstructions?: string;
   whatsIncluded?: string;
+}
+
+interface RecentlyViewedProduct {
+  _id: string;
+  name: string;
+  image: string;
+  price: number;
+  category: string;
+}
+
+interface RelatedProduct {
+  _id: string;
+  name: string;
+  image: string;
+  price: number;
+  originalPrice?: number;
+  category: string;
+  rating?: number;
+  numReviews?: number;
+  countInStock?: number;
 }
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -50,30 +79,28 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [reviewError, setReviewError] = useState('');
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedPill, setSelectedPill] = useState<string | null>(null);
-  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [relatedProducts, setRelatedProducts] = useState<RelatedProduct[]>([]);
   const [pinCode, setPinCode] = useState('');
   const [pinChecked, setPinChecked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
-  const [previewReview, setPreviewReview] = useState<any | null>(null);
+  const [previewReview, setPreviewReview] = useState<Review | null>(null);
   const [previewImageIndex, setPreviewImageIndex] = useState(0);
-  const [deliveryDates, setDeliveryDates] = useState({ start: '', end: '' });
-  const [isFloatingVideoOpen, setIsFloatingVideoOpen] = useState(true);
-  const draggableNodeRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
+  const [deliveryDates] = useState(() => {
     const today = new Date();
     const start = new Date(today);
     start.setDate(today.getDate() + 3);
     const end = new Date(today);
     end.setDate(today.getDate() + 6);
-    
+
     const formatDate = (date: Date) => {
       return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     };
-    
-    setDeliveryDates({ start: formatDate(start), end: formatDate(end) });
-  }, []);
+
+    return { start: formatDate(start), end: formatDate(end) };
+  });
+  const [isFloatingVideoOpen, setIsFloatingVideoOpen] = useState(true);
+  const draggableNodeRef = useRef<HTMLDivElement>(null);
   const lehengaSizes = ['XS', 'S', 'M', 'L', 'XL', 'Custom'];
   const isSaree = product?.category?.toLowerCase() === 'sarees';
 
@@ -88,8 +115,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
           // Save to Recently Viewed in localStorage
           try {
-            const stored = JSON.parse(localStorage.getItem('suki_recently_viewed') || '[]');
-            const filtered = stored.filter((p: any) => p._id !== data._id);
+            const stored = JSON.parse(localStorage.getItem('suki_recently_viewed') || '[]') as RecentlyViewedProduct[];
+            const filtered = stored.filter((p: RecentlyViewedProduct) => p._id !== data._id);
             const viewedProduct = {
               _id: data._id,
               name: data.name,
@@ -116,12 +143,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   useEffect(() => {
     if (product) {
       const stock = product.countInStock;
-      
-      if (quantity > stock && stock > 0) {
-        setQuantity(stock);
-      } else if (stock === 0) {
-        setQuantity(1);
-      }
+
+      queueMicrotask(() => {
+        if (quantity > stock && stock > 0) {
+          setQuantity(stock);
+        } else if (stock === 0) {
+          setQuantity(1);
+        }
+      });
     }
   }, [product, quantity]);
 
@@ -134,7 +163,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         if (res.ok) {
           const allProducts = await res.json();
           const related = allProducts
-            .filter((p: any) => p.category === product.category && p._id !== product._id)
+            .filter((p: RelatedProduct) => p.category === product.category && p._id !== product._id)
             .slice(0, 4);
           setRelatedProducts(related);
         }
@@ -197,8 +226,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         setReviewError(data.message || 'Failed to submit review');
         return false;
       }
-    } catch (err: any) {
-      setReviewError(err.message);
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : 'Failed to submit review');
       return false;
     } finally {
       setReviewLoading(false);
@@ -262,7 +291,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           )}
           {product.whatsIncluded && (
             <div style={{ marginBottom: '1rem' }}>
-              <strong>What's Included:</strong>
+              <strong>What&apos;s Included:</strong>
               <p style={{ marginTop: '0.25rem' }}>{product.whatsIncluded}</p>
             </div>
           )}
@@ -321,7 +350,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   const ratingCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   if (product?.reviews) {
-    product.reviews.forEach((r: any) => {
+    product.reviews.forEach((r: Review) => {
       if (r.rating >= 1 && r.rating <= 5) {
         ratingCounts[r.rating as keyof typeof ratingCounts]++;
       }
@@ -620,7 +649,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           <p style={{ color: '#777', marginBottom: '2rem' }}>No reviews yet. Be the first to review this product!</p>
         ) : (
           <div className="pdp-reviews-masonry">
-            {product.reviews.map((rev: any, idx: number) => {
+            {product.reviews.map((rev: Review, idx: number) => {
               const initials = rev.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
               return (
                 <div 
@@ -684,7 +713,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           </div>
 
           <div className="pdp-related-carousel">
-            {relatedProducts.map((rp: any) => (
+            {relatedProducts.map((rp: RelatedProduct) => (
               <ProductCard key={rp._id} product={rp} />
             ))}
           </div>
@@ -836,7 +865,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
       {/* Review Preview Modal */}
-      {previewReview && (
+      {previewReview && previewReview.images && previewReview.images.length > 0 && (
         <div className="pdp-review-preview-overlay" onClick={() => setPreviewReview(null)}>
           <div className="pdp-review-preview-content" onClick={(e) => e.stopPropagation()}>
             <div className="pdp-review-preview-left">
@@ -845,10 +874,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 
                 {previewReview.images.length > 1 && (
                   <>
-                    <button className="pdp-preview-nav-btn left" onClick={() => setPreviewImageIndex(prev => prev === 0 ? previewReview.images.length - 1 : prev - 1)}>
+                    <button className="pdp-preview-nav-btn left" onClick={() => setPreviewImageIndex(prev => prev === 0 ? previewReview.images!.length - 1 : prev - 1)}>
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                     </button>
-                    <button className="pdp-preview-nav-btn right" onClick={() => setPreviewImageIndex(prev => prev === previewReview.images.length - 1 ? 0 : prev + 1)}>
+                    <button className="pdp-preview-nav-btn right" onClick={() => setPreviewImageIndex(prev => prev === previewReview.images!.length - 1 ? 0 : prev + 1)}>
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </button>
                   </>

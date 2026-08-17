@@ -1,10 +1,18 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+
+interface HeroBanner {
+  image: string;
+  heading: string;
+  subheading: string;
+  buttonText: string;
+  buttonLink: string;
+}
 
 export default function AdminHomepageManager() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [heroBanners, setHeroBanners] = useState([
+  const [heroBanners, setHeroBanners] = useState<HeroBanner[]>([
     {
       image: '',
       heading: '',
@@ -14,23 +22,29 @@ export default function AdminHomepageManager() {
     }
   ]);
 
-  useEffect(() => {
-    fetchConfig();
-  }, []);
-
-  const fetchConfig = async () => {
-    try {
+  const fetchConfig = useCallback(() => {
+    const req = async () => {
       const res = await fetch('/api/homepage');
       const data = await res.json();
-      if (res.ok && data.heroBanners) {
-        setHeroBanners(data.heroBanners);
-      }
-    } catch (error) {
-      console.error('Error fetching homepage config', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { ok: res.ok, heroBanners: data.heroBanners };
+    };
+    req()
+      .then(({ ok, heroBanners }) => {
+        if (ok && heroBanners) {
+          setHeroBanners(heroBanners);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching homepage config', error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
 
   const handleChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -49,8 +63,10 @@ export default function AdminHomepageManager() {
     formData.append('image', file);
 
     try {
+      const token = localStorage.getItem('suki_admin_token');
       const res = await fetch('/api/upload', {
         method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 

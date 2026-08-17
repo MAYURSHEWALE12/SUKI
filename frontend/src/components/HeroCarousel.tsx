@@ -3,6 +3,14 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
+interface HeroBanner {
+  heading: string;
+  subheading: string;
+  image: string;
+  buttonLink: string;
+  buttonText: string;
+}
+
 export default function HeroCarousel() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [slides, setSlides] = useState([
@@ -22,7 +30,7 @@ export default function HeroCarousel() {
         const res = await fetch('/api/homepage');
         const data = await res.json();
         if (data.heroBanners && data.heroBanners.length > 0) {
-          const newSlides = data.heroBanners.map((b: any, index: number) => ({
+          const newSlides = data.heroBanners.map((b: HeroBanner, index: number) => ({
             id: index + 1,
             title: b.heading,
             subtitle: b.subheading,

@@ -3,9 +3,17 @@ import React, { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 
+interface ReelProduct {
+  _id: string;
+  name: string;
+  image: string;
+  video: string;
+  price: number;
+}
+
 export default function ReelsCarousel() {
   const trackRef = useRef<HTMLDivElement>(null);
-  const [reels, setReels] = useState<any[]>([]);
+  const [reels, setReels] = useState<ReelProduct[]>([]);
   const { addToCart, setIsCartOpen } = useCart();
   const [loading, setLoading] = useState(true);
 
@@ -16,7 +24,7 @@ export default function ReelsCarousel() {
         if (res.ok) {
           const data = await res.json();
           // Filter products that actually have a video attached
-          const videoProducts = data.filter((p: any) => p.video && p.video.trim() !== '');
+          const videoProducts = data.filter((p: ReelProduct) => p.video && p.video.trim() !== '');
           setReels(videoProducts);
         }
       } catch (err) {
@@ -67,7 +75,7 @@ export default function ReelsCarousel() {
     return () => clearInterval(interval);
   }, [reels]);
 
-  const handleAddToCart = (product: any, e: React.MouseEvent) => {
+  const handleAddToCart = (product: ReelProduct, e: React.MouseEvent) => {
     e.preventDefault();
     addToCart({
       _id: product._id,

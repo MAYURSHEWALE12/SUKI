@@ -45,15 +45,15 @@ export default function SareesGrid() {
       ) : (
         <div className="trending-grid">
           {products.map((product) => (
-            <ProductCard key={product._id} product={product as any} />
+            <ProductCard key={product._id} product={product} />
           ))}
         </div>
       )}
 
       <div style={{ textAlign: 'center', marginTop: '40px' }}>
-        <a href="/collections/sarees" className="btn btn-outline" style={{ display: 'inline-block', padding: '12px 32px', border: '1px solid #C2185B', backgroundColor: '#C2185B', color: '#fff', textDecoration: 'none', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.9rem' }}>
+        <Link href="/collections/sarees" className="btn btn-outline" style={{ display: 'inline-block', padding: '12px 32px', border: '1px solid #C2185B', backgroundColor: '#C2185B', color: '#fff', textDecoration: 'none', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.9rem' }}>
           View All Sarees
-        </a>
+        </Link>
       </div>
     </section>
   );

@@ -8,12 +8,34 @@ import { useCart } from '@/context/CartContext';
 
 import React, { Suspense } from 'react';
 
+interface OrderItem {
+  _id?: string;
+  name: string;
+  image?: string;
+  price: number;
+  quantity: number;
+  size?: string;
+}
+
+interface Order {
+  _id?: string;
+  createdAt?: string;
+  itemsPrice?: number;
+  shippingPrice?: number;
+  totalPrice?: number;
+  orderItems?: OrderItem[];
+}
+
 function SuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { clearCart } = useCart();
   const [verified, setVerified] = useState(false);
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
+  const [fallbackOrderDate] = useState(() => Date.now());
+  const [estimatedDelivery = ''] = useState(() =>
+    new Date(Date.now() + 4 * 86400000).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })
+  );
 
   const orderId = searchParams.get('orderId');
 
@@ -93,7 +115,7 @@ function SuccessContent() {
         <h1 className="success-title">Order Confirmed!</h1>
         <p className="success-message">
           Thank you for your purchase.<br />
-          We've received your order and are getting it<br />
+          We&apos;ve received your order and are getting it<br />
           ready to be shipped.
         </p>
 
@@ -110,7 +132,7 @@ function SuccessContent() {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
               <div className="receipt-header-info">
                 <span className="receipt-label">Order Date</span>
-                <span className="receipt-value">{new Date(order?.createdAt || Date.now()).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                <span className="receipt-value">{new Date(order?.createdAt || fallbackOrderDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
               </div>
             </div>
           </div>
@@ -120,7 +142,7 @@ function SuccessContent() {
           </div>
 
           <div className="receipt-items">
-            {order?.orderItems?.map((item: any, index: number) => (
+            {order?.orderItems?.map((item: OrderItem, index: number) => (
               <div key={index} className="receipt-item">
                 <div className="receipt-item-image">
                   <Image src={item.image || '/placeholder.jpg'} alt={item.name} width={60} height={80} style={{ objectFit: 'cover' }} />
@@ -153,7 +175,7 @@ function SuccessContent() {
 
           <div className="delivery-estimate-box">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
-            <span>Estimated delivery by <strong>{new Date(Date.now() + 4 * 86400000).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}</strong></span>
+            <span>Estimated delivery by <strong>{estimatedDelivery}</strong></span>
           </div>
         </div>
 

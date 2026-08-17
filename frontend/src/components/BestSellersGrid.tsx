@@ -56,7 +56,7 @@ export default function BestSellersGrid() {
       ) : (
         <div className="grid">
           {products.map((product) => (
-            <ProductCard key={product._id} product={product as any} />
+            <ProductCard key={product._id} product={product} />
           ))}
         </div>
       )}

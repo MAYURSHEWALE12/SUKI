@@ -1,12 +1,22 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+
+interface Discount {
+  _id: string;
+  code: string;
+  type: 'percentage' | 'fixed' | 'free_shipping';
+  value: number;
+  minOrderValue: number;
+  isActive: boolean;
+  expiryDate: string;
+}
 
 export default function AdminDiscountsPage() {
-  const [discounts, setDiscounts] = useState([]);
+  const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [showModal, setShowModal] = useState(false);
-  const [editingDiscount, setEditingDiscount] = useState<any>(null);
+  const [editingDiscount, setEditingDiscount] = useState<Discount | null>(null);
   const [saving, setSaving] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -18,26 +28,32 @@ export default function AdminDiscountsPage() {
     expiryDate: '',
   });
 
-  useEffect(() => {
-    fetchDiscounts();
-  }, []);
-
-  const fetchDiscounts = async () => {
-    try {
+  const fetchDiscounts = useCallback(() => {
+    const req = async () => {
       const token = localStorage.getItem('suki_admin_token');
       const res = await fetch('/api/discounts', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      if (res.ok) {
-        setDiscounts(data);
-      }
-    } catch (error) {
-      console.error('Error fetching discounts:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { ok: res.ok, discounts: data };
+    };
+    req()
+      .then(({ ok, discounts }) => {
+        if (ok) {
+          setDiscounts(discounts);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching discounts:', error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    fetchDiscounts();
+  }, [fetchDiscounts]);
 
   const openAddModal = () => {
     setEditingDiscount(null);
@@ -52,7 +68,7 @@ export default function AdminDiscountsPage() {
     setShowModal(true);
   };
 
-  const openEditModal = (discount: any) => {
+  const openEditModal = (discount: Discount) => {
     setEditingDiscount(discount);
     setFormData({
       code: discount.code,
@@ -65,8 +81,9 @@ export default function AdminDiscountsPage() {
     setShowModal(true);
   };
 
-  const handleChange = (e: any) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const checked = 'checked' in e.target ? e.target.checked : false;
     setFormData({
       ...formData,
       [name]: type === 'checkbox' ? checked : (type === 'number' ? Number(value) : value)
@@ -148,7 +165,7 @@ export default function AdminDiscountsPage() {
             </tr>
           </thead>
           <tbody>
-            {discounts.map((discount: any) => (
+            {discounts.map((discount: Discount) => (
               <tr key={discount._id}>
                 <td style={{ paddingLeft: '1.5rem', fontWeight: 700, color: '#111', textTransform: 'uppercase' }}>
                   {discount.code}

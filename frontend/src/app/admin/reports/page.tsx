@@ -1,9 +1,34 @@
 "use client";
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+
+interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+}
+
+interface Order {
+  _id: string;
+  createdAt: string;
+  totalPrice: number;
+  status: string;
+  user?: { name?: string; email?: string };
+  shippingAddress?: { fullName?: string };
+  orderItems?: OrderItem[];
+}
+
+interface Customer {
+  name: string;
+  email: string;
+  phone?: string;
+  totalOrders: number;
+  totalSpend: number;
+  createdAt: string;
+}
 
 export default function AdminReportsPage() {
-  const [orders, setOrders] = useState<any[]>([]);
-  const [customers, setCustomers] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Date range state
@@ -23,12 +48,8 @@ export default function AdminReportsPage() {
     setEndDate(end.toISOString().split('T')[0]);
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
+  const fetchData = useCallback(() => {
+    const req = async () => {
       const token = localStorage.getItem('suki_admin_token');
       const headers = { Authorization: `Bearer ${token}` };
 
@@ -37,18 +58,31 @@ export default function AdminReportsPage() {
         fetch('/api/auth/users', { headers })
       ]);
 
-      if (ordersRes.ok) setOrders(await ordersRes.json());
-      if (customersRes.ok) setCustomers(await customersRes.json());
-    } catch (error) {
-      console.error('Error fetching report data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        orders: ordersRes.ok ? await ordersRes.json() : undefined,
+        customers: customersRes.ok ? await customersRes.json() : undefined
+      };
+    };
+    req()
+      .then((result) => {
+        if (result.orders) setOrders(result.orders);
+        if (result.customers) setCustomers(result.customers);
+      })
+      .catch((error) => {
+        console.error('Error fetching report data:', error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Filter orders by date range
   const filteredOrders = useMemo(() => {
-    return orders.filter((o: any) => {
+    return orders.filter((o: Order) => {
       const orderDate = new Date(o.createdAt).toISOString().split('T')[0];
       return orderDate >= startDate && orderDate <= endDate;
     });
@@ -56,26 +90,26 @@ export default function AdminReportsPage() {
 
   // Aggregated stats
   const stats = useMemo(() => {
-    const totalRevenue = filteredOrders.reduce((acc: number, o: any) => acc + o.totalPrice, 0);
+    const totalRevenue = filteredOrders.reduce((acc: number, o: Order) => acc + o.totalPrice, 0);
     const totalOrders = filteredOrders.length;
     const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
     const statusCounts: Record<string, number> = {};
-    filteredOrders.forEach((o: any) => {
+    filteredOrders.forEach((o: Order) => {
       statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
     });
 
     // Revenue by day
     const revenueByDay: Record<string, number> = {};
-    filteredOrders.forEach((o: any) => {
+    filteredOrders.forEach((o: Order) => {
       const day = new Date(o.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
       revenueByDay[day] = (revenueByDay[day] || 0) + o.totalPrice;
     });
 
     // Top products
     const productSales: Record<string, { name: string; qty: number; revenue: number }> = {};
-    filteredOrders.forEach((o: any) => {
-      o.orderItems?.forEach((item: any) => {
+    filteredOrders.forEach((o: Order) => {
+      o.orderItems?.forEach((item: OrderItem) => {
         const key = item.name;
         if (!productSales[key]) productSales[key] = { name: key, qty: 0, revenue: 0 };
         productSales[key].qty += item.quantity;
@@ -100,12 +134,12 @@ export default function AdminReportsPage() {
 
   const exportOrdersCSV = () => {
     const headers = ['Order ID', 'Date', 'Customer', 'Email', 'Items', 'Status', 'Total (₹)'];
-    const rows = filteredOrders.map((o: any) => [
+    const rows = filteredOrders.map((o: Order) => [
       o._id,
       new Date(o.createdAt).toLocaleDateString('en-IN'),
       o.user?.name || o.shippingAddress?.fullName || 'Guest',
       o.user?.email || 'N/A',
-      (o.orderItems || []).map((i: any) => `${i.quantity}x ${i.name}`).join('; '),
+      (o.orderItems || []).map((i: OrderItem) => `${i.quantity}x ${i.name}`).join('; '),
       o.status,
       o.totalPrice.toFixed(2)
     ]);
@@ -120,11 +154,11 @@ export default function AdminReportsPage() {
 
   const exportCustomersCSV = () => {
     const headers = ['Name', 'Email', 'Phone', 'Total Orders', 'Lifetime Spend (₹)', 'Joined'];
-    const rows = customers.map((c: any) => [
+    const rows = customers.map((c: Customer) => [
       c.name,
       c.email,
       c.phone || 'N/A',
-      c.totalOrders,
+      c.totalOrders.toString(),
       c.totalSpend.toFixed(2),
       new Date(c.createdAt).toLocaleDateString('en-IN')
     ]);

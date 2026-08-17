@@ -18,7 +18,7 @@ export default function TermsAndConditionsPage() {
 
         <h2 style={{ fontSize: '1.5rem', color: '#1f2937', marginTop: '2.5rem', marginBottom: '1rem', fontWeight: 600 }}>2. Products and Pricing</h2>
         <p style={{ marginBottom: '1.5rem' }}>
-          Product prices, availability, descriptions, colours and images may vary and are subject to change without notice. We have made every effort to display as accurately as possible the colours and images of our products, but we cannot guarantee that your computer monitor's display of any colour will be accurate.
+          Product prices, availability, descriptions, colours and images may vary and are subject to change without notice. We have made every effort to display as accurately as possible the colours and images of our products, but we cannot guarantee that your computer monitor&apos;s display of any colour will be accurate.
         </p>
         
         <h2 style={{ fontSize: '1.5rem', color: '#1f2937', marginTop: '2.5rem', marginBottom: '1rem', fontWeight: 600 }}>3. Order Processing</h2>

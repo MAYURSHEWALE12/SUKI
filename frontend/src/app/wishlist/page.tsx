@@ -3,20 +3,29 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
 
+interface WishlistProduct {
+  _id: string;
+  name: string;
+  image?: string;
+  price?: number;
+  originalPrice?: number;
+  rating?: number;
+  numReviews?: number;
+  category?: string;
+  countInStock?: number;
+}
+
 export default function WishlistPage() {
-  const [wishlistProducts, setWishlistProducts] = useState<any[]>([]);
+  const [wishlistProducts, setWishlistProducts] = useState<WishlistProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn] = useState(() => typeof window !== 'undefined' && !!localStorage.getItem('suki_token'));
 
   useEffect(() => {
     const token = localStorage.getItem('suki_token');
     if (!token) {
-      setIsLoggedIn(false);
-      setLoading(false);
+      queueMicrotask(() => setLoading(false));
       return;
     }
-    
-    setIsLoggedIn(true);
 
     const fetchWishlistProducts = async () => {
       try {

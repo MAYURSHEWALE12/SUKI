@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
 import ProductCard from './ProductCard';
 
 interface ViewedProduct {
@@ -19,30 +18,30 @@ export default function RecentlyViewed() {
   useEffect(() => {
     const fetchValidProducts = async () => {
       try {
-        const stored = JSON.parse(localStorage.getItem('suki_recently_viewed') || '[]');
+        const stored: ViewedProduct[] = JSON.parse(localStorage.getItem('suki_recently_viewed') || '[]');
         if (!stored.length) return;
         
         // Take up to 10 to ensure we have enough after filtering, but only display 4
         const candidates = stored.slice(0, 10);
         
         const results = await Promise.all(
-          candidates.map(async (p: any) => {
+          candidates.map(async (p) => {
             try {
               const res = await fetch(`/api/products/${p._id}`);
               return res.ok ? p : null;
-            } catch (e) {
+            } catch {
               return null;
             }
           })
         );
         
-        const valid = results.filter(Boolean);
+        const valid = results.filter((r): r is ViewedProduct => r !== null);
         
         // Clean up localStorage to remove deleted items
         if (valid.length !== candidates.length) {
-          const validIds = valid.map((v: any) => v._id);
-          const newStored = stored.filter((s: any) => 
-            validIds.includes(s._id) || !candidates.find((c: any) => c._id === s._id)
+          const validIds = valid.map((v) => v._id);
+          const newStored = stored.filter((s) => 
+            validIds.includes(s._id) || !candidates.find((c) => c._id === s._id)
           );
           localStorage.setItem('suki_recently_viewed', JSON.stringify(newStored));
         }
@@ -63,11 +62,11 @@ export default function RecentlyViewed() {
       <div className="continue-head">
         <h2 className="serif">Continue shopping</h2>
       </div>
-      <p className="subtitle">Products you've recently viewed</p>
+      <p className="subtitle">Products you&apos;ve recently viewed</p>
 
         <div className="grid">
           {products.map((product) => (
-            <ProductCard key={product._id} product={product as any} />
+            <ProductCard key={product._id} product={product} />
           ))}
         </div>
 

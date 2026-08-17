@@ -1,5 +1,5 @@
 "use client";
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useWishlist } from '@/context/WishlistContext';
@@ -29,6 +29,14 @@ interface Product {
   createdAt?: string;
 }
 
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
 export default function ProductCard({ product }: { product: Product }) {
   const { wishlist, toggleWishlist } = useWishlist();
   const { addToCart } = useCart();
@@ -46,18 +54,24 @@ export default function ProductCard({ product }: { product: Product }) {
   const oldPrice = product.originalPrice || Math.floor(currentPrice * 1.2);
   const rating = product.rating || 0;
   const numReviews = product.numReviews || product.reviews || 0;
-  const category = product.category || product.fabric || 'Designer Wear';
 
   // Show NEW badge for 8 days after creation
-  const isNew = product.createdAt
-    ? (Date.now() - new Date(product.createdAt).getTime()) < 8 * 24 * 60 * 60 * 1000
-    : false;
+  const [isNew, setIsNew] = useState(false);
+
+  useEffect(() => {
+    if (!product.createdAt) return;
+    const createdAt = new Date(product.createdAt).getTime();
+    const timeout = setTimeout(() => {
+      setIsNew((Date.now() - createdAt) < 8 * 24 * 60 * 60 * 1000);
+    }, 0);
+    return () => clearTimeout(timeout);
+  }, [product.createdAt]);
 
   const isCelebPage = typeof window !== 'undefined' && window.location.pathname.includes('celeb-styles');
-  const celebrityName = product.celebrity || null;
-  
+
   const mockPremiumBadges = ["Celebrity Pick", "Trending", "Limited Edition", "Exclusive"];
-  const randomPremiumBadge = Math.random() > 0.7 ? mockPremiumBadges[Math.floor(Math.random() * mockPremiumBadges.length)] : null;
+  const premiumSeed = hashString(productId);
+  const randomPremiumBadge = premiumSeed % 10 > 6 ? mockPremiumBadges[premiumSeed % mockPremiumBadges.length] : null;
   const displayBadge = isNew ? "NEW" : (product.badge || (isCelebPage ? randomPremiumBadge : product.badge));
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -104,9 +118,15 @@ export default function ProductCard({ product }: { product: Product }) {
           )}
 
           {/* Hover Add to Cart button */}
-          <button className="luxury-atc-btn" onClick={handleAddToCart} aria-label="Add to cart">
+          <button 
+            className="luxury-atc-btn" 
+            onClick={handleAddToCart} 
+            aria-label={isOutOfStock ? "Out of stock" : "Add to cart"}
+            disabled={isOutOfStock}
+            style={{ opacity: isOutOfStock ? 0.7 : 1, cursor: isOutOfStock ? 'not-allowed' : 'pointer' }}
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-            Add to Cart
+            {isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
           </button>
         </div>
       </Link>
@@ -136,14 +156,6 @@ export default function ProductCard({ product }: { product: Product }) {
             </>
           )}
         </div>
-        <button 
-          className="btn-primary" 
-          onClick={handleAddToCart}
-          disabled={isOutOfStock}
-          style={{ width: '100%', marginTop: '1rem', padding: '0.8rem', opacity: isOutOfStock ? 0.5 : 1 }}
-        >
-          {isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
-        </button>
       </div>
     </div>
   );

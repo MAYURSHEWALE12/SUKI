@@ -4,15 +4,60 @@ import { useRouter } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
 
 
+interface Address {
+  _id?: string;
+  fullName: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  phone: string;
+  isDefault: boolean;
+}
+
+interface OrderItem {
+  _id?: string;
+  name: string;
+  image?: string;
+  price: number;
+  quantity: number;
+}
+
+interface Order {
+  _id: string;
+  createdAt: string;
+  status?: string;
+  totalPrice: number;
+  orderItems: OrderItem[];
+}
+
+interface WishlistItem {
+  _id: string;
+  name: string;
+  image?: string;
+  price?: number;
+  originalPrice?: number;
+  rating?: number;
+  numReviews?: number;
+  category?: string;
+  countInStock?: number;
+}
+
 export default function AccountPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('profile');
-  const [user, setUser] = useState({ name: '', email: '', phone: '', addresses: [] as any[], wishlist: [] as any[] });
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hash = window.location.hash.replace('#', '');
+      if (['profile', 'addresses', 'orders', 'wishlist'].includes(hash)) return hash;
+    }
+    return 'profile';
+  });
+  const [user, setUser] = useState({ name: '', email: '', phone: '', addresses: [] as Address[], wishlist: [] as WishlistItem[] });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
 
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -58,15 +103,6 @@ export default function AccountPage() {
 
     fetchProfile();
   }, [router]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.hash) {
-      const hash = window.location.hash.replace('#', '');
-      if (['profile', 'addresses', 'orders', 'wishlist'].includes(hash)) {
-        setActiveTab(hash);
-      }
-    }
-  }, []);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -181,18 +217,19 @@ export default function AccountPage() {
     }
 
     let newAddresses = [...user.addresses];
+    let addressToSave = addressForm;
     
     // Handle default status
     if (addressForm.isDefault) {
       newAddresses = newAddresses.map(a => ({ ...a, isDefault: false }));
     } else if (newAddresses.length === 0) {
-      addressForm.isDefault = true;
+      addressToSave = { ...addressForm, isDefault: true };
     }
 
     if (editingAddressIndex !== null) {
-      newAddresses[editingAddressIndex] = addressForm;
+      newAddresses[editingAddressIndex] = addressToSave;
     } else {
-      newAddresses.push(addressForm);
+      newAddresses.push(addressToSave);
     }
 
     const token = localStorage.getItem('suki_token');
@@ -397,7 +434,7 @@ export default function AccountPage() {
               </div>
             ) : (
               <div className="address-grid">
-                {user.addresses.map((addr: any, index: number) => (
+                {user.addresses.map((addr: Address, index: number) => (
                   <div key={index} className={`address-card ${addr.isDefault ? 'default-address' : ''}`}>
                     {addr.isDefault && <div className="default-badge">Default</div>}
                     <h4>{addr.fullName}</h4>
@@ -423,11 +460,11 @@ export default function AccountPage() {
               <p>Loading your orders...</p>
             ) : orders.length === 0 ? (
               <div className="placeholder-section" style={{ padding: '2rem 0' }}>
-                <p>You haven't placed any orders yet.</p>
+                <p>You haven&apos;t placed any orders yet.</p>
               </div>
             ) : (
               <div className="orders-list">
-                {orders.map((order: any) => (
+                {orders.map((order: Order) => (
                   <div key={order._id} className="order-card">
                     <div className="order-header">
                       <div className="order-meta">
@@ -449,7 +486,7 @@ export default function AccountPage() {
                     </div>
                     
                     <div className="order-items">
-                      {order.orderItems.map((item: any, idx: number) => (
+                      {order.orderItems.map((item: OrderItem, idx: number) => (
                         <div key={idx} className="order-item-row">
                           <img src={item.image} alt={item.name} className="order-item-img" />
                           <div className="order-item-info">
@@ -487,7 +524,7 @@ export default function AccountPage() {
               </div>
             ) : (
               <div className="product-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '2rem' }}>
-                {user.wishlist.map((item: any) => (
+                {user.wishlist.map((item: WishlistItem) => (
                   <ProductCard key={item._id} product={item} />
                 ))}
               </div>

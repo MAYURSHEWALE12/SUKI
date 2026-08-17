@@ -2,6 +2,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
 
+type WishlistItem = string | { _id: string };
+
 interface WishlistContextType {
   wishlist: string[];
   toggleWishlist: (productId: string) => Promise<void>;
@@ -21,10 +23,6 @@ export const WishlistProvider = ({ children }: { children: React.ReactNode }) =>
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
 
-  useEffect(() => {
-    fetchWishlist();
-  }, []);
-
   const fetchWishlist = async () => {
     const token = localStorage.getItem('suki_token');
     if (!token) {
@@ -38,7 +36,7 @@ export const WishlistProvider = ({ children }: { children: React.ReactNode }) =>
       });
       const data = await res.json();
       if (res.ok && data.wishlist) {
-        setWishlist(data.wishlist.map((p: any) => typeof p === 'string' ? p : p._id));
+        setWishlist(data.wishlist.map((p: WishlistItem) => typeof p === 'string' ? p : p._id));
       }
     } catch (error) {
       console.error('Error fetching wishlist:', error);
@@ -46,6 +44,11 @@ export const WishlistProvider = ({ children }: { children: React.ReactNode }) =>
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const timeout = setTimeout(fetchWishlist, 0);
+    return () => clearTimeout(timeout);
+  }, []);
 
   const toggleWishlist = async (productId: string) => {
     const token = localStorage.getItem('suki_token');
@@ -77,7 +80,7 @@ export const WishlistProvider = ({ children }: { children: React.ReactNode }) =>
         fetchWishlist();
       } else {
         const data = await res.json();
-        setWishlist(data.map((p: any) => typeof p === 'string' ? p : p._id));
+        setWishlist(data.map((p: WishlistItem) => typeof p === 'string' ? p : p._id));
         showToast(isWishlisted ? 'Removed from Wishlist' : 'Added to Wishlist', 'success');
       }
     } catch (error) {

@@ -1,10 +1,29 @@
 "use client";
 import React, { useEffect, useState, use } from 'react';
 
+interface OrderItem {
+  name: string;
+  quantity: number;
+}
+
+interface Order {
+  _id: string;
+  user?: { name?: string; phone?: string };
+  shippingAddress: {
+    fullName?: string;
+    address: string;
+    city: string;
+    postalCode: string;
+    country: string;
+    phone?: string;
+  };
+  orderItems: OrderItem[];
+}
+
 export default function PrintOrderLabel({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
   const id = unwrappedParams.id;
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,7 +35,7 @@ export default function PrintOrderLabel({ params }: { params: Promise<{ id: stri
         });
         const data = await res.json();
         if (res.ok) {
-          const foundOrder = data.find((o: any) => o._id === id);
+          const foundOrder = data.find((o: Order) => o._id === id);
           setOrder(foundOrder);
         }
       } catch (error) {
@@ -106,7 +125,7 @@ export default function PrintOrderLabel({ params }: { params: Promise<{ id: stri
               </tr>
             </thead>
             <tbody>
-              {order.orderItems.map((item: any, idx: number) => (
+              {order.orderItems.map((item: OrderItem, idx: number) => (
                 <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
                   <td style={{ padding: '6px 0' }}>{item.name}</td>
                   <td style={{ padding: '6px 0', textAlign: 'center' }}><strong>{item.quantity}</strong></td>

@@ -116,14 +116,14 @@ function SearchContent() {
           ) : products.length > 0 ? (
             <div className="product-grid">
               {products.map((product) => (
-                <ProductCard key={product._id} product={product as any} />
+                <ProductCard key={product._id} product={product} />
               ))}
             </div>
           ) : (
             <div className="empty-state">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               <h3>No products found</h3>
-              <p>We couldn't find anything matching "{query}". Try checking your spelling or using more general terms.</p>
+              <p>We couldn&apos;t find anything matching &quot;{query}&quot;. Try checking your spelling or using more general terms.</p>
               <div className="empty-suggestions">
                 <Link href="/collections/lehengas" className="btn btn-outline">Shop Lehengas</Link>
                 <Link href="/collections/sarees" className="btn btn-outline">Shop Sarees</Link>

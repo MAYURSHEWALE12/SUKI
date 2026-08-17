@@ -203,9 +203,7 @@ export default function CheckoutPage() {
         })),
         shippingAddress,
         paymentMethod,
-        itemsPrice: cartTotalPrice,
-        shippingPrice: 0,
-        totalPrice: finalTotal,
+        discountCode: appliedDiscount?.code,
       };
 
       // Check if user is logged in
@@ -239,7 +237,7 @@ export default function CheckoutPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: finalTotal,
+          amount: createdOrder.totalPrice,
           productinfo: 'Suki Ethnic Purchase',
           firstname: shippingAddress.fullName.split(' ')[0],
           email: 'customer@example.com', // In a real app, use logged-in user email
@@ -283,8 +281,8 @@ export default function CheckoutPage() {
       document.body.removeChild(form);
 
       // The popup will redirect back to success page which will then redirect the main window
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during checkout');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred during checkout');
       setIsProcessing(false);
       // Close the popup if it fails
       const popup = window.open('', 'payu_window');

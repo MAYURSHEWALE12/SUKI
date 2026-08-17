@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import ProductCard from './ProductCard';
 
 interface Product {
@@ -55,7 +54,7 @@ export default function TrendingArrivals() {
       ) : (
         <div className="trending-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
           {products.map((product) => (
-            <ProductCard key={product._id} product={product as any} />
+            <ProductCard key={product._id} product={product} />
           ))}
         </div>
       )}

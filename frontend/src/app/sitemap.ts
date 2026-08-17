@@ -1,5 +1,10 @@
 import { MetadataRoute } from 'next';
 
+interface SitemapProduct {
+  _id: string;
+  updatedAt?: string;
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sukiethnic.com';
 
@@ -13,7 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       // Assuming the API returns an array or an object with a 'products' array
       const products = Array.isArray(data) ? data : data.products || [];
       
-      productUrls = products.map((product: any) => ({
+      productUrls = products.map((product: SitemapProduct) => ({
         url: `${baseUrl}/product/${product._id}`,
         lastModified: new Date(product.updatedAt || Date.now()),
         changeFrequency: 'weekly' as const,

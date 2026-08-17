@@ -52,7 +52,7 @@ export default function YouMayAlsoLike() {
               ...product,
               image: product.images && product.images.length > 0 ? product.images[0] : undefined
             };
-            return <ProductCard key={product._id} product={productForCard as any} />;
+            return <ProductCard key={product._id} product={productForCard} />;
           })}
         </div>
 

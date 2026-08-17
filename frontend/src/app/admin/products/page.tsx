@@ -1,17 +1,55 @@
 "use client";
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+
+interface Product {
+  _id: string;
+  name: string;
+  category: string;
+  brand?: string;
+  description?: string;
+  price: number;
+  originalPrice?: number;
+  countInStock: number;
+  image?: string;
+  images?: string[];
+  celebrity?: string;
+  isNewArrival?: boolean;
+  shortDescription?: string;
+  highlights?: string;
+  careInstructions?: string;
+  whatsIncluded?: string;
+}
+
+interface ProductForm {
+  name: string;
+  brand: string;
+  category: string;
+  description: string;
+  price: number;
+  originalPrice: number;
+  countInStock: number;
+  image: string;
+  images: string[];
+  celebrity: string;
+  isNewArrival: boolean;
+  shortDescription: string;
+  highlights: string;
+  careInstructions: string;
+  whatsIncluded: string;
+}
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [showModal, setShowModal] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
   
 
 
-  const [formData, setFormData] = useState({
+
+  const [formData, setFormData] = useState<ProductForm>({
     name: '',
     brand: 'Suki Ethnic',
     category: 'lehengas',
@@ -37,24 +75,29 @@ export default function AdminProductsPage() {
   const itemsPerPage = 10;
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
+  const fetchProducts = useCallback(() => {
+    const req = async () => {
       const res = await fetch('/api/products');
       const data = await res.json();
-      if (res.ok) {
-        setProducts(data);
-      }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { ok: res.ok, products: data };
+    };
+    req()
+      .then(({ ok, products }) => {
+        if (ok) {
+          setProducts(products);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching products:', error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
 
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
   const openAddModal = () => {
     setEditingProduct(null);
     setPrimaryCategory('lehengas');
@@ -64,7 +107,7 @@ export default function AdminProductsPage() {
     setShowModal(true);
   };
 
-  const openEditModal = (product: any) => {
+  const openEditModal = (product: Product) => {
     setEditingProduct(product);
     const cat = product.category || 'lehengas';
     const isSareeType = ['sarees', 'normal-sarees', 'party-sarees', 'silk-sarees'].includes(cat);
@@ -90,8 +133,9 @@ export default function AdminProductsPage() {
     setShowModal(true);
   };
 
-  const handleChange = (e: any) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    const checked = 'checked' in e.target ? e.target.checked : false;
     setFormData({
       ...formData,
       [name]: type === 'checkbox' ? checked : (type === 'number' ? Number(value) : value)
@@ -117,7 +161,7 @@ export default function AdminProductsPage() {
       setUploadingField(null);
       if (xhr.status >= 200 && xhr.status < 300) {
         const imageUrl = xhr.responseText;
-        setFormData((prev: any) => {
+        setFormData((prev: ProductForm) => {
           if (imageField === 'images' && arrayIndex !== undefined) {
             const newImages = [...(prev.images || ['', '', '', ''])];
             newImages[arrayIndex] = imageUrl;
@@ -218,7 +262,7 @@ export default function AdminProductsPage() {
 
   const toggleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedProducts(new Set(currentProducts.map((p: any) => p._id)));
+      setSelectedProducts(new Set(currentProducts.map((p: Product) => p._id)));
     } else {
       setSelectedProducts(new Set());
     }
@@ -233,7 +277,7 @@ export default function AdminProductsPage() {
 
   // Filter and Pagination Logic
   const filteredProducts = useMemo(() => {
-    return products.filter((p: any) => {
+    return products.filter((p: Product) => {
       const searchStr = searchTerm.toLowerCase();
       const nameMatch = (p.name || '').toLowerCase().includes(searchStr);
       const catMatch = (p.category || '').toLowerCase().includes(searchStr);
@@ -297,7 +341,7 @@ export default function AdminProductsPage() {
           </div>
 
           {/* Product Rows */}
-          {currentProducts.map((product: any) => (
+          {currentProducts.map((product: Product) => (
             <div 
               key={product._id} 
               style={{ 
@@ -497,7 +541,7 @@ export default function AdminProductsPage() {
                 <input type="text" name="careInstructions" value={formData.careInstructions} onChange={handleChange} placeholder="e.g. Dry clean only" />
               </div>
               <div className="form-group full-width">
-                <label>What's Included</label>
+                <label>What&apos;s Included</label>
                 <input type="text" name="whatsIncluded" value={formData.whatsIncluded} onChange={handleChange} placeholder="e.g. Saree + Blouse piece" />
               </div>
               <div className="form-group full-width" style={{ flexDirection: 'row', alignItems: 'center' }}>
