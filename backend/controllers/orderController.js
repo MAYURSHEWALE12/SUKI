@@ -183,9 +183,11 @@ exports.generatePayuHash = async (req, res) => {
     const {
       productinfo,
       firstname,
-      email,
       phone
     } = req.body;
+
+    // Prefer the logged-in user's verified email over the client-supplied one
+    const email = (req.user && req.user.email) || req.body.email;
 
     // The payment amount must match the server-computed order total,
     // otherwise a client could pay a fraction of the real order value.
@@ -197,6 +199,9 @@ exports.generatePayuHash = async (req, res) => {
     const txnid = order._id.toString(); // Use Order ID as txnid
     const key = process.env.PAYU_MERCHANT_KEY;
     const salt = process.env.PAYU_MERCHANT_SALT;
+    const gatewayUrl = process.env.PAYU_ENV === 'production'
+      ? 'https://secure.payu.in/_payment'
+      : 'https://test.payu.in/_payment';
 
     // Hash sequence : key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt
     const hashString = `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${salt}`;
@@ -211,6 +216,7 @@ exports.generatePayuHash = async (req, res) => {
       firstname,
       email,
       phone,
+      gatewayUrl,
       surl: `${req.protocol}://${req.get('host')}/api/orders/payu-success`,
       furl: `${req.protocol}://${req.get('host')}/api/orders/payu-failure`,
     });

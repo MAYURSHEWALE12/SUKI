@@ -20,7 +20,7 @@ export default function ReelsCarousel() {
   useEffect(() => {
     const fetchReels = async () => {
       try {
-        const res = await fetch('/api/products');
+        const res = await fetch('/api/products', { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           // Filter products that actually have a video attached

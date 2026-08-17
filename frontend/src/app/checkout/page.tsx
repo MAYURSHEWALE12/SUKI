@@ -29,6 +29,7 @@ export default function CheckoutPage() {
     country: 'India',
     phone: '',
   });
+  const [customerEmail, setCustomerEmail] = useState('');
   
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [paymentMethod, setPaymentMethod] = useState('Credit Card');
@@ -92,6 +93,9 @@ export default function CheckoutPage() {
           applyAddress(defaultAddress);
         } else if (data && data.name) {
           setShippingAddress(prev => ({ ...prev, fullName: data.name }));
+        }
+        if (data && data.email) {
+          setCustomerEmail(data.email);
         }
       })
       .catch(console.error);
@@ -183,6 +187,12 @@ export default function CheckoutPage() {
     setIsProcessing(true);
     setError('');
 
+    if (!customerEmail.trim()) {
+      setError('Please enter your email address for the payment receipt.');
+      setIsProcessing(false);
+      return;
+    }
+
     // Open popup synchronously to bypass popup blockers
     const popup = window.open('', 'payu_window', 'width=500,height=600,left=200,top=100');
     if (!popup) {
@@ -240,7 +250,7 @@ export default function CheckoutPage() {
           amount: createdOrder.totalPrice,
           productinfo: 'Suki Ethnic Purchase',
           firstname: shippingAddress.fullName.split(' ')[0],
-          email: 'customer@example.com', // In a real app, use logged-in user email
+          email: customerEmail,
           phone: shippingAddress.phone
         })
       });
@@ -254,7 +264,7 @@ export default function CheckoutPage() {
       // Dynamically create a form and submit to PayU
       const form = document.createElement('form');
       form.method = 'POST';
-      form.action = 'https://test.payu.in/_payment';
+      form.action = payuData.gatewayUrl || 'https://test.payu.in/_payment';
       
       const appendField = (name: string, value: string) => {
         const input = document.createElement('input');
@@ -385,6 +395,10 @@ export default function CheckoutPage() {
                     <div className="input-group full-width">
                       <label>Phone Number</label>
                       <input type="tel" name="phone" required value={shippingAddress.phone} onChange={handleChange} placeholder="Enter your phone number" />
+                    </div>
+                    <div className="input-group full-width">
+                      <label>Email Address (for payment receipt)</label>
+                      <input type="email" required value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="Enter your email address" />
                     </div>
                   </div>
                 </div>

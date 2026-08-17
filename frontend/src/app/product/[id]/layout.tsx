@@ -54,7 +54,7 @@ export default async function ProductLayout({ children, params }: { children: Re
               priceCurrency: "INR",
               price: product.price,
               availability: product.countInStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-              url: `https://sukiethnic.com/product/${id}`
+              url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://sukiethnic.com'}/product/${id}`
             }
           })
         }} />
