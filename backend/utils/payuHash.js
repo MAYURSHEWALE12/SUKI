@@ -13,9 +13,12 @@ function computeForwardHash({ key, txnid, amount, productinfo, firstname, email,
 }
 
 // Reverse (PayU -> us for payment verification):
-// sha512(additionalCharges|salt|status|udf1..udf5|........................|email|firstname|productinfo|amount|txnid|key)
+// sha512(additionalCharges|salt|status|udf1..udf5|(5 empty)|email|firstname|productinfo|amount|txnid|key)
+// additionalCharges is prepended only when it is a real nonzero surcharge
+// (PayU omits it otherwise; normalise so "0"/"0.00" can never break the hash).
 function computeReverseHash({ additionalCharges, salt, status, email, firstname, productinfo, amount, txnid, key }) {
-  const prefix = additionalCharges ? [additionalCharges, salt, status] : [salt, status];
+  const hasCharges = additionalCharges !== undefined && additionalCharges !== null && Number(additionalCharges) !== 0;
+  const prefix = hasCharges ? [String(additionalCharges), salt, status] : [salt, status];
   const fields = [...prefix, ...EMPTY_SLOTS, email, firstname, productinfo, amount, txnid, key];
   return crypto.createHash('sha512').update(fields.join('|')).digest('hex');
 }

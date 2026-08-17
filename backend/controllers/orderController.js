@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const crypto = require('crypto');
 const { validateDiscountCode, calculateDiscountAmount } = require('./discountController');
 const { computeForwardHash, computeReverseHash } = require('../utils/payuHash');
 
