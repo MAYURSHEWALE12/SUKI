@@ -17,8 +17,12 @@ export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [mounted, setMounted] = useState(false);
   
+  // localStorage is unavailable during SSR; syncing after mount is the only
+  // hydration-safe way to read it (token presence + optional auth header).
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: populate auth state once, post-hydration
     setMounted(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: read localStorage after mount only
     setIsLoggedIn(!!localStorage.getItem('suki_token'));
   }, []);
 
