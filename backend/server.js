@@ -12,7 +12,17 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors());
+// Restrict CORS to known frontend origins (comma-separated CORS_ORIGIN env override)
+const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+if (process.env.FRONTEND_URL && !corsOrigins.includes(process.env.FRONTEND_URL)) {
+  corsOrigins.push(process.env.FRONTEND_URL);
+}
+
+app.use(cors({ origin: corsOrigins }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

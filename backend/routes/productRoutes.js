@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getProducts, getProductById, createProduct, updateProduct, deleteProduct, createProductReview, getAllReviews } = require('../controllers/productController');
 const { protect, admin } = require('../middleware/authMiddleware');
+const { reviewLimiter } = require('../middleware/rateLimit');
 
 router.route('/')
   .get(getProducts)
@@ -10,7 +11,7 @@ router.route('/')
 router.get('/reviews/all', getAllReviews);
 
 router.route('/:id/reviews')
-  .post(protect, createProductReview);
+  .post(protect, reviewLimiter, createProductReview);
 
 router.route('/:id')
   .get(getProductById)
