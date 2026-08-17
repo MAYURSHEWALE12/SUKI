@@ -14,9 +14,13 @@ interface SearchSuggestion {
 export default function Header() {
   const pathname = usePathname();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(() =>
-    typeof window !== 'undefined' ? !!localStorage.getItem('suki_token') : false
-  );
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+    setIsLoggedIn(!!localStorage.getItem('suki_token'));
+  }, []);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -237,7 +241,11 @@ export default function Header() {
             <Link href="/whatsapp" className="mobile-hide">
               <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
             </Link>
-            {isLoggedIn ? (
+            {!mounted ? (
+              <button className="mobile-hide" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, opacity: 0 }}>
+                <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              </button>
+            ) : isLoggedIn ? (
               <div style={{ position: 'relative' }} ref={dropdownRef} className="mobile-hide">
                 <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                   <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>

@@ -147,7 +147,16 @@ exports.deleteProduct = async (req, res) => {
 // @access  Private
 exports.createProductReview = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid Product ID' });
+    }
+
     const { rating, comment } = req.body;
+    const numericRating = Number(rating);
+    if (!Number.isInteger(numericRating) || numericRating < 1 || numericRating > 5) {
+      return res.status(400).json({ message: 'Rating must be an integer between 1 and 5' });
+    }
+
     const product = await Product.findById(req.params.id);
 
     if (product) {

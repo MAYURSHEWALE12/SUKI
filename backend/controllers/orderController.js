@@ -36,8 +36,8 @@ exports.addOrderItems = async (req, res) => {
       if (!product) {
         return res.status(400).json({ message: `Product not found: ${item.product}` });
       }
-      const quantity = Math.floor(Number(item.quantity));
-      if (!Number.isFinite(quantity) || quantity < 1) {
+      const quantity = Number(item.quantity);
+      if (!Number.isInteger(quantity) || quantity < 1) {
         return res.status(400).json({ message: `Invalid quantity for ${product.name}` });
       }
       if (product.countInStock <= 0) {
