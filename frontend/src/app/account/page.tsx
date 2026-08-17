@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
-import './account.css';
+
 
 export default function AccountPage() {
   const router = useRouter();
@@ -133,6 +133,28 @@ export default function AccountPage() {
     } finally {
       setSaving(false);
       setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) return;
+    
+    const token = localStorage.getItem('suki_token');
+    try {
+      const response = await fetch('/api/auth/profile', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        localStorage.removeItem('suki_token');
+        window.location.href = '/';
+      } else {
+        alert('Failed to delete account.');
+      }
+    } catch (error) {
+      console.error("Delete account error", error);
+      alert('An error occurred.');
     }
   };
 
@@ -300,14 +322,23 @@ export default function AccountPage() {
               </div>
             </div>
             
-            <button 
-              className="btn btn-primary save-btn" 
-              onClick={handleSave} 
-              disabled={saving}
-            >
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
-            {message && <p className="success-message">{message}</p>}
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <button 
+                className="btn btn-primary save-btn" 
+                onClick={handleSave} 
+                disabled={saving}
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+              <button
+                className="btn"
+                style={{ background: '#fff', color: '#ef4444', border: '1px solid #ef4444', padding: '0.8rem 2rem', fontWeight: 600, borderRadius: '4px' }}
+                onClick={handleDeleteAccount}
+              >
+                Delete Account
+              </button>
+            </div>
+            {message && <p className="success-message" style={{ marginTop: '1rem' }}>{message}</p>}
           </div>
         )}
 
@@ -423,7 +454,7 @@ export default function AccountPage() {
                           <img src={item.image} alt={item.name} className="order-item-img" />
                           <div className="order-item-info">
                             <h4>{item.name}</h4>
-                            <p>Size: {item.size} | Qty: {item.quantity}</p>
+                            <p>Qty: {item.quantity}</p>
                           </div>
                           <div className="order-item-price">
                             ₹{item.price * item.quantity}
@@ -432,7 +463,10 @@ export default function AccountPage() {
                       ))}
                     </div>
                     
-                    <div className="order-footer">
+                    <div className="order-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <a href={`/success?orderId=${order._id}`} className="btn btn-outline" style={{ padding: '0.6rem 1.2rem', fontSize: '0.9rem', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', textDecoration: 'none', borderRadius: '4px' }}>
+                        View Receipt / Bill
+                      </a>
                       <div className="order-total-block">
                         <span className="total-label">Total Amount:</span>
                         <span className="total-value">₹{order.totalPrice}</span>

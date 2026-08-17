@@ -7,13 +7,17 @@ const orderSchema = new mongoose.Schema(
       required: false,
       ref: 'User',
     },
+    sessionToken: {
+      type: String,
+      required: false,
+    },
     orderItems: [
       {
         name: { type: String, required: true },
         quantity: { type: Number, required: true },
         image: { type: String, required: true },
         price: { type: Number, required: true },
-        size: { type: String, required: true },
+
         product: {
           type: mongoose.Schema.Types.ObjectId,
           required: true,
@@ -56,6 +60,12 @@ const orderSchema = new mongoose.Schema(
     paidAt: {
       type: Date,
     },
+    paymentResult: {
+      id: { type: String },
+      status: { type: String },
+      update_time: { type: String },
+      email_address: { type: String },
+    },
     isDelivered: {
       type: Boolean,
       required: true,
@@ -68,6 +78,14 @@ const orderSchema = new mongoose.Schema(
       type: String,
       required: true,
       default: 'Processing',
+    },
+    trackingLink: {
+      type: String,
+      default: '',
+    },
+    adminNotes: {
+      type: String,
+      default: '',
     },
   },
   {

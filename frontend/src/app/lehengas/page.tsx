@@ -3,58 +3,58 @@ import ProductCard from "@/components/ProductCard";
 
 const mockProducts = [
   {
-    id: 1,
+    _id: "1",
     name: "Midnight Noir Sequin Saree",
-    mrp: "₹8,999",
-    salePrice: "₹4,499",
-    discount: "50% OFF",
-    badge: "Best Seller",
-    imageUrl: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=600&auto=format&fit=crop",
+    originalPrice: 8999,
+    price: 4499,
+    category: "Sarees",
+    isNewArrival: false,
+    image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=600&auto=format&fit=crop",
   },
   {
-    id: 2,
+    _id: "2",
     name: "Rose Gold Embellished Lehenga",
-    mrp: "₹14,999",
-    salePrice: "₹9,999",
-    discount: "33% OFF",
-    badge: "New",
-    imageUrl: "https://images.unsplash.com/photo-1583391733958-d15fa693d502?q=80&w=600&auto=format&fit=crop",
+    originalPrice: 14999,
+    price: 9999,
+    category: "Lehengas",
+    isNewArrival: true,
+    image: "https://images.unsplash.com/photo-1583391733958-d15fa693d502?q=80&w=600&auto=format&fit=crop",
   },
   {
-    id: 3,
+    _id: "3",
     name: "Emerald Green Silk Lehenga",
-    mrp: "₹5,499",
-    salePrice: "₹2,999",
-    discount: "45% OFF",
-    badge: "Trending",
-    imageUrl: "https://images.unsplash.com/photo-1617261075727-46323497d51b?q=80&w=600&auto=format&fit=crop",
+    originalPrice: 5499,
+    price: 2999,
+    category: "Lehengas",
+    isNewArrival: false,
+    image: "https://images.unsplash.com/photo-1617261075727-46323497d51b?q=80&w=600&auto=format&fit=crop",
   },
   {
-    id: 4,
+    _id: "4",
     name: "Ivory & Gold Georgette Lehenga",
-    mrp: "₹12,499",
-    salePrice: "₹7,499",
-    discount: "40% OFF",
-    badge: "Best Seller",
-    imageUrl: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=600&auto=format&fit=crop",
+    originalPrice: 12499,
+    price: 7499,
+    category: "Lehengas",
+    isNewArrival: false,
+    image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=600&auto=format&fit=crop",
   },
   {
-    id: 5,
+    _id: "5",
     name: "Royal Blue Velvet Lehenga",
-    mrp: "₹18,999",
-    salePrice: "₹12,499",
-    discount: "34% OFF",
-    badge: "",
-    imageUrl: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=600&auto=format&fit=crop",
+    originalPrice: 18999,
+    price: 12499,
+    category: "Lehengas",
+    isNewArrival: false,
+    image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=600&auto=format&fit=crop",
   },
   {
-    id: 6,
+    _id: "6",
     name: "Blush Pink Net Lehenga",
-    mrp: "₹9,999",
-    salePrice: "₹5,999",
-    discount: "40% OFF",
-    badge: "Sale",
-    imageUrl: "https://images.unsplash.com/photo-1583391733958-d15fa693d502?q=80&w=600&auto=format&fit=crop",
+    originalPrice: 9999,
+    price: 5999,
+    category: "Lehengas",
+    isNewArrival: false,
+    image: "https://images.unsplash.com/photo-1583391733958-d15fa693d502?q=80&w=600&auto=format&fit=crop",
   }
 ];
 
@@ -102,7 +102,7 @@ export default function LehengasPage() {
 
         <div className="product-grid">
           {mockProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product._id} product={product} />
           ))}
         </div>
       </main>

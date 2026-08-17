@@ -46,6 +46,24 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       localStorage.setItem('suki_token', data.token);
       localStorage.setItem('suki_user', JSON.stringify({ id: data._id, name: data.name, email: data.email }));
       
+      // Handle pending wishlist item
+      const pendingWishlistItem = localStorage.getItem('pending_wishlist_item');
+      if (pendingWishlistItem) {
+        try {
+          await fetch('/api/auth/wishlist', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${data.token}` 
+            },
+            body: JSON.stringify({ productId: pendingWishlistItem })
+          });
+          localStorage.removeItem('pending_wishlist_item');
+        } catch (e) {
+          console.error("Failed to add pending wishlist item", e);
+        }
+      }
+
       // Success! Close modal
       onClose();
       // Optionally trigger a page refresh or update context state here
@@ -162,14 +180,28 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 />
               </div>
 
-              <div className="checkbox-group">
+              {!isLogin && (
+                <div className="checkbox-group" style={{ alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                  <input 
+                    type="checkbox" 
+                    id="agreePolicies" 
+                    required 
+                    style={{ marginTop: '0.25rem', accentColor: '#C2185B' }}
+                  />
+                  <label htmlFor="agreePolicies" style={{ lineHeight: 1.4, fontSize: '0.85rem' }}>
+                    I agree to the <a href="/terms-and-conditions" target="_blank" style={{ color: '#C2185B', textDecoration: 'underline' }}>Terms & Conditions</a> and <a href="/privacy-policy" target="_blank" style={{ color: '#C2185B', textDecoration: 'underline' }}>Privacy Policy</a>. <span style={{color:'red'}}>*</span>
+                  </label>
+                </div>
+              )}
+              <div className="checkbox-group" style={{ alignItems: 'flex-start' }}>
                 <input 
                   type="checkbox" 
                   id="notify" 
                   checked={notify}
                   onChange={(e) => setNotify(e.target.checked)}
+                  style={{ marginTop: '0.25rem', accentColor: '#C2185B' }}
                 />
-                <label htmlFor="notify">Notify me with offers & updates</label>
+                <label htmlFor="notify" style={{ lineHeight: 1.4, fontSize: '0.85rem' }}>I agree to receive offers, updates, and promotional messages from Suki Ethnic.</label>
               </div>
 
               <button type="submit" className="submit-btn" disabled={loading}>

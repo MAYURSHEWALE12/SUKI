@@ -7,19 +7,20 @@ export interface CartItem {
   name: string;
   price: number;
   image: string;
-  size: string;
   quantity: number;
-  countInStock: number;
+  countInStock?: number;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (item: CartItem) => void;
-  removeFromCart: (id: string, size: string) => void;
-  updateQuantity: (id: string, size: string, quantity: number) => void;
+  removeFromCart: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   cartTotalQuantity: number;
   cartTotalPrice: number;
+  isCartOpen: boolean;
+  setIsCartOpen: (isOpen: boolean) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -27,6 +28,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -50,13 +52,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = (item: CartItem) => {
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(i => i._id === item._id && i.size === item.size);
+      const existingItem = prevItems.find(i => i._id === item._id);
       
       if (existingItem) {
-        // Increase quantity but cap at countInStock
-        const newQuantity = Math.min(existingItem.quantity + item.quantity, item.countInStock);
+        // Increase quantity but cap at countInStock if it exists
+        const increment = item.quantity || 1;
+        const newQuantity = existingItem.countInStock !== undefined 
+          ? Math.min(existingItem.quantity + increment, existingItem.countInStock)
+          : existingItem.quantity + increment;
+          
         return prevItems.map(i => 
-          i._id === item._id && i.size === item.size 
+          i._id === item._id
             ? { ...i, quantity: newQuantity } 
             : i
         );
@@ -64,22 +70,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
       
       return [...prevItems, item];
     });
+    setIsCartOpen(true);
   };
 
-  const removeFromCart = (id: string, size: string) => {
-    setCartItems(prevItems => prevItems.filter(i => !(i._id === id && i.size === size)));
+  const removeFromCart = (id: string) => {
+    setCartItems(prevItems => prevItems.filter(i => i._id !== id));
   };
 
-  const updateQuantity = (id: string, size: string, quantity: number) => {
+  const updateQuantity = (id: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(id, size);
+      removeFromCart(id);
       return;
     }
     
     setCartItems(prevItems => 
       prevItems.map(i => {
-        if (i._id === id && i.size === size) {
-          return { ...i, quantity: Math.min(quantity, i.countInStock) };
+        if (i._id === id) {
+          const newQuantity = i.countInStock !== undefined 
+            ? Math.min(quantity, i.countInStock) 
+            : quantity;
+          return { ...i, quantity: newQuantity };
         }
         return i;
       })
@@ -101,7 +111,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       updateQuantity,
       clearCart,
       cartTotalQuantity,
-      cartTotalPrice
+      cartTotalPrice,
+      isCartOpen,
+      setIsCartOpen
     }}>
       {children}
     </CartContext.Provider>

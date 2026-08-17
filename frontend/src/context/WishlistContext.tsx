@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useToast } from '@/context/ToastContext';
 
 interface WishlistContextType {
   wishlist: string[];
@@ -18,6 +19,7 @@ export const useWishlist = () => useContext(WishlistContext);
 export const WishlistProvider = ({ children }: { children: React.ReactNode }) => {
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
     fetchWishlist();
@@ -48,7 +50,9 @@ export const WishlistProvider = ({ children }: { children: React.ReactNode }) =>
   const toggleWishlist = async (productId: string) => {
     const token = localStorage.getItem('suki_token');
     if (!token) {
-      alert("Please login to save items to your wishlist.");
+      localStorage.setItem('pending_wishlist_item', productId);
+      showToast("Please login to save items to your wishlist.", "error");
+      window.dispatchEvent(new Event('openLoginModal'));
       return;
     }
 
@@ -74,6 +78,7 @@ export const WishlistProvider = ({ children }: { children: React.ReactNode }) =>
       } else {
         const data = await res.json();
         setWishlist(data.map((p: any) => typeof p === 'string' ? p : p._id));
+        showToast(isWishlisted ? 'Removed from Wishlist' : 'Added to Wishlist', 'success');
       }
     } catch (error) {
       console.error('Error toggling wishlist:', error);

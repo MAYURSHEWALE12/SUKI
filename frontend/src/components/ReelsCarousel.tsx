@@ -1,10 +1,49 @@
 "use client";
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useCart } from '@/context/CartContext';
 
 export default function ReelsCarousel() {
   const trackRef = useRef<HTMLDivElement>(null);
+  const [reels, setReels] = useState<any[]>([]);
+  const { addToCart, setIsCartOpen } = useCart();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchReels = async () => {
+      try {
+        const res = await fetch('/api/products');
+        if (res.ok) {
+          const data = await res.json();
+          // Filter products that actually have a video attached
+          const videoProducts = data.filter((p: any) => p.video && p.video.trim() !== '');
+          setReels(videoProducts);
+        }
+      } catch (err) {
+        console.error('Error fetching reel products:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchReels();
+  }, []);
+
+  // Force play all videos
+  useEffect(() => {
+    if (reels.length > 0 && trackRef.current) {
+      const videos = trackRef.current.querySelectorAll('video');
+      videos.forEach(video => {
+        // Mute is required for programmatic autoplay
+        video.muted = true;
+        video.play().catch(e => console.log('Autoplay prevented:', e));
+      });
+    }
+  }, [reels]);
+
+  useEffect(() => {
+    if (reels.length === 0) return;
+
     const interval = setInterval(() => {
       if (trackRef.current) {
         const firstCard = trackRef.current.querySelector('.reel-card');
@@ -26,66 +65,23 @@ export default function ReelsCarousel() {
     }, 3000); // Auto slide every 3 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [reels]);
 
-  const reels = [
-    {
-      id: 1,
-      video: "/videos/reel1.mp4",
-      title: "Pista Banarasi Silk Gadwal Pattu Saree",
-      views: "5L",
-      thumb: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=100&q=80"
-    },
-    {
-      id: 2,
-      video: "/videos/reel2.mp4",
-      title: "Off White Ethnic Motif Silk Blend Saree",
-      views: "5L",
-      thumb: "https://images.unsplash.com/photo-1583391733958-d15fa693d502?w=100&q=80"
-    },
-    {
-      id: 3,
-      video: "/videos/reel3.mp4",
-      title: "Cream Colour Double Border Chex Weaving",
-      views: "4L",
-      thumb: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=100&q=80"
-    },
-    {
-      id: 4,
-      video: "/videos/reel4.mp4",
-      title: "Sky Blue Satin Georgette Saree",
-      views: "4L",
-      thumb: "https://images.unsplash.com/photo-1617261075727-46323497d51b?w=100&q=80"
-    },
-    {
-      id: 5,
-      video: "/videos/reel5.mp4",
-      title: "Pink Embroidered Saree",
-      views: "3L",
-      thumb: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=100&q=80"
-    },
-    {
-      id: 6,
-      video: "/videos/reel1.mp4",
-      title: "Deepika Singh Rani Pink Silk Woven Saree",
-      views: "2L",
-      thumb: "https://images.unsplash.com/photo-1583391733959-f58318c47f58?w=100&q=80"
-    },
-    {
-      id: 7,
-      video: "/videos/reel2.mp4",
-      title: "Mouni Roy Green Floral Blossom Saree",
-      views: "1L",
-      thumb: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=100&q=80"
-    },
-    {
-      id: 8,
-      video: "/videos/reel3.mp4",
-      title: "Purple Bhagalpuri Silk Printed Saree",
-      views: "50K",
-      thumb: "https://images.unsplash.com/photo-1617261075727-46323497d51b?w=100&q=80"
-    }
-  ];
+  const handleAddToCart = (product: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    addToCart({
+      _id: product._id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      quantity: 1,
+      countInStock: 99
+    });
+    setIsCartOpen(true);
+  };
+
+  if (loading) return null;
+  if (reels.length === 0) return null; // Don't show the section if no products have videos
 
   return (
     <section className="reels-section">
@@ -95,21 +91,20 @@ export default function ReelsCarousel() {
       </div>
       <div className="reels-container" ref={trackRef}>
         <div className="reels-track">
-          {[...reels, ...reels].map((reel, index) => (
-            <div className="reel-card" key={`${reel.id}-${index}`}>
-              <div className="reel-video-container">
-                <div className="reel-views">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                  {reel.views}
+          {/* Duplicate the array to allow for infinite scrolling effect */}
+          {[...reels, ...reels].map((product, index) => (
+            <div className="reel-card" key={`${product._id}-${index}`}>
+              <Link href={`/product/${product._id}`} style={{ textDecoration: 'none', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <div className="reel-video-container">
+
+                  <video className="reel-video" src={`${product.video}?id=${index}`} poster={product.image} autoPlay loop muted playsInline style={{ pointerEvents: 'none' }} />
+                  <div className="reel-product-info" style={{ zIndex: 10, position: 'absolute' }}>
+                    <p className="reel-product-title">{product.name}</p>
+                    {product.price > 0 && <p style={{ color: '#fff', fontSize: '13px', margin: '4px 0 0 0', fontWeight: 'bold' }}>₹{product.price}</p>}
+                  </div>
                 </div>
-                <video className="reel-video" autoPlay loop muted playsInline>
-                  <source src={reel.video} type="video/mp4" />
-                </video>
-                <div className="reel-product-info">
-                  <p className="reel-product-title">{reel.title}</p>
-                </div>
-              </div>
-              <button className="reel-add-cart-btn">Add To Cart</button>
+              </Link>
+              <button className="reel-add-cart-btn" onClick={(e) => handleAddToCart(product, e)}>Add To Cart</button>
             </div>
           ))}
         </div>

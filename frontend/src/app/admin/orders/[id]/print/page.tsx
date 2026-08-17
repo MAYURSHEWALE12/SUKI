@@ -100,9 +100,8 @@ export default function PrintOrderLabel({ params }: { params: Promise<{ id: stri
           <div style={{ fontSize: '12px', color: '#555', marginBottom: '8px', textTransform: 'uppercase' }}>Packing Slip (Items):</div>
           <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #ccc', textAlign: 'left' }}>
+              <tr style={{ borderBottom: '1px solid #ddd', textAlign: 'left' }}>
                 <th style={{ paddingBottom: '4px' }}>Item</th>
-                <th style={{ paddingBottom: '4px' }}>Size</th>
                 <th style={{ paddingBottom: '4px', textAlign: 'center' }}>Qty</th>
               </tr>
             </thead>
@@ -110,7 +109,6 @@ export default function PrintOrderLabel({ params }: { params: Promise<{ id: stri
               {order.orderItems.map((item: any, idx: number) => (
                 <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
                   <td style={{ padding: '6px 0' }}>{item.name}</td>
-                  <td style={{ padding: '6px 0' }}>{item.size}</td>
                   <td style={{ padding: '6px 0', textAlign: 'center' }}><strong>{item.quantity}</strong></td>
                 </tr>
               ))}

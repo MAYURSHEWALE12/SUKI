@@ -3,8 +3,9 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
-import '../collections/[category]/category.css';
-import './search.css';
+import ProductCardSkeleton from '@/components/ProductCardSkeleton';
+
+
 
 interface Product {
   _id: string;
@@ -101,7 +102,11 @@ function SearchContent() {
           )}
 
           {loading ? (
-            <div className="loading-state"><div className="spinner" /><p>Searching...</p></div>
+            <div className="product-grid">
+              {Array(12).fill(0).map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
+            </div>
           ) : !query ? (
             <div className="empty-state">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>

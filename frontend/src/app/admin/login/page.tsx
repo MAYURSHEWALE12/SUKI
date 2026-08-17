@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import './admin-login.css';
+
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('admin@sukiethnic.com');

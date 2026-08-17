@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 
@@ -156,8 +157,7 @@ exports.createProductReview = async (req, res) => {
       });
 
       if (!orderExists) {
-        res.status(400);
-        throw new Error('You can only review products you have purchased.');
+        return res.status(400).json({ message: 'You can only review products you have purchased.' });
       }
 
       const alreadyReviewed = product.reviews.find(
@@ -165,8 +165,7 @@ exports.createProductReview = async (req, res) => {
       );
 
       if (alreadyReviewed) {
-        res.status(400);
-        throw new Error('Product already reviewed');
+        return res.status(400).json({ message: 'Product already reviewed' });
       }
 
       const review = {
@@ -183,10 +182,33 @@ exports.createProductReview = async (req, res) => {
       await product.save();
       res.status(201).json({ message: 'Review added' });
     } else {
-      res.status(404);
-      throw new Error('Product not found');
+      return res.status(404).json({ message: '' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.getAllReviews = async (req, res) => {
+  try {
+    const products = await Product.find({}).select('name reviews');
+    let allReviews = [];
+    products.forEach(product => {
+      product.reviews.forEach(review => {
+        allReviews.push({
+          _id: review._id,
+          productName: product.name,
+          productId: product._id,
+          name: review.name,
+          rating: review.rating,
+          comment: review.comment,
+          createdAt: review.createdAt
+        });
+      });
+    });
+    res.json(allReviews);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

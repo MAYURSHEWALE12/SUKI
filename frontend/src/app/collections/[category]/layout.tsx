@@ -6,7 +6,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category } = await params;
-  const displayCategory = category.charAt(0).toUpperCase() + category.slice(1);
+  const displayCategory = category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   
   return {
     title: `${displayCategory} | Suki Ethnic`,

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import jsPDF from 'jspdf';
 
 export default function AdminOrdersPage() {
@@ -7,6 +7,16 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+
+  // New Features State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  
+  // Notes and Tracking state for inputs
+  const [trackingLinks, setTrackingLinks] = useState<Record<string, string>>({});
+  const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
 
   const downloadPDFLabel = (order: any) => {
     const doc = new jsPDF({
@@ -33,7 +43,6 @@ export default function AdminOrdersPage() {
     doc.setFont("helvetica", "normal");
     doc.text(order.user?.name || order.shippingAddress.fullName || 'Customer', 0.25, 1.35);
     
-    // Handle long addresses
     const splitAddress = doc.splitTextToSize(order.shippingAddress.address, 3.5);
     doc.text(splitAddress, 0.25, 1.55);
     
@@ -53,7 +62,7 @@ export default function AdminOrdersPage() {
     doc.setFont("helvetica", "normal");
     let currentY = lineY + 0.55;
     order.orderItems.forEach((item: any) => {
-      const itemText = `${item.quantity}x ${item.name} (Size: ${item.size})`;
+      const itemText = `${item.quantity}x ${item.name}`;
       const splitItem = doc.splitTextToSize(itemText, 3.5);
       doc.text(splitItem, 0.25, currentY);
       currentY += (splitItem.length * 0.18) + 0.05;
@@ -79,6 +88,16 @@ export default function AdminOrdersPage() {
       const data = await res.json();
       if (res.ok) {
         setOrders(data);
+        
+        // Initialize tracking/notes state
+        const initialTracking: Record<string, string> = {};
+        const initialNotes: Record<string, string> = {};
+        data.forEach((o: any) => {
+          initialTracking[o._id] = o.trackingLink || '';
+          initialNotes[o._id] = o.adminNotes || '';
+        });
+        setTrackingLinks(initialTracking);
+        setAdminNotes(initialNotes);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -97,7 +116,11 @@ export default function AdminOrdersPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ 
+          status: newStatus,
+          trackingLink: trackingLinks[orderId],
+          adminNotes: adminNotes[orderId]
+        })
       });
       
       if (res.ok) {
@@ -110,61 +133,136 @@ export default function AdminOrdersPage() {
     }
   };
 
-  if (loading) return <div>Loading orders...</div>;
+  const handleBulkUpdate = async (status: string) => {
+    if (selectedOrders.size === 0) return;
+    setLoading(true);
+    const token = localStorage.getItem('suki_admin_token');
+    
+    // Process sequentially to avoid overwhelming server
+    for (const orderId of Array.from(selectedOrders)) {
+      try {
+        await fetch(`/api/orders/${orderId}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ status })
+        });
+      } catch (err) {
+        console.error("Bulk update failed for", orderId, err);
+      }
+    }
+    
+    setSelectedOrders(new Set());
+    await fetchOrders();
+  };
+
+  const toggleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedOrders(new Set(currentOrders.map((o: any) => o._id)));
+    } else {
+      setSelectedOrders(new Set());
+    }
+  };
+
+  const toggleSelectOrder = (id: string) => {
+    const next = new Set(selectedOrders);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedOrders(next);
+  };
+
+  // Filter and Pagination Logic
+  const filteredOrders = useMemo(() => {
+    return orders.filter((o: any) => {
+      const searchStr = searchTerm.toLowerCase();
+      const customerName = (o.user?.name || o.shippingAddress?.fullName || '').toLowerCase();
+      const idMatch = o._id.toLowerCase().includes(searchStr);
+      const nameMatch = customerName.includes(searchStr);
+      return idMatch || nameMatch;
+    });
+  }, [orders, searchTerm]);
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const currentOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  if (loading && orders.length === 0) return <div>Loading orders...</div>;
 
   return (
     <div>
-      <div className="admin-page-header">
+      <div className="admin-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>Orders Management</h1>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <input 
+            type="text" 
+            placeholder="Search Order ID or Customer..." 
+            value={searchTerm}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            style={{ padding: '0.6rem 1rem', border: '1px solid #e5e7eb', borderRadius: '8px', minWidth: '300px' }}
+          />
+        </div>
       </div>
 
       <div className="admin-card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        
+        {/* Bulk Actions Toolbar */}
+        {selectedOrders.size > 0 && (
+          <div style={{ padding: '1rem 1.5rem', backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{selectedOrders.size} selected</span>
+            <select onChange={(e) => { if(e.target.value) handleBulkUpdate(e.target.value); e.target.value = ''; }} style={{ padding: '0.4rem', borderRadius: '4px', border: '1px solid #d1d5db' }}>
+              <option value="">Bulk Actions...</option>
+              <option value="Processing">Mark as Processing</option>
+              <option value="Shipped">Mark as Shipped</option>
+              <option value="Delivered">Mark as Delivered</option>
+            </select>
+          </div>
+        )}
+
+        <table>
           <thead>
-            <tr style={{ borderBottom: '1px solid rgba(212, 175, 55, 0.1)' }}>
-              <th style={{ padding: '1rem', fontFamily: 'var(--font-body)', fontSize: '0.8rem', textTransform: 'uppercase', color: '#d4af37' }}>Order ID</th>
-              <th style={{ padding: '1rem', fontFamily: 'var(--font-body)', fontSize: '0.8rem', textTransform: 'uppercase', color: '#d4af37' }}>Date</th>
-              <th style={{ padding: '1rem', fontFamily: 'var(--font-body)', fontSize: '0.8rem', textTransform: 'uppercase', color: '#d4af37' }}>Total</th>
-              <th style={{ padding: '1rem', fontFamily: 'var(--font-body)', fontSize: '0.8rem', textTransform: 'uppercase', color: '#d4af37' }}>Status</th>
-              <th style={{ padding: '1rem', fontFamily: 'var(--font-body)', fontSize: '0.8rem', textTransform: 'uppercase', color: '#d4af37' }}>Action</th>
+            <tr>
+              <th style={{ width: '40px', paddingLeft: '1.5rem' }}>
+                <input 
+                  type="checkbox" 
+                  checked={currentOrders.length > 0 && selectedOrders.size === currentOrders.length}
+                  onChange={toggleSelectAll}
+                />
+              </th>
+              <th>Order ID</th>
+              <th>Date</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
-            {orders.map((order: any) => (
+            {currentOrders.map((order: any) => (
               <React.Fragment key={order._id}>
-                <tr style={{ borderBottom: expandedOrderId === order._id ? 'none' : '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '1rem', fontFamily: 'var(--font-body)', fontWeight: 500, color: '#fff' }}>
+                <tr style={{ borderBottom: expandedOrderId === order._id ? 'none' : '1px solid #f3f4f6', backgroundColor: selectedOrders.has(order._id) ? '#f0f9ff' : 'transparent' }}>
+                  <td style={{ paddingLeft: '1.5rem' }}>
+                    <input type="checkbox" checked={selectedOrders.has(order._id)} onChange={() => toggleSelectOrder(order._id)} />
+                  </td>
+                  <td style={{ fontWeight: 600, color: '#111' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <button 
                         onClick={() => setExpandedOrderId(expandedOrderId === order._id ? null : order._id)}
-                        style={{ background: 'none', border: 'none', color: '#d4af37', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}
+                        style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}
                       >
                         {expandedOrderId === order._id ? '▼' : '▶'}
                       </button>
                       #{order._id.substring(0, 8).toUpperCase()}
                     </div>
                   </td>
-                  <td style={{ padding: '1rem', color: '#aaa' }}>{new Date(order.createdAt).toLocaleDateString()}</td>
-                  <td style={{ padding: '1rem', fontWeight: 'bold', color: '#d4af37' }}>₹{order.totalPrice.toFixed(2)}</td>
-                  <td style={{ padding: '1rem' }}>
-                    <span style={{ 
-                      padding: '0.4rem 1rem', 
-                      borderRadius: '50px', 
-                      fontSize: '0.85rem', 
-                      fontWeight: 600,
-                      backgroundColor: order.status === 'Processing' ? 'rgba(212, 175, 55, 0.15)' : (order.status === 'Shipped' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(34, 197, 94, 0.15)'),
-                      color: order.status === 'Processing' ? '#f3e5ab' : (order.status === 'Shipped' ? '#93c5fd' : '#86efac'),
-                      border: `1px solid ${order.status === 'Processing' ? 'rgba(212, 175, 55, 0.3)' : (order.status === 'Shipped' ? 'rgba(59, 130, 246, 0.3)' : 'rgba(34, 197, 94, 0.3)')}`
-                    }}>
+                  <td style={{ color: '#4b5563' }}>{new Date(order.createdAt).toLocaleDateString()}</td>
+                  <td style={{ fontWeight: 600, color: '#111' }}>₹{order.totalPrice.toFixed(2)}</td>
+                  <td>
+                    <span className={`status-badge ${order.status.toLowerCase()}`}>
                       {order.status}
                     </span>
                   </td>
-                  <td style={{ padding: '1rem' }}>
+                  <td>
                     <select 
                       value={order.status}
                       onChange={(e) => updateOrderStatus(order._id, e.target.value)}
                       disabled={updating === order._id}
-                      style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid rgba(212, 175, 55, 0.3)', cursor: 'pointer', backgroundColor: '#111', color: '#fff' }}
                     >
                       <option value="Processing">Processing</option>
                       <option value="Shipped">Shipped</option>
@@ -173,50 +271,68 @@ export default function AdminOrdersPage() {
                   </td>
                 </tr>
                 {expandedOrderId === order._id && (
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                    <td colSpan={5} style={{ padding: '2rem' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                  <tr style={{ backgroundColor: '#f9fafb' }}>
+                    <td colSpan={6} style={{ padding: '2rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '2rem' }}>
                         <div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                            <h4 style={{ color: '#d4af37', margin: 0, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Order Items</h4>
+                            <h4 style={{ margin: 0, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>Order Items</h4>
                             <button 
                               onClick={() => downloadPDFLabel(order)}
-                              style={{ 
-                                backgroundColor: '#d4af37', 
-                                color: '#111', 
-                                border: 'none', 
-                                padding: '0.4rem 0.8rem', 
-                                borderRadius: '4px', 
-                                fontSize: '0.75rem', 
-                                fontWeight: 'bold', 
-                                cursor: 'pointer', 
-                                textTransform: 'uppercase', 
-                                letterSpacing: '0.5px' 
-                              }}
+                              className="admin-btn-secondary"
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}
                             >
                               ⬇️ Download PDF Label
                             </button>
                           </div>
                           {order.orderItems.map((item: any, idx: number) => (
                             <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                              <img src={item.image} alt={item.name} style={{ width: '50px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
+                              <img src={item.image} alt={item.name} style={{ width: '50px', height: '60px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #e5e7eb' }} />
                               <div>
-                                <div style={{ color: '#fff', fontWeight: 500 }}>{item.name}</div>
-                                <div style={{ color: '#aaa', fontSize: '0.85rem' }}>Size: {item.size} | Qty: {item.quantity}</div>
+                                <div style={{ fontWeight: 600, color: '#111' }}>{item.name}</div>
+                                <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>Qty: {item.quantity}</div>
                               </div>
-                              <div style={{ marginLeft: 'auto', color: '#fff' }}>₹{item.price * item.quantity}</div>
+                              <div style={{ marginLeft: 'auto', fontWeight: 600, color: '#111' }}>₹{item.price * item.quantity}</div>
                             </div>
                           ))}
+
+                          <div style={{ marginTop: '2rem' }}>
+                            <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>Fulfillment (Tracking & Notes)</h4>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                              <input 
+                                type="text" 
+                                placeholder="Tracking Link (e.g. BlueDart URL)" 
+                                value={trackingLinks[order._id] || ''}
+                                onChange={(e) => setTrackingLinks({...trackingLinks, [order._id]: e.target.value})}
+                                style={{ padding: '0.6rem', border: '1px solid #d1d5db', borderRadius: '6px', width: '100%' }}
+                              />
+                              <textarea 
+                                placeholder="Admin Notes (Internal only)" 
+                                value={adminNotes[order._id] || ''}
+                                onChange={(e) => setAdminNotes({...adminNotes, [order._id]: e.target.value})}
+                                style={{ padding: '0.6rem', border: '1px solid #d1d5db', borderRadius: '6px', width: '100%', minHeight: '60px' }}
+                              />
+                              <button 
+                                onClick={() => updateOrderStatus(order._id, order.status)}
+                                className="admin-btn-primary"
+                                style={{ alignSelf: 'flex-start', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                                disabled={updating === order._id}
+                              >
+                                {updating === order._id ? 'Saving...' : 'Save Tracking & Notes'}
+                              </button>
+                            </div>
+                          </div>
                         </div>
+
                         <div>
-                          <h4 style={{ color: '#d4af37', marginBottom: '1rem', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Shipping Details</h4>
-                          <div style={{ padding: '1rem', backgroundColor: '#111', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', color: '#ccc', lineHeight: '1.6', fontSize: '0.9rem' }}>
-                            <div style={{ color: '#fff', fontWeight: 500, marginBottom: '0.5rem' }}>{order.user?.name || order.shippingAddress.fullName || 'Customer'}</div>
+                          <h4 style={{ marginBottom: '1rem', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>Shipping Details</h4>
+                          <div style={{ padding: '1rem', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #e5e7eb', lineHeight: '1.6', fontSize: '0.9rem' }}>
+                            <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: '#111' }}>{order.user?.name || order.shippingAddress.fullName || 'Customer'}</div>
                             <div>{order.shippingAddress.address}</div>
                             <div>{order.shippingAddress.city}, {order.shippingAddress.postalCode}</div>
                             <div>{order.shippingAddress.country}</div>
-                            <div style={{ marginTop: '0.5rem', color: '#aaa' }}>Phone: {order.shippingAddress.phone || order.user?.phone || 'N/A'}</div>
-                            <div style={{ color: '#aaa' }}>Email: {order.user?.email || 'N/A'}</div>
+                            <div style={{ marginTop: '0.5rem', color: '#6b7280' }}>Phone: {order.shippingAddress.phone || order.user?.phone || 'N/A'}</div>
+                            <div style={{ color: '#6b7280' }}>Email: {order.user?.email || 'N/A'}</div>
                           </div>
                         </div>
                       </div>
@@ -225,13 +341,40 @@ export default function AdminOrdersPage() {
                 )}
               </React.Fragment>
             ))}
-            {orders.length === 0 && (
+            {currentOrders.length === 0 && (
               <tr>
-                <td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>No orders found.</td>
+                <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>No orders found matching your criteria.</td>
               </tr>
             )}
           </tbody>
         </table>
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>
+              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredOrders.length)} of {filteredOrders.length} orders
+            </span>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                disabled={currentPage === 1}
+                className="admin-btn-secondary"
+                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+              >
+                Previous
+              </button>
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                disabled={currentPage === totalPages}
+                className="admin-btn-secondary"
+                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

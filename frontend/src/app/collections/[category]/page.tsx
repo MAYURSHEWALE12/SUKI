@@ -2,7 +2,8 @@
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
-import './category.css';
+import ProductCardSkeleton from '@/components/ProductCardSkeleton';
+
 
 interface Product {
   _id: string;
@@ -18,8 +19,12 @@ interface Product {
 const CATEGORIES = [
   { slug: 'lehengas', name: 'Lehengas' },
   { slug: 'sarees', name: 'Sarees' },
-  { slug: 'suits', name: 'Suits' },
-  { slug: 'dresses', name: 'Dresses' },
+  { slug: 'normal-sarees', name: 'Normal Sarees' },
+  { slug: 'party-sarees', name: 'Party Sarees' },
+  { slug: 'silk-sarees', name: 'Silk Sarees' },
+  { slug: 'half-sarees', name: 'Half Sarees' },
+  { slug: 'navratri-ghagra', name: 'Navratri Ghagra' },
+  { slug: 'celeb-styles', name: 'Celeb & Influencer Edit' },
 ];
 
 export default function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
@@ -32,7 +37,20 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const displayCategory = category.charAt(0).toUpperCase() + category.slice(1);
+  const currentCategoryObj = CATEGORIES.find(c => c.slug === category);
+  const displayCategory = currentCategoryObj ? currentCategoryObj.name : category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ');
+
+  const [expandedFilters, setExpandedFilters] = useState<Record<string, boolean>>({
+    price: true,
+    category: true,
+    celebrity: true,
+    occasion: true,
+    fabric: true,
+  });
+
+  const toggleFilter = (section: string) => {
+    setExpandedFilters(prev => ({ ...prev, [section]: !prev[section] }));
+  };
 
   const clearFilters = () => {
     setPriceFilter('');
@@ -52,14 +70,10 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
           url += '&maxPrice=5000';
         } else if (priceFilter === '5k_10k') {
           url += '&minPrice=5000&maxPrice=10000';
-        } else if (priceFilter === 'over_10k') {
-          url += '&minPrice=10000';
-        }
-
-        if (ratingFilter === '4') {
-          url += '&minRating=4';
-        } else if (ratingFilter === '3') {
-          url += '&minRating=3';
+        } else if (priceFilter === '10k_25k') {
+          url += '&minPrice=10000&maxPrice=25000';
+        } else if (priceFilter === 'over_25k') {
+          url += '&minPrice=25000';
         }
 
         if (sort === 'price_asc') {
@@ -91,6 +105,38 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
     setMobileFiltersOpen(false);
   }, [category]);
 
+  const renderFilterGroup = (
+    id: string,
+    title: string,
+    options: { value: string; label: string }[],
+    selectedValue: string,
+    onChange: (val: string) => void,
+    type: 'radio' | 'checkbox' = 'radio'
+  ) => {
+    const isOpen = expandedFilters[id];
+    return (
+      <div className="filter-group">
+        <div className="filter-group-header" onClick={() => toggleFilter(id)}>
+          <h4>{title}</h4>
+          <svg className={`filter-group-icon ${isOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div className="filter-group-content" style={{ maxHeight: isOpen ? '500px' : '0', opacity: isOpen ? 1 : 0, marginTop: isOpen ? '0.5rem' : '0' }}>
+          {options.map((opt) => (
+            <label key={opt.value} className={selectedValue === opt.value ? 'active' : ''}>
+              <input 
+                type={type} 
+                name={id} 
+                checked={selectedValue === opt.value} 
+                onChange={() => onChange(opt.value)} 
+              /> 
+              {opt.label}
+            </label>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const sidebarContent = (
     <div className="filter-block">
       <div className="filter-header">
@@ -100,45 +146,81 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
         )}
       </div>
 
-      <div className="filter-group">
-        <h4>Price</h4>
-        <label className={priceFilter === '' ? 'active' : ''}>
-          <input type="radio" name="price" checked={priceFilter === ''} onChange={() => setPriceFilter('')} /> All Prices
-        </label>
-        <label className={priceFilter === 'under_5k' ? 'active' : ''}>
-          <input type="radio" name="price" checked={priceFilter === 'under_5k'} onChange={() => setPriceFilter('under_5k')} /> Under ₹5,000
-        </label>
-        <label className={priceFilter === '5k_10k' ? 'active' : ''}>
-          <input type="radio" name="price" checked={priceFilter === '5k_10k'} onChange={() => setPriceFilter('5k_10k')} /> ₹5,000 – ₹10,000
-        </label>
-        <label className={priceFilter === 'over_10k' ? 'active' : ''}>
-          <input type="radio" name="price" checked={priceFilter === 'over_10k'} onChange={() => setPriceFilter('over_10k')} /> Over ₹10,000
-        </label>
-      </div>
+      {renderFilterGroup('price', 'Price', [
+        { value: '', label: 'All Prices' },
+        { value: 'under_5k', label: 'Under ₹5,000' },
+        { value: '5k_10k', label: '₹5,000 – ₹10,000' },
+        { value: '10k_25k', label: '₹10,000 – ₹25,000' },
+        { value: 'over_25k', label: 'Above ₹25,000' }
+      ], priceFilter, setPriceFilter)}
 
-      <div className="filter-group">
-        <h4>Rating</h4>
-        <label className={ratingFilter === '' ? 'active' : ''}>
-          <input type="radio" name="rating" checked={ratingFilter === ''} onChange={() => setRatingFilter('')} /> Any Rating
-        </label>
-        <label className={ratingFilter === '4' ? 'active' : ''}>
-          <input type="radio" name="rating" checked={ratingFilter === '4'} onChange={() => setRatingFilter('4')} /> 4★ & above
-        </label>
-        <label className={ratingFilter === '3' ? 'active' : ''}>
-          <input type="radio" name="rating" checked={ratingFilter === '3'} onChange={() => setRatingFilter('3')} /> 3★ & above
-        </label>
-      </div>
+      {renderFilterGroup('category', 'Category', [
+        { value: 'lehengas', label: 'Lehengas' },
+        { value: 'sarees', label: 'Sarees' },
+        { value: 'half-sarees', label: 'Half Sarees' },
+        { value: 'navratri-ghagra', label: 'Navratri Ghagra' }
+      ], '', () => {}, 'checkbox')}
+
+      {renderFilterGroup('celebrity', 'Celebrity', [
+        { value: 'deepika', label: 'Deepika Inspired' },
+        { value: 'alia', label: 'Alia Inspired' },
+        { value: 'kiara', label: 'Kiara Inspired' },
+        { value: 'kriti', label: 'Kriti Inspired' },
+        { value: 'mrunal', label: 'Mrunal Inspired' }
+      ], '', () => {}, 'checkbox')}
+
+      {renderFilterGroup('occasion', 'Occasion', [
+        { value: 'wedding', label: 'Wedding' },
+        { value: 'reception', label: 'Reception' },
+        { value: 'haldi', label: 'Haldi' },
+        { value: 'mehendi', label: 'Mehendi' },
+        { value: 'festive', label: 'Festive' },
+        { value: 'party', label: 'Party Wear' }
+      ], '', () => {}, 'checkbox')}
+
+      {renderFilterGroup('fabric', 'Fabric', [
+        { value: 'silk', label: 'Silk' },
+        { value: 'organza', label: 'Organza' },
+        { value: 'georgette', label: 'Georgette' },
+        { value: 'velvet', label: 'Velvet' },
+        { value: 'net', label: 'Net' }
+      ], '', () => {}, 'checkbox')}
     </div>
   );
 
   return (
     <div className="category-page">
-      <div className="category-header">
-        <h1 className="category-title">Shop {displayCategory}</h1>
-        <p className="category-subtitle">Explore our exclusive collection of premium {category}</p>
-      </div>
-      
-      <div className="category-container container">
+      {category === 'celeb-styles' ? (
+        <div className="celeb-banner">
+          <div className="celeb-banner-content">
+            <h1 className="celeb-banner-title">Celeb & Influencer Edit</h1>
+            <div className="celeb-banner-divider"></div>
+            <p className="celeb-banner-subtitle">Iconic looks spotted on your favorite stars</p>
+          </div>
+        </div>
+      ) : category === 'sarees' ? (
+        <section className="banner-section" style={{ width: '100%' }}>
+          <img 
+            src="/images/sarees_banner.png" 
+            alt="Sarees Banner" 
+            style={{ width: '100%', display: 'block', height: 'auto' }} 
+          />
+        </section>
+      ) : category === 'lehengas' ? (
+        <section className="banner-section" style={{ width: '100%' }}>
+          <img 
+            src="/images/banner.png" 
+            alt="Lehengas Banner" 
+            style={{ width: '100%', display: 'block', height: 'auto' }} 
+          />
+        </section>
+      ) : (
+        <div className="category-header">
+          <h1 className="category-title">Shop {displayCategory}</h1>
+          <p className="category-subtitle">Explore our exclusive collection of premium {displayCategory}</p>
+        </div>
+      )}
+      <div className="category-container">
         {/* Sidebar Filters (desktop) */}
         <aside className="category-sidebar">
           {sidebarContent}
@@ -198,7 +280,11 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
           </div>
 
           {loading ? (
-            <div className="loading-state"><div className="spinner" /><p>Loading products...</p></div>
+            <div className="product-grid">
+              {Array(12).fill(0).map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
+            </div>
           ) : products.length > 0 ? (
             <div className="product-grid">
               {products.map((product) => (
@@ -207,13 +293,14 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
             </div>
           ) : (
             <div className="empty-state">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <h3>No products found</h3>
-              <p>Try adjusting your filters or exploring another category.</p>
-              <div className="empty-suggestions">
-                {CATEGORIES.filter(c => c.slug !== category).map(c => (
-                  <Link key={c.slug} href={`/collections/${c.slug}`} className="btn btn-outline">{c.name}</Link>
-                ))}
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+              <h3>No matching celebrity looks found</h3>
+              <p>Try changing your filters or explore our latest designer collections.</p>
+              <div className="empty-actions">
+                <Link href="/collections/new-arrivals" className="btn-primary">Continue Shopping</Link>
+                {hasActiveFilters && (
+                  <button onClick={clearFilters} className="btn-outline">Clear Filters</button>
+                )}
               </div>
             </div>
           )}

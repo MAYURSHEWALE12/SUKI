@@ -5,6 +5,7 @@ const reviewSchema = new mongoose.Schema(
     name: { type: String, required: true },
     rating: { type: Number, required: true },
     comment: { type: String, required: true },
+    images: [{ type: String }],
     user: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
@@ -27,9 +28,21 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    sku: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
     image: {
       type: String,
       required: true,
+    },
+    images: [{
+      type: String
+    }],
+    video: {
+      type: String,
+      required: false,
     },
     hoverImage: {
       type: String,
@@ -43,9 +56,29 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    celebrity: {
+      type: String,
+      required: false,
+    },
     description: {
       type: String,
       required: true,
+    },
+    shortDescription: {
+      type: String,
+      required: false,
+    },
+    highlights: {
+      type: String,
+      required: false,
+    },
+    careInstructions: {
+      type: String,
+      required: false,
+    },
+    whatsIncluded: {
+      type: String,
+      required: false,
     },
     reviews: [reviewSchema],
     rating: {
@@ -72,6 +105,8 @@ const productSchema = new mongoose.Schema(
       required: true,
       default: 0,
     },
+
+
     isNewArrival: {
       type: Boolean,
       default: false,

@@ -138,6 +138,24 @@ exports.updateUserProfile = async (req, res) => {
   }
 };
 
+// @desc    Delete user account
+// @route   DELETE /api/auth/profile
+// @access  Private
+exports.deleteUserAccount = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+      await User.deleteOne({ _id: user._id });
+      res.json({ message: 'User removed' });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Toggle item in wishlist
 // @route   POST /api/auth/wishlist
 // @access  Private
@@ -158,6 +176,35 @@ exports.toggleWishlist = async (req, res) => {
     } else {
       res.status(404).json({ message: 'User not found' });
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all users (admin)
+// @route   GET /api/auth/users
+// @access  Private/Admin
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({});
+    const Order = require('../models/Order');
+    
+    const usersWithStats = await Promise.all(users.map(async (user) => {
+      const orders = await Order.find({ user: user._id });
+      const totalSpend = orders.reduce((acc, order) => acc + order.totalPrice, 0);
+      return {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        isAdmin: user.isAdmin,
+        totalSpend,
+        totalOrders: orders.length,
+        createdAt: user.createdAt
+      };
+    }));
+    
+    res.json(usersWithStats);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

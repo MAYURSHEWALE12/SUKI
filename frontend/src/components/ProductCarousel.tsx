@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import ProductCard from './ProductCard';
+import ProductCardSkeleton from './ProductCardSkeleton';
 import './ProductCarousel.css';
 
 interface Product {
@@ -14,7 +15,7 @@ interface Product {
   numReviews?: number;
 }
 
-export default function ProductCarousel({ title }: { title: string }) {
+export default function ProductCarousel({ title, filterNewArrivals = false }: { title: string, filterNewArrivals?: boolean }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -32,7 +33,8 @@ export default function ProductCarousel({ title }: { title: string }) {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('/api/products');
+        const url = filterNewArrivals ? '/api/products?isNewArrival=true' : '/api/products';
+        const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
           setProducts(data);
@@ -48,14 +50,37 @@ export default function ProductCarousel({ title }: { title: string }) {
   }, []);
 
   if (loading) {
-    return <div className="carousel-loading">Loading new arrivals...</div>;
+    return (
+      <section className="product-carousel-section">
+        <div className="container">
+          <div className="section-header-row">
+            <div className="section-title-group">
+              <h2 className="section-title-left">{title}</h2>
+              <p className="section-subtitle">Discover our most loved collections</p>
+            </div>
+          </div>
+          <div className="carousel-track-container">
+            <div className="carousel-track">
+              {Array(4).fill(0).map((_, i) => (
+                <div className="carousel-slide" key={i}>
+                  <ProductCardSkeleton />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
     <section className="product-carousel-section">
       <div className="container">
         <div className="section-header-row">
-          <h2 className="section-title-left">{title}</h2>
+          <div className="section-title-group">
+            <h2 className="section-title-left">{title}</h2>
+            <p className="section-subtitle">Discover our most loved collections</p>
+          </div>
           <div className="carousel-controls">
             <button className="carousel-control-btn prev-btn" aria-label="Previous" onClick={() => scroll('left')}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -74,6 +99,13 @@ export default function ProductCarousel({ title }: { title: string }) {
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="carousel-pagination">
+          <span className="page-dot active"></span>
+          <span className="page-dot"></span>
+          <span className="page-dot"></span>
+          <span className="page-dot"></span>
         </div>
       </div>
     </section>

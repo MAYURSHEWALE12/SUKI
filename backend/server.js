@@ -14,6 +14,7 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
@@ -21,8 +22,10 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/discounts', require('./routes/discountRoutes'));
 app.use('/api/homepage', require('./routes/homepageRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/subscribers', require('./routes/subscriberRoutes'));
 
 // Serve uploads folder statically
 const path = require('path');
