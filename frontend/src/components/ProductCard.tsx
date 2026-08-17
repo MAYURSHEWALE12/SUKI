@@ -51,7 +51,8 @@ export default function ProductCard({ product }: { product: Product }) {
   };
 
   const currentPrice = product.price || 0;
-  const oldPrice = product.originalPrice || Math.floor(currentPrice * 1.2);
+  // Only show a strikethrough/discount when an honest MRP exists - never invent one
+  const oldPrice = product.originalPrice || 0;
   const rating = product.rating || 0;
   const numReviews = product.numReviews || product.reviews || 0;
 
@@ -84,7 +85,7 @@ export default function ProductCard({ product }: { product: Product }) {
         price: currentPrice,
         image: product.image || product.imageUrl || '/placeholder.jpg',
         quantity: 1,
-        countInStock: product.countInStock || 99,
+        countInStock: product.countInStock,
       });
     }
   };

@@ -107,7 +107,14 @@ exports.updateUserProfile = async (req, res) => {
 
     if (user) {
       user.name = req.body.name || user.name;
-      user.email = req.body.email || user.email;
+
+      if (req.body.email && req.body.email !== user.email) {
+        const emailTaken = await User.findOne({ email: req.body.email });
+        if (emailTaken) {
+          return res.status(400).json({ message: 'Email is already in use' });
+        }
+        user.email = req.body.email;
+      }
       user.phone = req.body.phone !== undefined ? req.body.phone : user.phone;
 
       if (req.body.addresses) {

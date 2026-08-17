@@ -1,64 +1,45 @@
-import Link from "next/link";
+"use client";
+import React, { useEffect, useState } from "react";
 import ProductCard from "@/components/ProductCard";
 
-const mockProducts = [
-  {
-    _id: "1",
-    name: "Midnight Noir Sequin Saree",
-    originalPrice: 8999,
-    price: 4499,
-    category: "Sarees",
-    isNewArrival: false,
-    image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=600&auto=format&fit=crop",
-  },
-  {
-    _id: "2",
-    name: "Rose Gold Embellished Lehenga",
-    originalPrice: 14999,
-    price: 9999,
-    category: "Lehengas",
-    isNewArrival: true,
-    image: "https://images.unsplash.com/photo-1583391733958-d15fa693d502?q=80&w=600&auto=format&fit=crop",
-  },
-  {
-    _id: "3",
-    name: "Emerald Green Silk Lehenga",
-    originalPrice: 5499,
-    price: 2999,
-    category: "Lehengas",
-    isNewArrival: false,
-    image: "https://images.unsplash.com/photo-1617261075727-46323497d51b?q=80&w=600&auto=format&fit=crop",
-  },
-  {
-    _id: "4",
-    name: "Ivory & Gold Georgette Lehenga",
-    originalPrice: 12499,
-    price: 7499,
-    category: "Lehengas",
-    isNewArrival: false,
-    image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=600&auto=format&fit=crop",
-  },
-  {
-    _id: "5",
-    name: "Royal Blue Velvet Lehenga",
-    originalPrice: 18999,
-    price: 12499,
-    category: "Lehengas",
-    isNewArrival: false,
-    image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=600&auto=format&fit=crop",
-  },
-  {
-    _id: "6",
-    name: "Blush Pink Net Lehenga",
-    originalPrice: 9999,
-    price: 5999,
-    category: "Lehengas",
-    isNewArrival: false,
-    image: "https://images.unsplash.com/photo-1583391733958-d15fa693d502?q=80&w=600&auto=format&fit=crop",
-  }
-];
+interface LehengaProduct {
+  _id: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  image?: string;
+  category?: string;
+  rating?: number;
+  numReviews?: number;
+  countInStock?: number;
+  isNewArrival?: boolean;
+  createdAt?: string;
+}
 
 export default function LehengasPage() {
+  const [products, setProducts] = useState<LehengaProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sort, setSort] = useState('');
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const params = new URLSearchParams({ category: 'lehengas' });
+        if (sort) params.set('sort', sort);
+        const res = await fetch(`/api/products?${params.toString()}`);
+        const data = await res.json();
+        if (res.ok && Array.isArray(data)) {
+          setProducts(data);
+        }
+      } catch (error) {
+        console.error('Failed to load lehengas', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, [sort]);
+
   return (
     <div className="container plp-layout">
       {/* Sidebar Filters */}
@@ -91,20 +72,26 @@ export default function LehengasPage() {
         <div className="plp-header">
           <h2>Lehengas</h2>
           <div className="sort-by">
-            <select>
-              <option>Sort by: Best Selling</option>
-              <option>Price: Low to High</option>
-              <option>Price: High to Low</option>
-              <option>Newest Arrivals</option>
+            <select value={sort} onChange={(e) => setSort(e.target.value)}>
+              <option value="">Sort by: Best Selling</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="newest">Newest Arrivals</option>
             </select>
           </div>
         </div>
 
-        <div className="product-grid">
-          {mockProducts.map((product) => (
-            <ProductCard key={product._id} product={product} />
-          ))}
-        </div>
+        {loading ? (
+          <p>Loading lehengas...</p>
+        ) : products.length === 0 ? (
+          <p>No lehengas currently available.</p>
+        ) : (
+          <div className="product-grid">
+            {products.map((product) => (
+              <ProductCard key={product._id} product={product} />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
