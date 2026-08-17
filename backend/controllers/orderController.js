@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
-const crypto = require('crypto');
 const { validateDiscountCode, calculateDiscountAmount } = require('./discountController');
+const { computeForwardHash, computeReverseHash } = require('../utils/payuHash');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -203,9 +203,8 @@ exports.generatePayuHash = async (req, res) => {
       ? 'https://secure.payu.in/_payment'
       : 'https://test.payu.in/_payment';
 
-    // Hash sequence : key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt
-    const hashString = `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${salt}`;
-    const hash = crypto.createHash('sha512').update(hashString).digest('hex');
+    // Hash sequence : key|txnid|amount|productinfo|firstname|email|udf1..udf5|(7 empty)|salt
+    const hash = computeForwardHash({ key, txnid, amount, productinfo, firstname, email, salt });
 
     res.json({
       key,
@@ -231,19 +230,14 @@ exports.generatePayuHash = async (req, res) => {
 exports.handlePayuSuccess = async (req, res) => {
   try {
     const { txnid, mihpayid, status, hash, amount, productinfo, firstname, email, bank_ref_num, additionalCharges } = req.body;
-    
-    // Reverse Hash sequence for verification
+
     const key = process.env.PAYU_MERCHANT_KEY;
     const salt = process.env.PAYU_MERCHANT_SALT;
 
-    let hashString;
-    if (additionalCharges) {
-      hashString = `${additionalCharges}|${salt}|${status}|||||||||||${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
-    } else {
-      hashString = `${salt}|${status}|||||||||||${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
-    }
-    
-    const calculatedHash = crypto.createHash('sha512').update(hashString).digest('hex');
+    // Reverse Hash sequence for verification:
+    // salt|status|udf1..udf5|(7 empty)|email|firstname|productinfo|amount|txnid|key
+    // (with additionalCharges prepended before salt when PayU sends it)
+    const calculatedHash = computeReverseHash({ additionalCharges, salt, status, email, firstname, productinfo, amount, txnid, key });
 
     if (calculatedHash === hash) {
       const order = await Order.findById(txnid);
@@ -274,7 +268,6 @@ exports.handlePayuSuccess = async (req, res) => {
     const fs = require('fs');
     fs.writeFileSync('payu-debug.json', JSON.stringify({
       body: req.body,
-      hashString,
       calculatedHash,
       receivedHash: hash
     }, null, 2));

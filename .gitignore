@@ -12,3 +12,5 @@ build/
 *.patch
 lint-results.json
 temp.txt
+payu-debug.json
+payu-error.json
