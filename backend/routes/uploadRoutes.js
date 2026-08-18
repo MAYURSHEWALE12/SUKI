@@ -108,7 +108,29 @@ router.post('/', protect, admin, handleUpload(upload.single('image'), async (req
 }));
 
 router.post('/multiple', protect, admin, handleUpload(upload.array('images', 3), async (req, res) => {
-  const paths = req.files.map(file => `/${file.path.replace(/\\/g, '/')}`);
+  const checked = await Promise.all(req.files.map((file) => {
+    const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
+    if (ext === 'mp4' || ext === 'mov' || ext === 'webm') {
+      return { file };
+    }
+    return new Promise((resolve) => {
+      checkMagicBytes(file.path, ext, (err) => {
+        if (err) {
+          fs.unlinkSync(file.path);
+          return resolve({ file, error: err.message });
+        }
+        resolve({ file });
+      });
+    });
+  }));
+
+  const failed = checked.find((c) => c.error);
+  if (failed) {
+    checked.forEach((c) => c.file && c.file.path !== failed.file.path && fs.existsSync(c.file.path) && fs.unlinkSync(c.file.path));
+    return res.status(400).json({ message: failed.error });
+  }
+
+  const paths = checked.map(({ file }) => `/${file.path.replace(/\\/g, '/')}`);
   res.json(paths);
 }));
 

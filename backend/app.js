@@ -4,6 +4,10 @@ const cors = require('cors');
 function createApp() {
   const app = express();
 
+  // Trust the first proxy hop when deployed behind a reverse proxy so rate
+  // limits and req.ip see the real client IP. Disable for direct exposure.
+  app.set('trust proxy', process.env.TRUST_PROXY === 'false' ? false : 1);
+
   // Restrict CORS to known frontend origins (comma-separated CORS_ORIGIN env override)
   const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
     .split(',')

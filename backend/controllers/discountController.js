@@ -1,4 +1,35 @@
 const Discount = require('../models/Discount');
+const { toFiniteNumber, isValidObjectId } = require('../utils/validation');
+
+const VALID_TYPES = ['percentage', 'fixed', 'free_shipping'];
+
+const validateDiscountFields = ({ code, type, value, minOrderValue, expiryDate }) => {
+  if (code !== undefined && (!code || typeof code !== 'string' || !code.trim())) {
+    return 'Please provide a discount code';
+  }
+  if (type !== undefined && !VALID_TYPES.includes(type)) {
+    return 'Discount type must be percentage, fixed or free_shipping';
+  }
+  if (value !== undefined) {
+    const numericValue = toFiniteNumber(value);
+    if (numericValue === null || numericValue < 0) {
+      return 'Discount value must be a non-negative number';
+    }
+    if (type === 'percentage' && numericValue > 100) {
+      return 'Percentage discount cannot exceed 100';
+    }
+  }
+  if (minOrderValue !== undefined) {
+    const numericMin = toFiniteNumber(minOrderValue);
+    if (numericMin === null || numericMin < 0) {
+      return 'minOrderValue must be a non-negative number';
+    }
+  }
+  if (expiryDate !== undefined && Number.isNaN(Date.parse(expiryDate))) {
+    return 'Please provide a valid expiry date';
+  }
+  return null;
+};
 
 // Shared helper: finds a code and checks active/expiry. Returns { discount } or { error }.
 const validateDiscountCode = async (code) => {
@@ -43,7 +74,12 @@ exports.getDiscounts = async (req, res) => {
 exports.createDiscount = async (req, res) => {
   try {
     const { code, type, value, minOrderValue, isActive, expiryDate } = req.body;
-    
+
+    const validationError = validateDiscountFields({ code, type, value, minOrderValue, expiryDate });
+    if (validationError) {
+      return res.status(400).json({ message: validationError });
+    }
+
     const discountExists = await Discount.findOne({ code: code.toUpperCase() });
     if (discountExists) {
       return res.status(400).json({ message: 'Discount code already exists' });
@@ -70,6 +106,13 @@ exports.createDiscount = async (req, res) => {
 exports.updateDiscount = async (req, res) => {
   try {
     const { code, type, value, minOrderValue, isActive, expiryDate } = req.body;
+
+    if (!isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid Discount ID' });
+
+    const validationError = validateDiscountFields({ code, type, value, minOrderValue, expiryDate });
+    if (validationError) {
+      return res.status(400).json({ message: validationError });
+    }
 
     const discount = await Discount.findById(req.params.id);
 
@@ -115,24 +158,29 @@ exports.validateDiscount = async (req, res) => {
   try {
     const { code, cartTotal } = req.body;
 
+    const numericCartTotal = toFiniteNumber(cartTotal);
+    if (numericCartTotal === null || numericCartTotal < 0) {
+      return res.status(400).json({ message: 'cartTotal must be a non-negative number' });
+    }
+
     const { discount, error } = await validateDiscountCode(code);
     if (error) {
       return res.status(error === 'Invalid discount code' ? 404 : 400).json({ message: error });
     }
 
-    if (cartTotal < discount.minOrderValue) {
+    if (numericCartTotal < discount.minOrderValue) {
       return res.status(400).json({ 
         message: `Minimum order value of ₹${discount.minOrderValue} required to use this code` 
       });
     }
 
-    const discountAmount = calculateDiscountAmount(discount, cartTotal);
+    const discountAmount = calculateDiscountAmount(discount, numericCartTotal);
 
     res.json({
       code: discount.code,
       type: discount.type,
       discountAmount,
-      newTotal: cartTotal - discountAmount,
+      newTotal: numericCartTotal - discountAmount,
       message: 'Discount applied successfully!'
     });
 

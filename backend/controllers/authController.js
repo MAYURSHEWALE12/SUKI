@@ -1,5 +1,7 @@
 const User = require('../models/User');
+const Order = require('../models/Order');
 const jwt = require('jsonwebtoken');
+const { isValidEmail, isValidPhone, isValidObjectId } = require('../utils/validation');
 
 // Generate JWT
 const generateToken = (id) => {
@@ -14,6 +16,19 @@ const generateToken = (id) => {
 exports.registerUser = async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
+
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ message: 'Please provide a name' });
+    }
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: 'Please provide a valid email' });
+    }
+    if (!password || typeof password !== 'string' || password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+    if (phone && !isValidPhone(phone)) {
+      return res.status(400).json({ message: 'Please provide a valid phone number' });
+    }
 
     const userExists = await User.findOne({ email });
 
@@ -106,22 +121,37 @@ exports.updateUserProfile = async (req, res) => {
     const user = await User.findById(req.user._id);
 
     if (user) {
+      if (req.body.name !== undefined && (!req.body.name || typeof req.body.name !== 'string' || !req.body.name.trim())) {
+        return res.status(400).json({ message: 'Please provide a valid name' });
+      }
       user.name = req.body.name || user.name;
 
       if (req.body.email && req.body.email !== user.email) {
+        if (!isValidEmail(req.body.email)) {
+          return res.status(400).json({ message: 'Please provide a valid email' });
+        }
         const emailTaken = await User.findOne({ email: req.body.email });
         if (emailTaken) {
           return res.status(400).json({ message: 'Email is already in use' });
         }
         user.email = req.body.email;
       }
+      if (req.body.phone !== undefined && req.body.phone !== '' && !isValidPhone(req.body.phone)) {
+        return res.status(400).json({ message: 'Please provide a valid phone number' });
+      }
       user.phone = req.body.phone !== undefined ? req.body.phone : user.phone;
 
       if (req.body.addresses) {
+        if (!Array.isArray(req.body.addresses)) {
+          return res.status(400).json({ message: 'Addresses must be an array' });
+        }
         user.addresses = req.body.addresses;
       }
 
       if (req.body.password) {
+        if (req.body.password.length < 6) {
+          return res.status(400).json({ message: 'Password must be at least 6 characters' });
+        }
         user.password = req.body.password;
       }
 
@@ -169,6 +199,9 @@ exports.deleteUserAccount = async (req, res) => {
 exports.toggleWishlist = async (req, res) => {
   try {
     const { productId } = req.body;
+    if (!isValidObjectId(productId)) {
+      return res.status(400).json({ message: 'Invalid Product ID' });
+    }
     const user = await User.findById(req.user._id);
 
     if (user) {
@@ -193,24 +226,29 @@ exports.toggleWishlist = async (req, res) => {
 // @access  Private/Admin
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({});
-    const Order = require('../models/Order');
-    
-    const usersWithStats = await Promise.all(users.map(async (user) => {
-      const orders = await Order.find({ user: user._id });
-      const totalSpend = orders.reduce((acc, order) => acc + order.totalPrice, 0);
+    const [users, orderStats] = await Promise.all([
+      User.find({}),
+      Order.aggregate([
+        { $group: { _id: '$user', totalOrders: { $sum: 1 }, totalSpend: { $sum: '$totalPrice' } } }
+      ]),
+    ]);
+
+    const statsByUser = new Map(orderStats.map((s) => [String(s._id), s]));
+
+    const usersWithStats = users.map((user) => {
+      const stats = statsByUser.get(user._id.toString());
       return {
         _id: user._id,
         name: user.name,
         email: user.email,
         phone: user.phone,
         isAdmin: user.isAdmin,
-        totalSpend,
-        totalOrders: orders.length,
+        totalSpend: stats ? stats.totalSpend : 0,
+        totalOrders: stats ? stats.totalOrders : 0,
         createdAt: user.createdAt
       };
-    }));
-    
+    });
+
     res.json(usersWithStats);
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -220,16 +220,26 @@ export default function AdminOrdersPage() {
 
   return (
     <div>
-      <div className="admin-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Orders Management</h1>
+      <div className="admin-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
+        <div>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e1b4b', marginBottom: '0.25rem' }}>Orders Management</h1>
+          <p style={{ color: '#6b7280', fontSize: '0.9rem', margin: 0 }}>View and manage all customer orders efficiently.</p>
+        </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <input 
-            type="text" 
-            placeholder="Search Order ID or Customer..." 
-            value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-            style={{ padding: '0.6rem 1rem', border: '1px solid #e5e7eb', borderRadius: '8px', minWidth: '300px' }}
-          />
+          <div style={{ position: 'relative' }}>
+            <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input 
+              type="text" 
+              placeholder="Search Order ID or Customer..." 
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              style={{ padding: '0.6rem 1rem 0.6rem 2.2rem', border: '1px solid #e5e7eb', borderRadius: '8px', minWidth: '320px', fontSize: '0.85rem' }}
+            />
+          </div>
+          <button className="admin-btn-primary" style={{ background: '#6d28d9', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Export Orders
+          </button>
         </div>
       </div>
 
@@ -256,13 +266,14 @@ export default function AdminOrdersPage() {
                   type="checkbox" 
                   checked={currentOrders.length > 0 && selectedOrders.size === currentOrders.length}
                   onChange={toggleSelectAll}
+                  style={{ borderRadius: '4px', border: '1px solid #d1d5db' }}
                 />
               </th>
-              <th>Order ID</th>
-              <th>Date</th>
-              <th>Total</th>
-              <th>Status</th>
-              <th>Action</th>
+              <th><div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>ORDER ID <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="7 15 12 20 17 15"></polyline><polyline points="7 9 12 4 17 9"></polyline></svg></div></th>
+              <th><div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>DATE <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="7 15 12 20 17 15"></polyline><polyline points="7 9 12 4 17 9"></polyline></svg></div></th>
+              <th><div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>TOTAL <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="7 15 12 20 17 15"></polyline><polyline points="7 9 12 4 17 9"></polyline></svg></div></th>
+              <th><div style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>STATUS <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="7 15 12 20 17 15"></polyline><polyline points="7 9 12 4 17 9"></polyline></svg></div></th>
+              <th>ACTION</th>
             </tr>
           </thead>
           <tbody>
@@ -270,23 +281,34 @@ export default function AdminOrdersPage() {
               <React.Fragment key={order._id}>
                 <tr style={{ borderBottom: expandedOrderId === order._id ? 'none' : '1px solid #f3f4f6', backgroundColor: selectedOrders.has(order._id) ? '#f0f9ff' : 'transparent' }}>
                   <td style={{ paddingLeft: '1.5rem' }}>
-                    <input type="checkbox" checked={selectedOrders.has(order._id)} onChange={() => toggleSelectOrder(order._id)} />
+                    <input type="checkbox" checked={selectedOrders.has(order._id)} onChange={() => toggleSelectOrder(order._id)} style={{ borderRadius: '4px', border: '1px solid #d1d5db' }} />
                   </td>
-                  <td style={{ fontWeight: 600, color: '#111' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <td style={{ fontWeight: 600, color: '#4c1d95', fontSize: '0.9rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <button 
                         onClick={() => setExpandedOrderId(expandedOrderId === order._id ? null : order._id)}
-                        style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}
+                        style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
                       >
-                        {expandedOrderId === order._id ? '▼' : '▶'}
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: expandedOrderId === order._id ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}><polyline points="9 18 15 12 9 6"></polyline></svg>
                       </button>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6d28d9" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                       #{order._id.substring(0, 8).toUpperCase()}
                     </div>
                   </td>
-                  <td style={{ color: '#4b5563' }}>{new Date(order.createdAt).toLocaleDateString()}</td>
-                  <td style={{ fontWeight: 600, color: '#111' }}>₹{order.totalPrice.toFixed(2)}</td>
+                  <td style={{ color: '#4b5563', fontSize: '0.9rem' }}>{new Date(order.createdAt).toLocaleString('en-US', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                  <td style={{ fontWeight: 600, color: '#111', fontSize: '0.9rem' }}>₹{order.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   <td>
-                    <span className={`status-badge ${order.status.toLowerCase()}`}>
+                    <span style={{ 
+                      padding: '0.35rem 0.75rem', 
+                      borderRadius: '9999px', 
+                      fontSize: '0.7rem', 
+                      fontWeight: 700, 
+                      letterSpacing: '0.5px',
+                      textTransform: 'uppercase',
+                      backgroundColor: order.status === 'Processing' ? '#fef3c7' : order.status === 'Shipped' ? '#e0e7ff' : order.status === 'Delivered' ? '#dcfce3' : '#f3f4f6',
+                      color: order.status === 'Processing' ? '#d97706' : order.status === 'Shipped' ? '#4338ca' : order.status === 'Delivered' ? '#15803d' : '#4b5563',
+                      border: `1px solid ${order.status === 'Processing' ? '#fde68a' : order.status === 'Shipped' ? '#c7d2fe' : order.status === 'Delivered' ? '#bbf7d0' : '#e5e7eb'}`
+                    }}>
                       {order.status}
                     </span>
                   </td>
@@ -295,6 +317,7 @@ export default function AdminOrdersPage() {
                       value={order.status}
                       onChange={(e) => updateOrderStatus(order._id, e.target.value)}
                       disabled={updating === order._id}
+                      style={{ padding: '0.4rem 1.8rem 0.4rem 0.8rem', borderRadius: '8px', border: '1px solid #e5e7eb', backgroundColor: '#fff', fontSize: '0.85rem', color: '#374151', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1em 1em' }}
                     >
                       <option value="Processing">Processing</option>
                       <option value="Shipped">Shipped</option>
@@ -382,27 +405,46 @@ export default function AdminOrdersPage() {
         </table>
         
         {/* Pagination Controls */}
-        {totalPages > 1 && (
+        {totalPages > 0 && (
           <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredOrders.length)} of {filteredOrders.length} orders
+              Showing <strong>{(currentPage - 1) * itemsPerPage + 1}</strong> to <strong>{Math.min(currentPage * itemsPerPage, filteredOrders.length)}</strong> of <strong>{filteredOrders.length}</strong> orders
             </span>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.25rem' }}>
               <button 
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
                 disabled={currentPage === 1}
-                className="admin-btn-secondary"
-                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: '1px solid #e5e7eb', background: '#fff', color: currentPage === 1 ? '#d1d5db' : '#374151', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
               >
-                Previous
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
               </button>
+              
+              {/* Pagination Numbers */}
+              {[...Array(totalPages)].map((_, idx) => {
+                const pageNum = idx + 1;
+                // Simple logic: show first, last, and surrounding pages
+                if (pageNum === 1 || pageNum === totalPages || (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)) {
+                  return (
+                    <button 
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: pageNum === currentPage ? 'none' : '1px solid #e5e7eb', background: pageNum === currentPage ? '#5b21b6' : '#fff', color: pageNum === currentPage ? '#fff' : '#374151', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                } else if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                  return <span key={pageNum} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', color: '#9ca3af' }}>...</span>;
+                }
+                return null;
+              })}
+              
               <button 
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
                 disabled={currentPage === totalPages}
-                className="admin-btn-secondary"
-                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: '1px solid #e5e7eb', background: '#fff', color: currentPage === totalPages ? '#d1d5db' : '#374151', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
               >
-                Next
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
               </button>
             </div>
           </div>

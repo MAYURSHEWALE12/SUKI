@@ -1,6 +1,5 @@
 import Link from "next/link";
 import HeroCarousel from "@/components/HeroCarousel";
-import ProductCarousel from "@/components/ProductCarousel";
 import BestSellersGrid from "@/components/BestSellersGrid";
 import LehengasGrid from "@/components/LehengasGrid";
 import SareesGrid from "@/components/SareesGrid";

@@ -39,6 +39,9 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
 
   const currentCategoryObj = CATEGORIES.find(c => c.slug === category);
   const displayCategory = currentCategoryObj ? currentCategoryObj.name : category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ');
+  // URL slugs (normal-sarees, navratri-ghagra, ...) differ from the category
+  // names stored on products (Normal Sarees, ...); always query by the real name.
+  const queryCategory = currentCategoryObj ? currentCategoryObj.name : category;
 
   const [expandedFilters, setExpandedFilters] = useState<Record<string, boolean>>({
     price: true,
@@ -64,7 +67,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        let url = `/api/products?category=${category}`;
+        let url = `/api/products?category=${encodeURIComponent(queryCategory)}`;
 
         if (priceFilter === 'under_5k') {
           url += '&maxPrice=5000';
@@ -99,7 +102,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
     };
 
     fetchProducts();
-  }, [category, priceFilter, ratingFilter, sort]);
+  }, [queryCategory, priceFilter, ratingFilter, sort]);
 
   useEffect(() => {
     const timeout = setTimeout(() => setMobileFiltersOpen(false), 0);

@@ -4,6 +4,9 @@ const Product = require('../models/Product');
 const crypto = require('crypto');
 const { validateDiscountCode, calculateDiscountAmount } = require('./discountController');
 const { computeForwardHash, computeReverseHash } = require('../utils/payuHash');
+const { isValidObjectId } = require('../utils/validation');
+
+const VALID_ORDER_STATUSES = ['Processing', 'Shipped', 'Delivered', 'Cancelled', 'Refunded'];
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -152,7 +155,10 @@ exports.getAllOrders = async (req, res) => {
 // @access  Private/Admin
 exports.updateOrderStatus = async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ message: 'Invalid Order ID' });
+    if (!isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid Order ID' });
+    if (req.body.status !== undefined && !VALID_ORDER_STATUSES.includes(req.body.status)) {
+      return res.status(400).json({ message: `Status must be one of: ${VALID_ORDER_STATUSES.join(', ')}` });
+    }
     const order = await Order.findById(req.params.id);
 
     if (order) {
@@ -184,7 +190,12 @@ exports.generatePayuHash = async (req, res) => {
     const {
       productinfo,
       firstname,
-      phone
+      phone,
+      udf1,
+      udf2,
+      udf3,
+      udf4,
+      udf5,
     } = req.body;
 
     // Prefer the logged-in user's verified email over the client-supplied one
@@ -204,8 +215,8 @@ exports.generatePayuHash = async (req, res) => {
       ? 'https://secure.payu.in/_payment'
       : 'https://test.payu.in/_payment';
 
-    // Hash sequence : key|txnid|amount|productinfo|firstname|email|udf1..udf5|(7 empty)|salt
-    const hash = computeForwardHash({ key, txnid, amount, productinfo, firstname, email, salt });
+    // Hash sequence : key|txnid|amount|productinfo|firstname|email|udf1..udf5|(6 empty)|salt
+    const hash = computeForwardHash({ key, txnid, amount, productinfo, firstname, email, salt, udf1, udf2, udf3, udf4, udf5 });
 
     res.json({
       key,
@@ -230,17 +241,17 @@ exports.generatePayuHash = async (req, res) => {
 // @access  Public (Webhook)
 exports.handlePayuSuccess = async (req, res) => {
   try {
-    const { txnid, mihpayid, status, hash, amount, productinfo, firstname, email, bank_ref_num, additionalCharges } = req.body;
+    const { txnid, mihpayid, status, hash, amount, productinfo, firstname, email, bank_ref_num, additionalCharges, udf1, udf2, udf3, udf4, udf5 } = req.body;
 
     const key = process.env.PAYU_MERCHANT_KEY;
     const salt = process.env.PAYU_MERCHANT_SALT;
 
     // Reverse Hash sequence for verification:
-    // salt|status|udf1..udf5|(7 empty)|email|firstname|productinfo|amount|txnid|key
+    // salt|status|(6 empty)|udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key
     // (with additionalCharges prepended before salt when PayU sends it)
-    const calculatedHash = computeReverseHash({ additionalCharges, salt, status, email, firstname, productinfo, amount, txnid, key });
+    const calculatedHash = computeReverseHash({ additionalCharges, salt, status, email, firstname, productinfo, amount, txnid, key, udf1, udf2, udf3, udf4, udf5 });
 
-    if (calculatedHash === hash) {
+    if (calculatedHash === hash && status === 'success') {
       const order = await Order.findById(txnid);
       if (order) {
         // Guard against duplicate PayU notifications double-decrementing stock
