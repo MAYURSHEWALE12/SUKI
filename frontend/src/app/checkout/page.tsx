@@ -38,6 +38,12 @@ export default function CheckoutPage() {
   const [error, setError] = useState('');
   const [agreePolicies, setAgreePolicies] = useState(false);
   const [agreeMarketing, setAgreeMarketing] = useState(false);
+
+  // Discount State
+  const [discountCode, setDiscountCode] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; type: string; discountAmount: number } | null>(null);
+  const [discountError, setDiscountError] = useState('');
+  const [discountLoading, setDiscountLoading] = useState(false);
   
 
   // Discount State
@@ -63,7 +69,41 @@ export default function CheckoutPage() {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const cartTotal = cartTotalPrice;
+  const totalAfterDiscount = cartTotalPrice - (appliedDiscount?.discountAmount || 0);
+
+  const applyDiscountCode = async () => {
+    const code = discountCode.trim();
+    if (!code) {
+      setDiscountError('Please enter a discount code.');
+      return;
+    }
+    setDiscountLoading(true);
+    setDiscountError('');
+    try {
+      const res = await fetch('/api/discounts/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, cartTotal: cartTotalPrice }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDiscountError(data.message || 'Invalid discount code.');
+        setAppliedDiscount(null);
+        return;
+      }
+      setAppliedDiscount({ code: data.code, type: data.type, discountAmount: data.discountAmount });
+      setDiscountCode('');
+    } catch {
+      setDiscountError('Could not validate the discount code. Please try again.');
+    } finally {
+      setDiscountLoading(false);
+    }
+  };
+
+  const removeAppliedDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountError('');
+  };
 
   const applyAddress = (addr: SavedAddress) => {
     setShippingAddress({
@@ -153,6 +193,7 @@ export default function CheckoutPage() {
         })),
         shippingAddress,
         paymentMethod,
+        ...(appliedDiscount ? { discountCode: appliedDiscount.code } : {}),
       };
 
       // Check if user is logged in
@@ -441,12 +482,52 @@ export default function CheckoutPage() {
             </div>
 
             <div className="summary-divider"></div>
-            
+
+            <div className="coupon-box">
+              {appliedDiscount ? (
+                <div className="coupon-applied">
+                  <span className="coupon-applied-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px', verticalAlign: '-2px' }}><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    {appliedDiscount.code} applied
+                  </span>
+                  <button type="button" className="coupon-remove-btn" onClick={removeAppliedDiscount}>Remove</button>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
+                    <input
+                      type="text"
+                      className="coupon-input"
+                      placeholder="Enter coupon code"
+                      value={discountCode}
+                      onChange={(e) => { setDiscountCode(e.target.value.toUpperCase()); setDiscountError(''); }}
+                      style={{ flex: 1, padding: '0.6rem 0.8rem', border: '1px solid #E4E4E7', borderRadius: '8px', fontSize: '0.85rem', textTransform: 'uppercase' }}
+                    />
+                    <button
+                      type="button"
+                      className="coupon-apply-btn"
+                      onClick={applyDiscountCode}
+                      disabled={discountLoading}
+                      style={{ padding: '0.6rem 1rem', background: '#C2185B', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600, cursor: discountLoading ? 'wait' : 'pointer' }}
+                    >
+                      {discountLoading ? '...' : 'Apply'}
+                    </button>
+                  </div>
+                  {discountError && <div style={{ color: '#E53E3E', fontSize: '0.8rem', marginTop: '0.4rem' }}>{discountError}</div>}
+                </>
+              )}
+            </div>
 
             <div className="summary-row">
               <span>Subtotal</span>
               <span>₹{cartTotalPrice.toLocaleString('en-IN')}</span>
             </div>
+            {appliedDiscount && appliedDiscount.discountAmount > 0 && (
+              <div className="summary-row">
+                <span>Discount ({appliedDiscount.code})</span>
+                <span style={{ color: '#059669' }}>-₹{appliedDiscount.discountAmount.toLocaleString('en-IN')}</span>
+              </div>
+            )}
             <div className="summary-row">
               <span>Shipping</span>
               <span className="free-shipping">Free</span>
@@ -462,7 +543,7 @@ export default function CheckoutPage() {
             <div className="summary-row total-row" style={{ flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
                 <span className="total-label">Total To Pay</span>
-                <span className="total-amount">₹{cartTotal.toLocaleString('en-IN')}</span>
+                <span className="total-amount">₹{Math.max(0, totalAfterDiscount).toLocaleString('en-IN')}</span>
               </div>
               <span className="total-subtext">(Taxes, discounts and shipping calculated at checkout)</span>
             </div>

@@ -81,6 +81,37 @@
   background: var(--color-primary-dark);
 }
 
+/* Hover Quick View Button */
+.luxury-quickview-btn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(255, 255, 255, 0.85);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4a1523;
+  cursor: pointer;
+  transform: translateY(-6px);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease, background 0.2s;
+  z-index: 11;
+}
+
+.product-card.luxury-style-card:hover .luxury-quickview-btn {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.luxury-quickview-btn:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+
 .luxury-wishlist-btn {
   position: absolute;
   top: 16px;

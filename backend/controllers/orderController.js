@@ -108,6 +108,8 @@ exports.addOrderItems = async (req, res) => {
       shippingAddress,
       paymentMethod,
       itemsPrice,
+      discountCode: discountCode ? String(discountCode).toUpperCase() : '',
+      discountAmount,
       shippingPrice,
       totalPrice,
       sessionToken,

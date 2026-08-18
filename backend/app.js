@@ -37,6 +37,7 @@ function createApp() {
   app.use('/api/homepage', require('./routes/homepageRoutes'));
   app.use('/api/upload', require('./routes/uploadRoutes'));
   app.use('/api/subscribers', require('./routes/subscriberRoutes'));
+  app.use('/api/feed', require('./routes/feedRoutes'));
 
   // Serve uploads folder statically
   const path = require('path');

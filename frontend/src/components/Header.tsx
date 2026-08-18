@@ -388,9 +388,8 @@ export default function Header() {
           <li className="nav-item"><Link href="/collections/half-sarees">Half Sarees</Link></li>
           <li className="nav-item"><Link href="/collections/navratri-ghagra">Navratri Ghagra</Link></li>
           <li className="nav-item"><Link href="/collections/best-sellers">Best Sellers</Link></li>
-          <li className="nav-item"><Link href="/collections/under-999">Under ₹999</Link></li>
           <li className="nav-item"><Link href="/collections/celeb-styles">Celeb & Influencer Edit</Link></li>
-          <li className="nav-item sale-item"><Link href="/collections/sale" style={{ color: '#C2185B', fontWeight: 600 }}>Sale</Link></li>
+          <li className="nav-item"><Link href="/occasions">Occasions</Link></li>
         </ul>
       </nav>
       
@@ -427,9 +426,8 @@ export default function Header() {
             <li style={{ animationDelay: '0.2s' }}><Link href="/collections/half-sarees" onClick={() => setIsMobileMenuOpen(false)}>Half Sarees</Link></li>
             <li style={{ animationDelay: '0.25s' }}><Link href="/collections/navratri-ghagra" onClick={() => setIsMobileMenuOpen(false)}>Navratri Ghagra</Link></li>
             <li style={{ animationDelay: '0.3s' }}><Link href="/collections/best-sellers" onClick={() => setIsMobileMenuOpen(false)}>Best Sellers</Link></li>
-            <li style={{ animationDelay: '0.35s' }}><Link href="/collections/under-999" onClick={() => setIsMobileMenuOpen(false)}>Under ₹999</Link></li>
             <li style={{ animationDelay: '0.4s' }}><Link href="/collections/celeb-styles" onClick={() => setIsMobileMenuOpen(false)}>Celeb & Influencer Edit</Link></li>
-            <li style={{ animationDelay: '0.45s' }}><Link href="/collections/sale" onClick={() => setIsMobileMenuOpen(false)} style={{ color: '#C2185B', fontWeight: 600 }}>Sale</Link></li>
+            <li style={{ animationDelay: '0.45s' }}><Link href="/occasions" onClick={() => setIsMobileMenuOpen(false)}>Occasions</Link></li>
           </ul>
           
           <div className="mobile-drawer-bottom" style={{ animationDelay: '0.8s' }}>

@@ -8,7 +8,7 @@ const { isValidObjectId, toFiniteNumber } = require('../utils/validation');
 // @access  Public
 exports.getProducts = async (req, res) => {
   try {
-    const { category, minPrice, maxPrice, minRating, sort, keyword, inStock, limit } = req.query;
+    const { category, occasion, minPrice, maxPrice, minRating, sort, keyword, inStock, limit } = req.query;
     const filter = {};
 
     // Escape regex metacharacters so user input is matched literally (prevents
@@ -27,6 +27,10 @@ exports.getProducts = async (req, res) => {
 
     if (category) {
       filter.category = { $regex: new RegExp(`^${escapeRegex(category.trim())}$`, 'i') };
+    }
+
+    if (occasion) {
+      filter.occasion = { $regex: new RegExp(`^${escapeRegex(occasion.trim())}$`, 'i') };
     }
 
     if (inStock === 'true') {
@@ -105,7 +109,7 @@ exports.getProductById = async (req, res) => {
 // @access  Private/Admin
 exports.createProduct = async (req, res) => {
   try {
-    const { name, price, description, image, hoverImage, brand, category, countInStock, originalPrice, isNewArrival } = req.body;
+    const { name, price, description, image, hoverImage, brand, category, occasion, countInStock, originalPrice, isNewArrival } = req.body;
 
     const numericPrice = toFiniteNumber(price);
     if (numericPrice === null || numericPrice < 0) {
@@ -124,6 +128,7 @@ exports.createProduct = async (req, res) => {
       hoverImage: hoverImage || '',
       brand: brand || 'Suki Ethnic',
       category: category || 'Uncategorized',
+      occasion: occasion || '',
       countInStock: numericStock,
       numReviews: 0,
       description: description || 'Product description goes here',
@@ -143,7 +148,7 @@ exports.createProduct = async (req, res) => {
 // @access  Private/Admin
 exports.updateProduct = async (req, res) => {
   try {
-    const { name, price, description, image, hoverImage, category, countInStock, originalPrice } = req.body;
+    const { name, price, description, image, hoverImage, category, occasion, countInStock, originalPrice } = req.body;
 
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid Product ID' });
     const product = await Product.findById(req.params.id);
@@ -163,6 +168,7 @@ exports.updateProduct = async (req, res) => {
       product.image = image || product.image;
       product.hoverImage = hoverImage || product.hoverImage;
       product.category = category || product.category;
+      product.occasion = occasion || product.occasion;
 
       if (countInStock !== undefined) {
         const numericStock = toFiniteNumber(countInStock);

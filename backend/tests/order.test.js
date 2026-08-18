@@ -84,6 +84,8 @@ test('valid percentage discount is applied and reflected in total', async () => 
   const body = await res.json();
   assert.strictEqual(body.itemsPrice, 9998);
   assert.strictEqual(body.totalPrice, 8998.2);
+  assert.strictEqual(body.discountCode, 'SAVE10');
+  assert.strictEqual(body.discountAmount, 999.8);
 });
 
 test('unknown discount code is rejected', async () => {

@@ -14,6 +14,7 @@ interface Product {
   image?: string;
   images?: string[];
   celebrity?: string;
+  occasion?: string;
   isNewArrival?: boolean;
   shortDescription?: string;
   highlights?: string;
@@ -32,6 +33,7 @@ interface ProductForm {
   image: string;
   images: string[];
   celebrity: string;
+  occasion: string;
   isNewArrival: boolean;
   shortDescription: string;
   highlights: string;
@@ -61,6 +63,7 @@ export default function AdminProductsPage() {
     image: '',
     images: ['', '', '', ''],
     celebrity: '',
+    occasion: '',
     isNewArrival: false,
     shortDescription: '',
     highlights: '',
@@ -103,7 +106,7 @@ export default function AdminProductsPage() {
     setEditingProduct(null);
     setPrimaryCategory('lehengas');
     setFormData({
-      name: '', brand: 'Suki Ethnic', category: 'lehengas', celebrity: '', description: '', shortDescription: '', highlights: '', careInstructions: '', whatsIncluded: '', price: 0, originalPrice: 0, countInStock: 0, image: '', images: ['', '', '', ''], isNewArrival: false
+      name: '', brand: 'Suki Ethnic', category: 'lehengas', celebrity: '', occasion: '', description: '', shortDescription: '', highlights: '', careInstructions: '', whatsIncluded: '', price: 0, originalPrice: 0, countInStock: 0, image: '', images: ['', '', '', ''], isNewArrival: false
     });
     setShowModal(true);
   };
@@ -123,6 +126,7 @@ export default function AdminProductsPage() {
       originalPrice: product.originalPrice || 0,
       countInStock: product.countInStock || 0,
       celebrity: product.celebrity || '',
+      occasion: product.occasion || '',
       image: product.image || '',
       images: product.images || ['', '', '', ''],
       isNewArrival: product.isNewArrival || false,
@@ -491,6 +495,17 @@ export default function AdminProductsPage() {
               <div className="form-group">
                 <label>Inspired By (Celebrity)</label>
                 <input type="text" name="celebrity" value={formData.celebrity} onChange={handleChange} placeholder="e.g. Deepika Inspired" />
+              </div>
+              <div className="form-group">
+                <label>Occasion</label>
+                <select name="occasion" value={formData.occasion} onChange={handleChange}>
+                  <option value="">None</option>
+                  <option value="Diwali">Diwali</option>
+                  <option value="Wedding">Wedding</option>
+                  <option value="Party">Party</option>
+                  <option value="Daily Wear">Daily Wear</option>
+                  <option value="Festive">Festive</option>
+                </select>
               </div>
 
               <div className="form-group full-width" style={{ marginTop: '1rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>

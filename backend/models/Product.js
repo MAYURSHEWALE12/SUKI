@@ -60,6 +60,10 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    occasion: {
+      type: String,
+      required: false,
+    },
     description: {
       type: String,
       required: true,

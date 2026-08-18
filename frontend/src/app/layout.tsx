@@ -13,6 +13,7 @@ import Footer from "@/components/Footer";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import CartDrawer from "@/components/CartDrawer";
 import GlobalReviews from "@/components/GlobalReviews";
+import ExitIntentPopup from "@/components/ExitIntentPopup";
 
 const philosopher = Philosopher({
   weight: ["400", "700"],
@@ -102,6 +103,7 @@ export default function RootLayout({
               <Footer />
               <FloatingWhatsApp />
               <GlobalReviews />
+              <ExitIntentPopup />
             </ToastProvider>
           </WishlistProvider>
         </CartProvider>

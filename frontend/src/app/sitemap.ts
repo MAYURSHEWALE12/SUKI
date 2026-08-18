@@ -41,6 +41,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/collections/navratri-ghagra',
     '/collections/new-arrivals',
     '/collections/best-sellers',
+    '/occasions',
+    '/occasions/diwali',
+    '/occasions/wedding',
+    '/occasions/party',
+    '/occasions/daily-wear',
     '/search',
     '/account'
   ].map((route) => ({
