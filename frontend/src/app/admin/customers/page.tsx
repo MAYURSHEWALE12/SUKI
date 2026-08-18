@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 
 interface Customer {
   _id: string;
@@ -17,22 +17,29 @@ export default function AdminCustomersPage() {
   
   // Features State
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalCustomers, setTotalCustomers] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
   const fetchCustomers = useCallback(() => {
     const req = async () => {
       const token = localStorage.getItem('suki_admin_token');
-      const res = await fetch('/api/auth/users', {
+      const params = new URLSearchParams({ page: String(currentPage), limit: String(itemsPerPage) });
+      if (debouncedSearch.trim()) params.set('keyword', debouncedSearch.trim());
+      const res = await fetch(`/api/auth/users?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      return { ok: res.ok, customers: data };
+      return { ok: res.ok, customers: data.data ?? [], total: data.total ?? 0, pages: data.pages ?? 1 };
     };
     req()
-      .then(({ ok, customers }) => {
+      .then(({ ok, customers, total, pages }) => {
         if (ok) {
           setCustomers(customers);
+          setTotalCustomers(total);
+          setTotalPages(pages);
         }
       })
       .catch((error) => {
@@ -41,24 +48,21 @@ export default function AdminCustomersPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [currentPage, debouncedSearch]);
 
   useEffect(() => {
     fetchCustomers();
   }, [fetchCustomers]);
 
-  // Filter and Pagination Logic
-  const filteredCustomers = useMemo(() => {
-    return customers.filter((c: Customer) => {
-      const searchStr = searchTerm.toLowerCase();
-      const nameMatch = (c.name || '').toLowerCase().includes(searchStr);
-      const emailMatch = (c.email || '').toLowerCase().includes(searchStr);
-      return nameMatch || emailMatch;
-    });
-  }, [customers, searchTerm]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
-  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
-  const currentCustomers = filteredCustomers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const currentCustomers = customers;
 
   if (loading && customers.length === 0) return <div>Loading customers...</div>;
 
@@ -112,7 +116,7 @@ export default function AdminCustomersPage() {
         {totalPages > 1 && (
           <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredCustomers.length)} of {filteredCustomers.length} customers
+              Showing {totalCustomers === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalCustomers)} of {totalCustomers} customers
             </span>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button 

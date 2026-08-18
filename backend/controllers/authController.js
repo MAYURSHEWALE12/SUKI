@@ -229,8 +229,18 @@ exports.getAllUsers = async (req, res) => {
     const page = Number(req.query.page);
     const limit = Number(req.query.limit);
     const hasPagination = Number.isInteger(page) && page > 0 && Number.isInteger(limit) && limit > 0;
+    const keyword = (req.query.keyword || '').toString().trim();
 
-    const userQuery = User.find({});
+    const userMatch = keyword
+      ? {
+          $or: [
+            { name: { $regex: keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } },
+            { email: { $regex: keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } },
+          ],
+        }
+      : {};
+
+    const userQuery = User.find(userMatch);
     if (hasPagination) userQuery.skip((page - 1) * limit).limit(Math.min(limit, 100));
 
     const [users, orderStats, total] = await Promise.all([
@@ -238,7 +248,7 @@ exports.getAllUsers = async (req, res) => {
       Order.aggregate([
         { $group: { _id: '$user', totalOrders: { $sum: 1 }, totalSpend: { $sum: '$totalPrice' } } }
       ]),
-      hasPagination ? User.countDocuments() : Promise.resolve(0),
+      hasPagination ? User.countDocuments(userMatch) : Promise.resolve(0),
     ]);
 
     const statsByUser = new Map(orderStats.map((s) => [String(s._id), s]));

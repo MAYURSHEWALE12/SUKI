@@ -146,6 +146,39 @@ exports.getAllOrders = async (req, res) => {
     const page = Number(req.query.page);
     const limit = Number(req.query.limit);
     const hasPagination = Number.isInteger(page) && page > 0 && Number.isInteger(limit) && limit > 0;
+    const keyword = (req.query.keyword || '').toString().trim();
+
+    if (keyword) {
+      const pattern = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pipeline = [
+        { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'userInfo' } },
+        { $unwind: { path: '$userInfo', preserveNullAndEmptyArrays: true } },
+        { $addFields: { _idStr: { $toString: '$_id' } } },
+        {
+          $match: {
+            $or: [
+              { _idStr: { $regex: pattern, $options: 'i' } },
+              { 'userInfo.name': { $regex: pattern, $options: 'i' } },
+              { 'shippingAddress.fullName': { $regex: pattern, $options: 'i' } },
+            ],
+          },
+        },
+        { $sort: { createdAt: -1 } },
+        { $addFields: { 'user.id': '$userInfo._id', 'user.name': '$userInfo.name', 'user.email': '$userInfo.email' } },
+        { $project: { userInfo: 0, _idStr: 0 } },
+      ];
+
+      if (hasPagination) {
+        const [result] = await Order.aggregate([
+          ...pipeline,
+          { $facet: { data: [{ $skip: (page - 1) * limit }, { $limit: Math.min(limit, 100) }], total: [{ $count: 'n' }] } },
+        ]);
+        const total = result.total[0] ? result.total[0].n : 0;
+        return res.json({ data: result.data, page, pages: Math.max(1, Math.ceil(total / limit)), total });
+      }
+
+      return res.json(await Order.aggregate(pipeline));
+    }
 
     const query = Order.find({}).populate('user', 'id name email').sort({ createdAt: -1 });
 

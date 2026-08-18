@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import jsPDF from 'jspdf';
 
 interface OrderItem {
@@ -36,7 +36,10 @@ export default function AdminOrdersPage() {
 
   // New Features State
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   
@@ -104,16 +107,20 @@ export default function AdminOrdersPage() {
   const fetchOrders = useCallback(() => {
     const req = async () => {
       const token = localStorage.getItem('suki_admin_token');
-      const res = await fetch('/api/orders', {
+      const params = new URLSearchParams({ page: String(currentPage), limit: String(itemsPerPage) });
+      if (debouncedSearch.trim()) params.set('keyword', debouncedSearch.trim());
+      const res = await fetch(`/api/orders?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      return { ok: res.ok, orders: data };
+      return { ok: res.ok, orders: data.data ?? [], total: data.total ?? 0, pages: data.pages ?? 1 };
     };
     req()
-      .then(({ ok, orders }) => {
+      .then(({ ok, orders, total, pages }) => {
         if (ok) {
           setOrders(orders);
+          setTotalOrders(total);
+          setTotalPages(pages);
 
           // Initialize tracking/notes state
           const initialTracking: Record<string, string> = {};
@@ -132,11 +139,19 @@ export default function AdminOrdersPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [currentPage, debouncedSearch]);
 
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     setUpdating(orderId);
@@ -189,7 +204,7 @@ export default function AdminOrdersPage() {
 
   const toggleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedOrders(new Set(currentOrders.map((o: Order) => o._id)));
+      setSelectedOrders(new Set(orders.map((o: Order) => o._id)));
     } else {
       setSelectedOrders(new Set());
     }
@@ -202,19 +217,7 @@ export default function AdminOrdersPage() {
     setSelectedOrders(next);
   };
 
-  // Filter and Pagination Logic
-  const filteredOrders = useMemo(() => {
-    return orders.filter((o: Order) => {
-      const searchStr = searchTerm.toLowerCase();
-      const customerName = (o.user?.name || o.shippingAddress?.fullName || '').toLowerCase();
-      const idMatch = o._id.toLowerCase().includes(searchStr);
-      const nameMatch = customerName.includes(searchStr);
-      return idMatch || nameMatch;
-    });
-  }, [orders, searchTerm]);
-
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
-  const currentOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const currentOrders = orders;
 
   if (loading && orders.length === 0) return <div>Loading orders...</div>;
 
@@ -408,7 +411,7 @@ export default function AdminOrdersPage() {
         {totalPages > 0 && (
           <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-              Showing <strong>{(currentPage - 1) * itemsPerPage + 1}</strong> to <strong>{Math.min(currentPage * itemsPerPage, filteredOrders.length)}</strong> of <strong>{filteredOrders.length}</strong> orders
+              Showing <strong>{totalOrders === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</strong> to <strong>{Math.min(currentPage * itemsPerPage, totalOrders)}</strong> of <strong>{totalOrders}</strong> orders
             </span>
             <div style={{ display: 'flex', gap: '0.25rem' }}>
               <button 

@@ -131,6 +131,18 @@ test('orders list still returns a plain array without page params', async () => 
   assert.strictEqual(body.length, 0);
 });
 
+test('orders list keyword matches order id or customer name', async () => {
+  const a = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody, { Authorization: `Bearer ${userToken}` })).json();
+  const byId = await (await fetch(`${ctx.base}/api/orders?page=1&limit=10&keyword=${a._id.substring(0, 8)}`, { headers: { Authorization: `Bearer ${adminToken}` } })).json();
+  assert.strictEqual(byId.total, 1);
+  assert.strictEqual(byId.data[0]._id, a._id);
+  const byName = await (await fetch(`${ctx.base}/api/orders?page=1&limit=10&keyword=buyer`, { headers: { Authorization: `Bearer ${adminToken}` } })).json();
+  assert.strictEqual(byName.total, 1);
+  const noMatch = await (await fetch(`${ctx.base}/api/orders?page=1&limit=10&keyword=zzznope`, { headers: { Authorization: `Bearer ${adminToken}` } })).json();
+  assert.strictEqual(noMatch.total, 0);
+  assert.deepStrictEqual(noMatch.data, []);
+});
+
 test('payu-hash refuses amounts that do not match the order total', async () => {
   const created = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
   const res = await json('POST', `${ctx.base}/api/orders/${created._id}/payu-hash`, ctx.base, {
