@@ -1,8 +1,13 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 
 function createApp() {
   const app = express();
+
+  // Security headers: clickjacking protection, MIME sniffing, referrer
+  // policy, CSP, HSTS, etc. Safe for a JSON API + image static files.
+  app.use(helmet({ frameguard: { action: 'deny' } }));
 
   // Trust the first proxy hop when deployed behind a reverse proxy so rate
   // limits and req.ip see the real client IP. Disable for direct exposure.
