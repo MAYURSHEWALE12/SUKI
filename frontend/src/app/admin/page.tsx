@@ -24,6 +24,35 @@ const filterByRange = (orders: Order[], days: number): Order[] => {
   });
 };
 
+// Orders between (now - 2*days) and (now - days): the period preceding the current range
+const filterPreviousRange = (orders: Order[], days: number): Order[] => {
+  const rangeStart = new Date();
+  rangeStart.setDate(rangeStart.getDate() - 2 * days);
+  const rangeEnd = new Date();
+  rangeEnd.setDate(rangeEnd.getDate() - days);
+  return orders.filter((order) => {
+    if (!order.createdAt) return false;
+    const date = new Date(order.createdAt);
+    return date >= rangeStart && date < rangeEnd;
+  });
+};
+
+const pctDelta = (current: number, previous: number): number | null => {
+  if (previous <= 0) return current > 0 ? 100 : null;
+  return ((current - previous) / previous) * 100;
+};
+
+const formatDelta = (delta: number | null, label: string) => {
+  if (delta === null) return <span>No prior data</span>;
+  const rounded = Math.abs(delta).toFixed(1);
+  const up = delta >= 0;
+  return (
+    <span>
+      <span style={{ color: up ? '#16a34a' : '#dc2626' }}>{up ? '↑' : '↓'} {rounded}%</span> {label}
+    </span>
+  );
+};
+
 export default function AdminDashboardPage() {
   const [rawOrders, setRawOrders] = useState<Order[]>([]);
   const [rawProducts, setRawProducts] = useState<{ _id: string }[]>([]);
@@ -57,12 +86,21 @@ export default function AdminDashboardPage() {
   }, []);
 
   const filteredOrders = filterByRange(rawOrders, dateRange);
+  const previousOrders = filterPreviousRange(rawOrders, dateRange);
 
   const stats = {
     totalOrders: filteredOrders.length,
     totalRevenue: filteredOrders.reduce((acc, order) => acc + order.totalPrice, 0),
     totalProducts: rawProducts.length
   };
+
+  const prevStats = {
+    totalOrders: previousOrders.length,
+    totalRevenue: previousOrders.reduce((acc, order) => acc + order.totalPrice, 0)
+  };
+
+  const revenueDelta = pctDelta(stats.totalRevenue, prevStats.totalRevenue);
+  const ordersDelta = pctDelta(stats.totalOrders, prevStats.totalOrders);
 
   // Process data for charts
   const chartDays = [...Array(dateRange)].map((_, i) => {
@@ -153,7 +191,7 @@ export default function AdminDashboardPage() {
             <div style={{ fontSize: '2rem', fontWeight: 700, color: '#1e1b4b', marginBottom: '0.25rem' }}>
               ₹{stats.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <div style={{ fontSize: '0.8rem', color: '#6b7280' }}><span style={{ color: '#16a34a' }}>↑ 18.6%</span> vs last 7 days</div>
+            <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>{formatDelta(revenueDelta, `vs previous ${dateRange} days`)}</div>
           </div>
         </div>
 
@@ -166,7 +204,7 @@ export default function AdminDashboardPage() {
             <div style={{ fontSize: '2rem', fontWeight: 700, color: '#1e1b4b', marginBottom: '0.25rem' }}>
               {stats.totalOrders}
             </div>
-            <div style={{ fontSize: '0.8rem', color: '#6b7280' }}><span style={{ color: '#16a34a' }}>↑ 10.0%</span> vs last 7 days</div>
+            <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>{formatDelta(ordersDelta, `vs previous ${dateRange} days`)}</div>
           </div>
         </div>
 
@@ -179,7 +217,7 @@ export default function AdminDashboardPage() {
             <div style={{ fontSize: '2rem', fontWeight: 700, color: '#1e1b4b', marginBottom: '0.25rem' }}>
               {stats.totalProducts}
             </div>
-            <div style={{ fontSize: '0.8rem', color: '#6b7280' }}><span style={{ color: '#16a34a' }}>↑ 5.3%</span> vs last 7 days</div>
+            <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>Live catalog size</div>
           </div>
         </div>
       </div>

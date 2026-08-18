@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         description: product.description ? product.description.substring(0, 160) : '',
       }
     };
-  } catch (error) {
+  } catch {
     return {
       title: 'Product | Suki Ethnic',
     };
@@ -35,8 +35,8 @@ export default async function ProductLayout({ children, params }: { children: Re
     if (res.ok) {
       product = await res.json();
     }
-  } catch (e) {
-    console.error('Failed to fetch product for schema', e);
+  } catch {
+    console.error('Failed to fetch product for schema');
   }
 
   return (

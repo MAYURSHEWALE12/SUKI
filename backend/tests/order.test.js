@@ -105,6 +105,32 @@ test('order status update is admin-only', async () => {
   assert.strictEqual(asAdmin.status, 200);
 });
 
+test('orders list paginates with an envelope when page+limit are given', async () => {
+  const a = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
+  const b = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
+  assert.notStrictEqual(a._id, b._id);
+
+  const res = await fetch(`${ctx.base}/api/orders?page=1&limit=1`, { headers: { Authorization: `Bearer ${adminToken}` } });
+  assert.strictEqual(res.status, 200);
+  const body = await res.json();
+  assert.strictEqual(body.total, 2);
+  assert.strictEqual(body.pages, 2);
+  assert.strictEqual(body.page, 1);
+  assert.strictEqual(body.data.length, 1);
+
+  const page2 = await (await fetch(`${ctx.base}/api/orders?page=2&limit=1`, { headers: { Authorization: `Bearer ${adminToken}` } })).json();
+  assert.strictEqual(page2.data.length, 1);
+  assert.notStrictEqual(page2.data[0]._id, body.data[0]._id);
+});
+
+test('orders list still returns a plain array without page params', async () => {
+  const res = await fetch(`${ctx.base}/api/orders`, { headers: { Authorization: `Bearer ${adminToken}` } });
+  assert.strictEqual(res.status, 200);
+  const body = await res.json();
+  assert.ok(Array.isArray(body));
+  assert.strictEqual(body.length, 0);
+});
+
 test('payu-hash refuses amounts that do not match the order total', async () => {
   const created = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
   const res = await json('POST', `${ctx.base}/api/orders/${created._id}/payu-hash`, ctx.base, {

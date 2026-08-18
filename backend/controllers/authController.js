@@ -226,11 +226,19 @@ exports.toggleWishlist = async (req, res) => {
 // @access  Private/Admin
 exports.getAllUsers = async (req, res) => {
   try {
-    const [users, orderStats] = await Promise.all([
-      User.find({}),
+    const page = Number(req.query.page);
+    const limit = Number(req.query.limit);
+    const hasPagination = Number.isInteger(page) && page > 0 && Number.isInteger(limit) && limit > 0;
+
+    const userQuery = User.find({});
+    if (hasPagination) userQuery.skip((page - 1) * limit).limit(Math.min(limit, 100));
+
+    const [users, orderStats, total] = await Promise.all([
+      userQuery.exec(),
       Order.aggregate([
         { $group: { _id: '$user', totalOrders: { $sum: 1 }, totalSpend: { $sum: '$totalPrice' } } }
       ]),
+      hasPagination ? User.countDocuments() : Promise.resolve(0),
     ]);
 
     const statsByUser = new Map(orderStats.map((s) => [String(s._id), s]));
@@ -248,6 +256,15 @@ exports.getAllUsers = async (req, res) => {
         createdAt: user.createdAt
       };
     });
+
+    if (hasPagination) {
+      return res.json({
+        data: usersWithStats,
+        page,
+        pages: Math.max(1, Math.ceil(total / limit)),
+        total,
+      });
+    }
 
     res.json(usersWithStats);
   } catch (error) {

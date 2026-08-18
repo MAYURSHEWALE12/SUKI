@@ -18,7 +18,7 @@ interface SavedAddress {
 }
 
 export default function CheckoutPage() {
-  const { cartItems, cartTotalPrice, clearCart } = useCart();
+  const { cartItems, cartTotalPrice } = useCart();
   const router = useRouter();
 
   const [shippingAddress, setShippingAddress] = useState({
@@ -39,11 +39,7 @@ export default function CheckoutPage() {
   const [agreeMarketing, setAgreeMarketing] = useState(false);
   
 
-  // Discount States
-  const [discountCode, setDiscountCode] = useState('');
-  const [appliedDiscount, setAppliedDiscount] = useState<{code: string, amount: number, message: string} | null>(null);
-  const [discountError, setDiscountError] = useState('');
-  const [validatingDiscount, setValidatingDiscount] = useState(false);
+  // Discount State
   const [deliveryDate] = useState(() =>
     new Date(Date.now() + 4 * 86400000).toLocaleDateString('en-IN', {
       weekday: 'short',
@@ -66,7 +62,7 @@ export default function CheckoutPage() {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const finalTotal = appliedDiscount ? Math.max(0, cartTotalPrice - appliedDiscount.amount) : cartTotalPrice;
+  const cartTotal = cartTotalPrice;
 
   const applyAddress = (addr: SavedAddress) => {
     setShippingAddress({
@@ -121,63 +117,6 @@ export default function CheckoutPage() {
     applyAddress(addr);
   };
 
-  const handleEditAddress = (addr: SavedAddress) => {
-    handleSelectAddress(addr);
-    document.getElementById('checkout-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
-  const handleDeleteAddress = async (idx: number) => {
-    const token = localStorage.getItem('suki_token');
-    if (!token) return;
-    const updated = savedAddresses.filter((_, i) => i !== idx);
-    setSavedAddresses(updated);
-    try {
-      await fetch('/api/auth/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ addresses: updated }),
-      });
-    } catch (err) {
-      console.error('Failed to delete address', err);
-    }
-  };
-
-  const handleApplyDiscount = async () => {
-    if (!discountCode.trim()) return;
-    setValidatingDiscount(true);
-    setDiscountError('');
-    
-    try {
-      const res = await fetch('/api/discounts/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: discountCode, cartTotal: cartTotalPrice })
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok) {
-        setAppliedDiscount({
-          code: data.code,
-          amount: data.discountAmount,
-          message: data.message
-        });
-        setDiscountCode('');
-      } else {
-        setDiscountError(data.message || 'Invalid discount code');
-      }
-    } catch {
-      setDiscountError('Error applying discount');
-    } finally {
-      setValidatingDiscount(false);
-    }
-  };
-
-  const removeDiscount = () => {
-    setAppliedDiscount(null);
-    setDiscountError('');
-  };
-
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreePolicies) {
@@ -213,7 +152,6 @@ export default function CheckoutPage() {
         })),
         shippingAddress,
         paymentMethod,
-        discountCode: appliedDiscount?.code,
       };
 
       // Check if user is logged in
@@ -508,24 +446,11 @@ export default function CheckoutPage() {
               <span>Subtotal</span>
               <span>₹{cartTotalPrice.toLocaleString('en-IN')}</span>
             </div>
-            {appliedDiscount && (
-              <div className="summary-row discount-row">
-                <span>Discount ({appliedDiscount.code})</span>
-                <span>-₹{appliedDiscount.amount.toFixed(2)}</span>
-              </div>
-            )}
             <div className="summary-row">
               <span>Shipping</span>
               <span className="free-shipping">Free</span>
             </div>
 
-            {appliedDiscount && (
-              <div className="savings-card">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                <span>You save <strong>₹{appliedDiscount.amount.toFixed(2)}</strong> on this order</span>
-              </div>
-            )}
-            
             <div className="summary-divider dashed-pink"></div>
 
             <div className="delivery-estimate">
@@ -536,7 +461,7 @@ export default function CheckoutPage() {
             <div className="summary-row total-row" style={{ flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
                 <span className="total-label">Total To Pay</span>
-                <span className="total-amount">₹{finalTotal.toLocaleString('en-IN')}</span>
+                <span className="total-amount">₹{cartTotal.toLocaleString('en-IN')}</span>
               </div>
               <span className="total-subtext">(Taxes, discounts and shipping calculated at checkout)</span>
             </div>

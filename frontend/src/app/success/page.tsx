@@ -79,7 +79,7 @@ function SuccessContent() {
     };
 
     verifyOrder();
-  }, [orderId, router]);
+  }, [orderId, router, clearCart]);
 
   if (!verified) {
     return (

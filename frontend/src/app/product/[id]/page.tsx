@@ -5,7 +5,6 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useToast } from '@/context/ToastContext';
 import ProductCard from '@/components/ProductCard';
-import GlobalReviews from '@/components/GlobalReviews';
 import Draggable from 'react-draggable';
 
 
@@ -80,8 +79,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedPill, setSelectedPill] = useState<string | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<RelatedProduct[]>([]);
-  const [pinCode, setPinCode] = useState('');
-  const [pinChecked, setPinChecked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [previewReview, setPreviewReview] = useState<Review | null>(null);
@@ -101,8 +98,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   });
   const [isFloatingVideoOpen, setIsFloatingVideoOpen] = useState(true);
   const draggableNodeRef = useRef<HTMLDivElement>(null);
-  const lehengaSizes = ['XS', 'S', 'M', 'L', 'XL', 'Custom'];
-  const isSaree = product?.category?.toLowerCase() === 'sarees';
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -126,7 +121,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             };
             const updated = [viewedProduct, ...filtered].slice(0, 10);
             localStorage.setItem('suki_recently_viewed', JSON.stringify(updated));
-          } catch (e) {
+          } catch {
             // Silently fail if localStorage is unavailable
           }
         }
@@ -251,12 +246,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     }
   };
 
-  const handleCheckPin = () => {
-    if (pinCode.trim().length >= 6) {
-      setPinChecked(true);
-    }
-  };
-
   if (loading) {
     return <div className="product-loading">Loading product details...</div>;
   }
@@ -265,12 +254,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     return <div className="product-not-found">Product not found</div>;
   }
 
-  const discountPercentage = product.originalPrice 
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) 
-    : 0;
-
   const isWishlisted = wishlist.includes(product._id);
-
 
   const stockAvailable = product.countInStock;
   const isOutOfStock = stockAvailable === 0;

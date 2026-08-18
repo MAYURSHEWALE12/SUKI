@@ -269,21 +269,57 @@ exports.createProductReview = async (req, res) => {
 
 exports.getAllReviews = async (req, res) => {
   try {
-    const products = await Product.find({}).select('name reviews');
-    let allReviews = [];
-    products.forEach(product => {
-      product.reviews.forEach(review => {
-        allReviews.push({
-          _id: review._id,
-          productName: product.name,
-          productId: product._id,
-          name: review.name,
-          rating: review.rating,
-          comment: review.comment,
-          createdAt: review.createdAt
+    const limit = Number(req.query.limit);
+    const validLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 100) : null;
+
+    let products = Product.find({}).select('name reviews');
+    if (validLimit) {
+      products = Product.aggregate([
+        { $match: { 'reviews.0': { $exists: true } } },
+        { $unwind: '$reviews' },
+        { $sort: { 'reviews.createdAt': -1 } },
+        { $limit: validLimit },
+        { $lookup: {
+            from: 'products',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'productMeta',
+          } },
+        { $project: {
+            _id: '$reviews._id',
+            productName: { $arrayElemAt: ['$productMeta.name', 0] },
+            productId: '$_id',
+            name: '$reviews.name',
+            rating: '$reviews.rating',
+            comment: '$reviews.comment',
+            images: '$reviews.images',
+            createdAt: '$reviews.createdAt',
+          } },
+      ]);
+    } else {
+      products = products.exec();
+    }
+
+    let allReviews;
+    if (validLimit) {
+      allReviews = await products;
+    } else {
+      const docs = await products;
+      allReviews = [];
+      docs.forEach(product => {
+        product.reviews.forEach(review => {
+          allReviews.push({
+            _id: review._id,
+            productName: product.name,
+            productId: product._id,
+            name: review.name,
+            rating: review.rating,
+            comment: review.comment,
+            createdAt: review.createdAt
+          });
         });
       });
-    });
+    }
     res.json(allReviews);
   } catch (error) {
     res.status(500).json({ message: error.message });

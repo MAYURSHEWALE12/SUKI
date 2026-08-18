@@ -44,7 +44,7 @@ export default function GlobalReviews() {
       const timeout = setTimeout(fetchReviews, 0);
       return () => clearTimeout(timeout);
     }
-  }, [isOpen]);
+  }, [isOpen, reviews.length]);
 
   return (
     <>

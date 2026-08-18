@@ -22,7 +22,6 @@ export default function Header() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: populate auth state once, post-hydration
     setMounted(true);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: read localStorage after mount only
     setIsLoggedIn(!!localStorage.getItem('suki_token'));
   }, []);
 
@@ -60,7 +59,6 @@ export default function Header() {
   };
   
   // Search bar typing effect
-  const searchTerms = ['lehengas...', 'sarees...', 'half sarees...', 'navratri ghagra...'];
   const [placeholder, setPlaceholder] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
@@ -68,6 +66,7 @@ export default function Header() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
+    const searchTerms = ['lehengas...', 'sarees...', 'half sarees...', 'navratri ghagra...'];
     const currentTerm = searchTerms[termIndex];
     let typingSpeed = isDeleting ? 50 : 100;
 
@@ -92,7 +91,7 @@ export default function Header() {
     }, typingSpeed);
 
     return () => clearTimeout(timeout);
-  }, [placeholder, isDeleting, termIndex, searchTerms]);
+  }, [placeholder, isDeleting, termIndex]);
 
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isSearching, setIsSearching] = useState(false);
