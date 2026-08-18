@@ -1,10 +1,12 @@
 const { test, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert');
+const fs = require('fs');
+const path = require('path');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Product = require('../models/Product');
 const Discount = require('../models/Discount');
-const { start, json } = require('./helpers');
+const { start, json, form } = require('./helpers');
 
 let ctx;
 let userToken;
@@ -141,6 +143,33 @@ test('orders list keyword matches order id or customer name', async () => {
   const noMatch = await (await fetch(`${ctx.base}/api/orders?page=1&limit=10&keyword=zzznope`, { headers: { Authorization: `Bearer ${adminToken}` } })).json();
   assert.strictEqual(noMatch.total, 0);
   assert.deepStrictEqual(noMatch.data, []);
+});
+
+test('failed payu callback writes no debug dump by default and a sanitized one when enabled', async () => {
+  const dumpPath = path.join(__dirname, '..', 'payu-debug.json');
+  if (fs.existsSync(dumpPath)) fs.unlinkSync(dumpPath);
+
+  const payload = {
+    txnid: 'missing-order', status: 'success', hash: 'wrong', amount: '100',
+    firstname: 'Buyer', email: 'buyer@test.com', productinfo: 'Silk Saree',
+  };
+
+  await form(`${ctx.base}/api/orders/payu-success`, payload);
+  assert.ok(!fs.existsSync(dumpPath), 'no debug dump should be written without PAYU_DEBUG=true');
+
+  process.env.PAYU_DEBUG = 'true';
+  try {
+    await form(`${ctx.base}/api/orders/payu-success`, payload);
+    assert.ok(fs.existsSync(dumpPath), 'debug dump should be written with PAYU_DEBUG=true');
+    const dump = JSON.parse(fs.readFileSync(dumpPath, 'utf8'));
+    assert.strictEqual(dump.body.txnid, 'missing-order');
+    assert.ok(dump.body.email.includes('***'));
+    assert.ok(!dump.body.email.includes('buyer@test.com'), 'raw email must not be dumped');
+    assert.strictEqual(dump.body.firstname, undefined, 'PII fields must be dropped');
+  } finally {
+    process.env.PAYU_DEBUG = 'false';
+    if (fs.existsSync(dumpPath)) fs.unlinkSync(dumpPath);
+  }
 });
 
 test('payu-hash refuses amounts that do not match the order total', async () => {

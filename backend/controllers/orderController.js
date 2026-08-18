@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const fs = require('fs');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const crypto = require('crypto');
@@ -7,6 +8,30 @@ const { computeForwardHash, computeReverseHash } = require('../utils/payuHash');
 const { isValidObjectId } = require('../utils/validation');
 
 const VALID_ORDER_STATUSES = ['Processing', 'Shipped', 'Delivered', 'Cancelled', 'Refunded'];
+
+// PayU callback debug dumps must never write raw customer data (email, name,
+// address) to disk. Only technical fields survive; email is masked. Enabled
+// explicitly with PAYU_DEBUG=true.
+function sanitizePayuDebug(body) {
+  const email = String(body.email || '');
+  const [user, domain] = email.split('@');
+  const maskedEmail = email && user
+    ? `${user[0]}***@${domain}`
+    : '';
+  return {
+    txnid: body.txnid,
+    mihpayid: body.mihpayid,
+    status: body.status,
+    amount: body.amount,
+    bank_ref_num: body.bank_ref_num,
+    additionalCharges: body.additionalCharges,
+    email: maskedEmail,
+  };
+}
+
+function payuDebugEnabled() {
+  return process.env.PAYU_DEBUG === 'true';
+}
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -325,19 +350,20 @@ exports.handlePayuSuccess = async (req, res) => {
       }
     }
     
-    // Dump for debugging
-    const fs = require('fs');
-    fs.writeFileSync('payu-debug.json', JSON.stringify({
-      body: req.body,
-      calculatedHash,
-      receivedHash: hash
-    }, null, 2));
+    if (payuDebugEnabled()) {
+      fs.writeFileSync('payu-debug.json', JSON.stringify({
+        body: sanitizePayuDebug(req.body),
+        calculatedHash,
+        receivedHash: hash
+      }, null, 2));
+    }
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     res.redirect(`${frontendUrl}/checkout?error=PaymentVerificationFailed`);
   } catch (error) {
-    const fs = require('fs');
-    fs.writeFileSync('payu-error.json', JSON.stringify({ error: error.message, stack: error.stack }));
+    if (payuDebugEnabled()) {
+      fs.writeFileSync('payu-error.json', JSON.stringify({ error: error.message, stack: error.stack }));
+    }
     console.error('PayU Success Error:', error);
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     res.redirect(`${frontendUrl}/checkout?error=PaymentFailed`);
