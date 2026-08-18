@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 import jsPDF from 'jspdf';
 
 interface OrderItem {
@@ -345,7 +346,7 @@ export default function AdminOrdersPage() {
                           </div>
                           {order.orderItems.map((item: OrderItem, idx: number) => (
                             <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                              <img src={item.image} alt={item.name} style={{ width: '50px', height: '60px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #e5e7eb' }} />
+                              {item.image && <Image src={item.image} alt={item.name} width={50} height={60} style={{ width: '50px', height: '60px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #e5e7eb' }} />}
                               <div>
                                 <div style={{ fontWeight: 600, color: '#111' }}>{item.name}</div>
                                 <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>Qty: {item.quantity}</div>

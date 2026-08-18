@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, use, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useToast } from '@/context/ToastContext';
@@ -418,11 +419,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </button>
 
 
-            <img 
+            <Image 
               key={mainImage} 
               src={mainImage} 
               alt={product.name} 
               className={`main-image ${isZooming ? 'zooming' : ''}`} 
+              width={600}
+              height={750}
+              sizes="(max-width: 768px) 100vw, 50vw"
               style={isZooming ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : {}}
             />
 
@@ -440,7 +444,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               onClick={() => setMainImage(product.image)}
               aria-label="View main image"
             >
-              <img src={product.image} alt="Thumbnail 1" />
+              <Image src={product.image} alt="Thumbnail 1" width={80} height={100} />
             </button>
             {product.hoverImage && (
               <button 
@@ -448,7 +452,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 onClick={() => setMainImage(product.hoverImage!)}
                 aria-label="View alternate image"
               >
-                <img src={product.hoverImage} alt="Thumbnail 2" />
+                <Image src={product.hoverImage} alt="Thumbnail 2" width={80} height={100} />
               </button>
             )}
           </div>
@@ -648,7 +652,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   }}
                 >
                   {rev.images && rev.images.length > 0 && (
-                    <img src={rev.images[0]} alt="Review photo" className="pdp-review-card-img" />
+                    <Image src={rev.images[0]} alt="Review photo" className="pdp-review-card-img" width={400} height={500} />
                   )}
                   <div className="pdp-review-card-body">
                     <div className="pdp-review-user-row">
@@ -719,7 +723,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           
           <h2 className="pdp-modal-title">Tell us about your reviews</h2>
           
-          <img src={mainImage} alt={product.name} className="pdp-modal-img" />
+          <Image src={mainImage} alt={product.name} className="pdp-modal-img" width={140} height={180} />
           <div className="pdp-modal-product-title">{product.name}</div>
           
           <div className="pdp-modal-stars">
@@ -825,7 +829,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
                 {uploadedImages.map((file, idx) => (
                   <div key={idx} style={{ position: 'relative', width: '60px', height: '60px' }}>
-                    <img src={URL.createObjectURL(file)} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ccc' }} />
+                    <Image src={URL.createObjectURL(file)} alt="Preview" unoptimized width={60} height={60} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ccc' }} />
                     <button 
                       type="button"
                       onClick={(e) => {
@@ -854,7 +858,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           <div className="pdp-review-preview-content" onClick={(e) => e.stopPropagation()}>
             <div className="pdp-review-preview-left">
               <div className="pdp-review-preview-img-wrapper">
-                <img src={previewReview.images[previewImageIndex]} alt="Review preview" className="pdp-review-preview-img" />
+                <Image src={previewReview.images[previewImageIndex]} alt="Review preview" className="pdp-review-preview-img" fill sizes="(max-width: 768px) 100vw, 50vw" />
                 
                 {previewReview.images.length > 1 && (
                   <>
@@ -871,11 +875,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               {previewReview.images.length > 1 && (
                 <div className="pdp-preview-thumbnails">
                   {previewReview.images.map((img: string, idx: number) => (
-                    <img 
+                    <Image 
                       key={idx} 
                       src={img} 
                       alt="Thumbnail" 
                       className={`pdp-preview-thumb ${idx === previewImageIndex ? 'active' : ''}`} 
+                      width={56}
+                      height={70}
                       onClick={() => setPreviewImageIndex(idx)} 
                     />
                   ))}

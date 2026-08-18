@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 
 interface HeroBanner {
   image: string;
@@ -181,7 +182,7 @@ export default function AdminHomepageManager() {
               </div>
               {banner.image && (
                 <div style={{ marginTop: '1rem', border: '1px solid #333', borderRadius: '8px', overflow: 'hidden', height: '200px' }}>
-                  <img src={banner.image} alt="Hero Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <Image src={banner.image} alt="Hero Preview" width={1200} height={400} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               )}
             </div>

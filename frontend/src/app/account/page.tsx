@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import ProductCard from '@/components/ProductCard';
 
 
@@ -488,7 +489,7 @@ export default function AccountPage() {
                     <div className="order-items">
                       {order.orderItems.map((item: OrderItem, idx: number) => (
                         <div key={idx} className="order-item-row">
-                          <img src={item.image} alt={item.name} className="order-item-img" />
+                          {item.image && <Image src={item.image} alt={item.name} className="order-item-img" width={90} height={110} />}
                           <div className="order-item-info">
                             <h4>{item.name}</h4>
                             <p>Qty: {item.quantity}</p>

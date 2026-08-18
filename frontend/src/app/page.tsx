@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import HeroCarousel from "@/components/HeroCarousel";
 import BestSellersGrid from "@/components/BestSellersGrid";
 import LehengasGrid from "@/components/LehengasGrid";
@@ -21,20 +22,26 @@ export default function Home() {
 
       {/* New Banner and Lehengas Section */}
       <section className="banner-section" style={{ width: '100%' }}>
-        <img 
+        <Image 
           src="/images/banner.png" 
           alt="Suki Ethnic Banner" 
-          style={{ width: '100%', display: 'block', height: '100%', maxHeight: '550px', objectFit: 'cover' }} 
+          width={1717}
+          height={677}
+          sizes="100vw"
+          style={{ width: '100%', display: 'block', height: 'auto', maxHeight: '550px', objectFit: 'cover' }} 
         />
       </section>
       <LehengasGrid />
 
       {/* Saree Banner and Grid */}
       <section className="banner-section" style={{ width: '100%' }}>
-        <img 
+        <Image 
           src="/images/sarees_banner.png" 
           alt="Suki Ethnic Sarees Banner" 
-          style={{ width: '100%', display: 'block', height: '100%', maxHeight: '550px', objectFit: 'cover' }} 
+          width={1774}
+          height={887}
+          sizes="100vw"
+          style={{ width: '100%', display: 'block', height: 'auto', maxHeight: '550px', objectFit: 'cover' }} 
         />
       </section>
       <SareesGrid />

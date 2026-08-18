@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCart } from '../context/CartContext';
 import './CartDrawer.css';
 
@@ -68,7 +69,7 @@ export default function CartDrawer() {
               {cartItems.map((item) => (
                 <div key={`${item._id}`} className="cart-item">
                   <div className="cart-item-image">
-                    <img src={item.image} alt={item.name} />
+                    <Image src={item.image} alt={item.name} width={90} height={120} />
                   </div>
                   
                   <div className="cart-item-details">

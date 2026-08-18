@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import Image from 'next/image';
 
 interface Product {
   _id: string;
@@ -360,16 +361,20 @@ export default function AdminProductsPage() {
                 style={{ marginRight: '1.5rem' }} 
               />
               
-              <img 
+              {product.image && (
+              <Image 
                 src={product.image} 
                 alt={product.name} 
+                width={56}
+                height={56}
                 style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '8px', marginRight: '1rem', border: '1px solid #f3f4f6' }} 
               />
+            )}
               
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, color: '#1f2937', fontSize: '0.95rem' }}>{product.name}</div>
                 <div style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '0.2rem', fontWeight: 500 }}>
-                  {product.countInStock > 0 ? <span style={{color: '#166534'}}>Available</span> : <span style={{color: '#ef4444'}}>Out of Stock</span>} &middot; {product.category}
+                  {product.countInStock > 0 ? <span style={{color: '#166534'}}>Available</span> : <span style={{color: '#ef4444'}}>Not Available</span>} &middot; {product.category}
                 </div>
               </div>
               

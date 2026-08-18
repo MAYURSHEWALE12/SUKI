@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import './GlobalReviews.css';
 
 interface Review {
@@ -101,10 +102,12 @@ export default function GlobalReviews() {
                         setPreviewReview(rev);
                         setPreviewImageIndex(0);
                       }}>
-                        <img 
+                        <Image 
                           src={rev.images[0]} 
                           alt="Review photo" 
                           className="global-review-card-img"
+                          width={400}
+                          height={500}
                         />
                       </div>
                     )}
@@ -138,7 +141,7 @@ export default function GlobalReviews() {
                     {rev.product && (
                       <div className="global-review-product-bottom">
                         <Link href={`/product/${rev.product._id}`} className="global-review-product-link" onClick={() => setIsOpen(false)}>
-                          <img src={rev.product.image} alt={rev.product.name} className="global-review-product-thumb" />
+                          <Image src={rev.product.image} alt={rev.product.name} className="global-review-product-thumb" width={40} height={40} />
                           <span className="global-review-product-name">{rev.product.name}</span>
                         </Link>
                       </div>
@@ -173,7 +176,7 @@ export default function GlobalReviews() {
           )}
 
           <div className="global-review-preview-content" onClick={(e) => e.stopPropagation()}>
-            <img src={previewReview.images?.[previewImageIndex]} alt="Review preview" />
+            <Image src={previewReview.images![previewImageIndex]} alt="Review preview" width={400} height={500} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '12px', display: 'block', margin: '0 auto' }} />
             
             <div className="global-review-preview-info">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>

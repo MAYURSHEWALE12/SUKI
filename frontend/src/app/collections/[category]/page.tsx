@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import ProductCard from '@/components/ProductCard';
 import ProductCardSkeleton from '@/components/ProductCardSkeleton';
 
@@ -204,17 +205,23 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
         </div>
       ) : category === 'sarees' ? (
         <section className="banner-section" style={{ width: '100%' }}>
-          <img 
+          <Image 
             src="/images/sarees_banner.png" 
             alt="Sarees Banner" 
+            width={1774}
+            height={887}
+            sizes="100vw"
             style={{ width: '100%', display: 'block', height: 'auto' }} 
           />
         </section>
       ) : category === 'lehengas' ? (
         <section className="banner-section" style={{ width: '100%' }}>
-          <img 
+          <Image 
             src="/images/banner.png" 
             alt="Lehengas Banner" 
+            width={1717}
+            height={677}
+            sizes="100vw"
             style={{ width: '100%', display: 'block', height: 'auto' }} 
           />
         </section>

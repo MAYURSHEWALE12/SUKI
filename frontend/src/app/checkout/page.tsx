@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -427,7 +428,7 @@ export default function CheckoutPage() {
               {cartItems.map((item) => (
                 <div key={`${item._id}`} className="summary-item">
                   <div className="summary-item-img">
-                    <img src={item.image} alt={item.name} />
+                    <Image src={item.image} alt={item.name} width={84} height={104} />
                     <span className="summary-item-qty">{item.quantity}</span>
                   </div>
                   <div className="summary-item-details">
