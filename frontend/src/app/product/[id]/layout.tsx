@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import Script from 'next/script';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -39,25 +38,68 @@ export default async function ProductLayout({ children, params }: { children: Re
     console.error('Failed to fetch product for schema');
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sukiethnic.com';
+  const productUrl = `${siteUrl}/product/${id}`;
+
+  let jsonLd = null;
+  if (product) {
+    const toAbsolute = (src: string) => src.startsWith('http') ? src : `${siteUrl}${src}`;
+    const images = [toAbsolute(product.image)];
+    if (product.hoverImage) images.push(toAbsolute(product.hoverImage));
+
+    jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "@id": `${productUrl}#product`,
+      name: product.name,
+      image: images,
+      description: product.description || product.shortDescription || product.name,
+      sku: product._id || id,
+      category: product.category,
+      brand: {
+        "@type": "Brand",
+        name: "Suki Ethnic"
+      },
+      offers: {
+        "@type": "Offer",
+        priceCurrency: "INR",
+        price: product.price,
+        availability: product.countInStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        url: productUrl,
+        seller: {
+          "@type": "Organization",
+          name: "Suki Ethnic",
+          url: siteUrl
+        }
+      },
+      ...(product.rating && product.reviews && product.reviews.length > 0 ? {
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: Number(product.rating).toFixed(1),
+          reviewCount: product.reviews.length,
+          bestRating: 5,
+          worstRating: 1
+        },
+        review: product.reviews.slice(0, 5).map((rev: { name: string; rating: number; comment: string; createdAt?: string }) => ({
+          "@type": "Review",
+          author: { "@type": "Person", name: rev.name },
+          ...(rev.createdAt && !Number.isNaN(Date.parse(rev.createdAt)) ? { datePublished: new Date(rev.createdAt).toISOString() } : {}),
+          reviewRating: { "@type": "Rating", ratingValue: rev.rating, bestRating: 5 },
+          ...(rev.comment ? { reviewBody: rev.comment } : {})
+        }))
+      } : {})
+    };
+  }
+
   return (
     <>
-      {product && (
-        <Script id="product-schema" type="application/ld+json" dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Product",
-            name: product.name,
-            image: product.image,
-            description: product.description,
-            offers: {
-              "@type": "Offer",
-              priceCurrency: "INR",
-              price: product.price,
-              availability: product.countInStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-              url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://sukiethnic.com'}/product/${id}`
-            }
-          })
-        }} />
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+          }}
+        />
       )}
       {children}
     </>
