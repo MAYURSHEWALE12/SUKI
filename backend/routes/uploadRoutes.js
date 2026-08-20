@@ -40,6 +40,10 @@ function checkFileType(file, cb) {
 }
 
 // Verify the file content matches its claimed type (mimetype is client-controlled).
+// Images: JPEG/PNG/GIF/WebP magic bytes. Videos: MP4/MOV must start with an
+// ftyp box, WebM/Matroska with the EBML magic — so an HTML/JS polyglot renamed
+// to .mp4 (which serves fine as a static file and could be triggered through a
+// misconfigured proxy/CDN) is rejected before it is stored.
 function checkMagicBytes(filePath, ext, cb) {
   let header;
   try {
@@ -56,12 +60,16 @@ function checkMagicBytes(filePath, ext, cb) {
   const isPng = header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4e && header[3] === 0x47;
   const isGif = header.toString('ascii', 0, 6) === 'GIF87a' || header.toString('ascii', 0, 6) === 'GIF89a';
   const isWebp = header.toString('ascii', 0, 4) === 'RIFF' && header.toString('ascii', 8, 12) === 'WEBP';
+  const isMp4 = header.toString('ascii', 4, 8) === 'ftyp'; // MP4/MOV both use ISO BMFF boxes
+  const isWebm = header[0] === 0x1a && header[1] === 0x45 && header[2] === 0xdf && header[3] === 0xa3; // EBML
 
   const valid = /jpg|jpeg/.test(ext) ? isJpeg
     : ext === 'png' ? isPng
     : ext === 'gif' ? isGif
     : ext === 'webp' ? isWebp
-    : true; // videos are validated by extension + mimetype only
+    : ext === 'mp4' || ext === 'mov' ? isMp4
+    : ext === 'webm' ? isWebm
+    : false;
 
   if (!valid) {
     return cb(new Error('File content does not match its extension'));
@@ -94,25 +102,18 @@ router.post('/', protect, admin, handleUpload(upload.single('image'), async (req
     return res.status(400).send('No file uploaded or validation failed');
   }
   const ext = path.extname(req.file.originalname).toLowerCase().replace('.', '');
-  if (ext !== 'mp4' && ext !== 'mov' && ext !== 'webm') {
-    checkMagicBytes(req.file.path, ext, (err) => {
-      if (err) {
-        fs.unlinkSync(req.file.path);
-        return res.status(400).json({ message: err.message });
-      }
-      res.send(`/${req.file.path.replace(/\\/g, '/')}`);
-    });
-    return;
-  }
-  res.send(`/${req.file.path.replace(/\\/g, '/')}`);
+  checkMagicBytes(req.file.path, ext, (err) => {
+    if (err) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ message: err.message });
+    }
+    res.send(`/${req.file.path.replace(/\\/g, '/')}`);
+  });
 }));
 
 router.post('/multiple', protect, admin, handleUpload(upload.array('images', 3), async (req, res) => {
   const checked = await Promise.all(req.files.map((file) => {
     const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
-    if (ext === 'mp4' || ext === 'mov' || ext === 'webm') {
-      return { file };
-    }
     return new Promise((resolve) => {
       checkMagicBytes(file.path, ext, (err) => {
         if (err) {

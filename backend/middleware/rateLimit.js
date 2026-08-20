@@ -28,4 +28,14 @@ const reviewLimiter = rateLimit({
   message: { message: 'Too many reviews. Please try again later.' },
 });
 
-module.exports = { authLimiter, orderLimiter, reviewLimiter };
+// Anti-abuse limit for newsletter signups: every valid submission fires a real
+// outbound email, so an unlimited endpoint would turn into an SMTP relay.
+const subscriberLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many subscription attempts. Please try again later.' },
+});
+
+module.exports = { authLimiter, orderLimiter, reviewLimiter, subscriberLimiter };

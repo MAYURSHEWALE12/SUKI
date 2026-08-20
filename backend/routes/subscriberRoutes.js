@@ -4,11 +4,12 @@ const Subscriber = require('../models/Subscriber');
 const sendEmail = require('../utils/sendEmail');
 const { newsletterWelcome } = require('../utils/emailTemplates');
 const { protect, admin } = require('../middleware/authMiddleware');
+const { subscriberLimiter } = require('../middleware/rateLimit');
 
 // @route   POST /api/subscribers
 // @desc    Subscribe to newsletter
-// @access  Public
-router.post('/', async (req, res) => {
+// @access  Public (rate-limited: every valid signup sends a real email)
+router.post('/', subscriberLimiter, async (req, res) => {
   try {
     const { email } = req.body;
 

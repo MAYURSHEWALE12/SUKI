@@ -44,6 +44,7 @@ function json(method, url, base, body, headers = {}) {
 function form(url, params, headers = {}) {
   return fetch(url, {
     method: 'POST',
+    redirect: 'manual', // payu callbacks redirect to the frontend; the tests only care about side effects
     headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...headers },
     body: new URLSearchParams(params).toString(),
   });

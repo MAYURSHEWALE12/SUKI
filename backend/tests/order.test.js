@@ -326,6 +326,13 @@ test('resume payment renders a PayU auto-submit form with a valid hash', async (
   assert.match(html, new RegExp(`name="txnid" value="${created._id}"`));
   assert.match(html, /name="amount" value="9998"/);
   assert.match(html, /name="hash" value="[0-9a-f]{128}"/);
+
+  // The page needs its own permissive CSP (inline auto-submit script + form
+  // POST to the PayU origin), overriding helmet's restrictive default.
+  const csp = res.headers.get('content-security-policy');
+  assert.ok(csp, 'CSP header present');
+  assert.match(csp, /script-src 'unsafe-inline'/, 'inline auto-submit script allowed');
+  assert.match(csp, /form-action \*/, 'form may POST to the PayU gateway');
 });
 
 test('resume payment redirects to success when the order is already paid', async () => {

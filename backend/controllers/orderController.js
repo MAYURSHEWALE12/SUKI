@@ -370,10 +370,19 @@ exports.resumeOrderPayment = async (req, res) => {
     ].map(([name, value]) => `<input type="hidden" name="${name}" value="${String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" />`).join('\n');
 
     res.setHeader('Content-Type', 'text/html');
+    // Helmet's default CSP forbids inline scripts AND form submissions to
+    // other origins (form-action 'self'), which would silently break this
+    // auto-submit page. Scope a permissive policy to this response only:
+    // it contains no user input, just a form that posts to the PayU gateway.
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; form-action *; base-uri 'none'; frame-ancestors 'none'"
+    );
     res.send(`<!DOCTYPE html>
 <html>
 <head><title>Redirecting to payment…</title></head>
 <body style="font-family: Arial, sans-serif; background:#fafafa; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0;">
+  <noscript><p>Please enable JavaScript to be redirected to secure payment.</p></noscript>
   <form id="payuForm" method="POST" action="${gatewayUrl}">
     ${hiddenFields}
   </form>
