@@ -3,10 +3,11 @@ const fs = require('fs');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const crypto = require('crypto');
-const sendEmail = require('../utils/sendEmail');
 const { validateDiscountCode, calculateDiscountAmount } = require('./discountController');
 const { computeForwardHash, computeReverseHash } = require('../utils/payuHash');
 const { isValidObjectId } = require('../utils/validation');
+const sendEmail = require('../utils/sendEmail');
+const { orderReceipt, paymentFailed, orderStatusUpdate } = require('../utils/emailTemplates');
 
 const VALID_ORDER_STATUSES = ['Processing', 'Shipped', 'Delivered', 'Cancelled', 'Refunded'];
 
@@ -44,6 +45,7 @@ exports.addOrderItems = async (req, res) => {
       shippingAddress,
       paymentMethod,
       discountCode,
+      email,
     } = req.body;
 
     if (!orderItems || orderItems.length === 0) {
@@ -114,9 +116,19 @@ exports.addOrderItems = async (req, res) => {
       shippingPrice,
       totalPrice,
       sessionToken,
+      email: email || (req.user ? req.user.email : undefined),
     });
 
     const createdOrder = await order.save();
+
+    // Order placed (receipt) - email is advisory; never block the response on SMTP
+    if (createdOrder.email) {
+      sendEmail({
+        email: createdOrder.email,
+        subject: `Order Confirmed - #${createdOrder._id.toString().substring(0, 8).toUpperCase()}`,
+        html: orderReceipt({ order: createdOrder, frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000' }),
+      });
+    }
 
     // Stock is unlimited; availability is a boolean flag managed by admin.
     // No inventory decrement on order creation.
@@ -278,11 +290,22 @@ exports.updateOrderStatus = async (req, res) => {
     const order = await Order.findById(req.params.id);
 
     if (order) {
+      const previousStatus = order.status;
       order.status = req.body.status || order.status;
       if (req.body.trackingLink !== undefined) order.trackingLink = req.body.trackingLink;
       if (req.body.adminNotes !== undefined) order.adminNotes = req.body.adminNotes;
       
       const updatedOrder = await order.save();
+
+      // Notify the customer when the status actually changes
+      if (order.email && order.status !== previousStatus) {
+        sendEmail({
+          email: order.email,
+          subject: `Order Update: ${order.status} - #${order._id.toString().substring(0, 8).toUpperCase()}`,
+          html: orderStatusUpdate({ order, previousStatus, frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000' }),
+        });
+      }
+
       res.json(updatedOrder);
     } else {
       res.status(404).json({ message: 'Order not found' });
@@ -417,6 +440,15 @@ exports.handlePayuSuccess = async (req, res) => {
         };
         await order.save();
 
+        // Payment confirmed - email is advisory; never block the redirect on SMTP
+        if (order.email) {
+          sendEmail({
+            email: order.email,
+            subject: `Payment Received - Order #${txnid.substring(0, 8).toUpperCase()}`,
+            html: orderReceipt({ order, frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000' }),
+          });
+        }
+
         // Stock is unlimited; availability is a boolean flag managed by admin.
 
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -463,6 +495,14 @@ exports.handlePayuFailure = async (req, res) => {
       if (order && !order.isPaid) {
         order.status = 'Payment Failed';
         await order.save();
+
+        if (order.email) {
+          sendEmail({
+            email: order.email,
+            subject: `Payment Not Completed - Order #${txnid.substring(0, 8).toUpperCase()}`,
+            html: paymentFailed({ order, frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000' }),
+          });
+        }
       }
     }
   } catch (error) {

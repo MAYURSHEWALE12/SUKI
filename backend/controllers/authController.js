@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
+const { welcome } = require('../utils/emailTemplates');
 const crypto = require('crypto');
 const Order = require('../models/Order');
 const jwt = require('jsonwebtoken');
@@ -46,6 +47,13 @@ exports.registerUser = async (req, res) => {
     });
 
     if (user) {
+      // Welcome email - advisory; never block registration on SMTP
+      sendEmail({
+        email: user.email,
+        subject: 'Welcome to Suki Ethnic!',
+        html: welcome({ name: user.name, frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000' }),
+      });
+
       res.status(201).json({
         _id: user._id,
         name: user.name,

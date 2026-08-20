@@ -205,6 +205,24 @@ test('payu-failure only marks an order failed when the callback hash verifies', 
   assert.strictEqual(order.status, 'Processing');
 });
 
+test('order stores the customer email for receipts', async () => {
+  const res = await json('POST', `${ctx.base}/api/orders`, ctx.base, { ...orderBody, email: 'buyer@test.com' });
+  assert.strictEqual(res.status, 201);
+  const body = await res.json();
+  assert.strictEqual(body.email, 'buyer@test.com');
+});
+
+test('order status update persists tracking and does not error without SMTP', async () => {
+  const created = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
+  const res = await json('PUT', `${ctx.base}/api/orders/${created._id}/status`, ctx.base,
+    { status: 'Shipped', trackingLink: 'https://track.example/1' },
+    { Authorization: `Bearer ${adminToken}` });
+  assert.strictEqual(res.status, 200);
+  const body = await res.json();
+  assert.strictEqual(body.status, 'Shipped');
+  assert.strictEqual(body.trackingLink, 'https://track.example/1');
+});
+
 test('orders list hides pending/failed by default but shows them with includePending', async () => {
   await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody);
   await Order.updateOne({}, { status: 'Pending Payment' });

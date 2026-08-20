@@ -193,6 +193,7 @@ export default function CheckoutPage() {
         })),
         shippingAddress,
         paymentMethod,
+        email: customerEmail.trim(),
         ...(appliedDiscount ? { discountCode: appliedDiscount.code } : {}),
       };
 

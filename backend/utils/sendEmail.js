@@ -1,6 +1,10 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.warn('Email skipped: SMTP_USER/SMTP_PASS not configured');
+    return false;
+  }
   try {
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',

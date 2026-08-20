@@ -9,6 +9,7 @@ async function start() {
   process.env.PAYU_MERCHANT_SALT = 'test-salt';
   process.env.PAYU_ENV = 'test';
   process.env.CORS_ORIGIN = 'http://localhost:3000';
+  process.env.ORDER_LIMIT_MAX = '1000';
 
   const mongo = await MongoMemoryServer.create();
   await mongoose.connect(mongo.getUri());

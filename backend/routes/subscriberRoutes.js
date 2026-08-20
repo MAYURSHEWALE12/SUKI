@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Subscriber = require('../models/Subscriber');
+const sendEmail = require('../utils/sendEmail');
+const { newsletterWelcome } = require('../utils/emailTemplates');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 // @route   POST /api/subscribers
@@ -23,6 +25,13 @@ router.post('/', async (req, res) => {
 
     // Create new subscriber
     subscriber = await Subscriber.create({ email });
+
+    // Confirmation email - advisory; never block subscription on SMTP
+    sendEmail({
+      email: subscriber.email,
+      subject: 'Welcome to the Suki Ethnic Newsletter!',
+      html: newsletterWelcome(),
+    });
 
     res.status(201).json({
       success: true,

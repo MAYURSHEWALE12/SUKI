@@ -9,10 +9,11 @@ const authLimiter = rateLimit({
   message: { message: 'Too many attempts. Please try again later.' },
 });
 
-// Anti-abuse limit for creating orders
+// Anti-abuse limit for creating orders. Overridable via env so the test suite
+// (which issues many order POSTs against one app instance) never trips it.
 const orderLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20,
+  max: Number(process.env.ORDER_LIMIT_MAX) || 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many orders placed. Please try again later.' },
