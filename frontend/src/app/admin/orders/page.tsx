@@ -43,6 +43,7 @@ export default function AdminOrdersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [openActionDropdown, setOpenActionDropdown] = useState<string | null>(null);
   
   // Notes and Tracking state for inputs
   const [trackingLinks, setTrackingLinks] = useState<Record<string, string>>({});
@@ -226,7 +227,7 @@ export default function AdminOrdersPage() {
     <div>
       <div className="admin-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e1b4b', marginBottom: '0.25rem' }}>Orders Management</h1>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111d4a', marginBottom: '0.25rem' }}>Orders Management</h1>
           <p style={{ color: '#6b7280', fontSize: '0.9rem', margin: 0 }}>View and manage all customer orders efficiently.</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -240,7 +241,7 @@ export default function AdminOrdersPage() {
               style={{ padding: '0.6rem 1rem 0.6rem 2.2rem', border: '1px solid #e5e7eb', borderRadius: '8px', minWidth: '320px', fontSize: '0.85rem' }}
             />
           </div>
-          <button className="admin-btn-primary" style={{ background: '#6d28d9', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button className="admin-btn-primary" style={{ background: '#111d4a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Export Orders
           </button>
@@ -287,7 +288,7 @@ export default function AdminOrdersPage() {
                   <td style={{ paddingLeft: '1.5rem' }}>
                     <input type="checkbox" checked={selectedOrders.has(order._id)} onChange={() => toggleSelectOrder(order._id)} style={{ borderRadius: '4px', border: '1px solid #d1d5db' }} />
                   </td>
-                  <td style={{ fontWeight: 600, color: '#4c1d95', fontSize: '0.9rem' }}>
+                  <td style={{ fontWeight: 600, color: '#111d4a', fontSize: '0.9rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <button 
                         onClick={() => setExpandedOrderId(expandedOrderId === order._id ? null : order._id)}
@@ -295,7 +296,7 @@ export default function AdminOrdersPage() {
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: expandedOrderId === order._id ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}><polyline points="9 18 15 12 9 6"></polyline></svg>
                       </button>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6d28d9" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111d4a" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                       #{order._id.substring(0, 8).toUpperCase()}
                     </div>
                   </td>
@@ -309,24 +310,45 @@ export default function AdminOrdersPage() {
                       fontWeight: 700, 
                       letterSpacing: '0.5px',
                       textTransform: 'uppercase',
-                      backgroundColor: order.status === 'Processing' ? '#fef3c7' : order.status === 'Shipped' ? '#e0e7ff' : order.status === 'Delivered' ? '#dcfce3' : '#f3f4f6',
-                      color: order.status === 'Processing' ? '#d97706' : order.status === 'Shipped' ? '#4338ca' : order.status === 'Delivered' ? '#15803d' : '#4b5563',
-                      border: `1px solid ${order.status === 'Processing' ? '#fde68a' : order.status === 'Shipped' ? '#c7d2fe' : order.status === 'Delivered' ? '#bbf7d0' : '#e5e7eb'}`
+                      backgroundColor: order.status === 'Processing' ? '#ffedd5' : order.status === 'Shipped' ? '#e0e7ff' : order.status === 'Delivered' ? '#dcfce3' : '#f3f4f6',
+                      color: order.status === 'Processing' ? '#ea580c' : order.status === 'Shipped' ? '#4338ca' : order.status === 'Delivered' ? '#15803d' : '#4b5563'
                     }}>
                       {order.status}
                     </span>
                   </td>
                   <td>
-                    <select 
-                      value={order.status}
-                      onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                      disabled={updating === order._id}
-                      style={{ padding: '0.4rem 1.8rem 0.4rem 0.8rem', borderRadius: '8px', border: '1px solid #e5e7eb', backgroundColor: '#fff', fontSize: '0.85rem', color: '#374151', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1em 1em' }}
+                    <div 
+                      style={{ position: 'relative', width: '130px' }} 
+                      tabIndex={0} 
+                      onBlur={(e) => {
+                        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                          setOpenActionDropdown(null);
+                        }
+                      }}
                     >
-                      <option value="Processing">Processing</option>
-                      <option value="Shipped">Shipped</option>
-                      <option value="Delivered">Delivered</option>
-                    </select>
+                      <div 
+                        onClick={() => { if (!updating) setOpenActionDropdown(openActionDropdown === order._id ? null : order._id); }}
+                        style={{ background: '#fff', border: '1px solid #111d4a', padding: '0.4rem 2rem 0.4rem 1rem', borderRadius: openActionDropdown === order._id ? '6px 6px 0 0' : '6px', color: '#111d4a', fontSize: '0.85rem', fontWeight: 400, cursor: updating === order._id ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: updating === order._id ? 0.7 : 1 }}
+                      >
+                        {order.status}
+                        <svg style={{ position: 'absolute', right: '10px' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                      </div>
+                      {openActionDropdown === order._id && (
+                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #111d4a', borderTop: 'none', borderRadius: '0 0 6px 6px', zIndex: 10, overflow: 'hidden' }}>
+                          {['Processing', 'Shipped', 'Delivered'].map(status => (
+                            <div 
+                              key={status}
+                              onClick={() => { updateOrderStatus(order._id, status); setOpenActionDropdown(null); }}
+                              style={{ padding: '0.6rem 1rem', cursor: 'pointer', fontSize: '0.85rem', background: order.status === status ? '#111d4a' : '#fff', color: order.status === status ? '#fff' : '#111d4a', transition: 'background 0.2s', textAlign: 'left' }}
+                              onMouseEnter={(e) => { if (order.status !== status) { e.currentTarget.style.background = '#f3f4f6'; } }}
+                              onMouseLeave={(e) => { if (order.status !== status) { e.currentTarget.style.background = '#fff'; } }}
+                            >
+                              {status}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
                 {expandedOrderId === order._id && (
@@ -335,41 +357,41 @@ export default function AdminOrdersPage() {
                       <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '2rem' }}>
                         <div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                            <h4 style={{ margin: 0, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>Order Items</h4>
+                            <h4 style={{ margin: 0, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#111d4a' }}>Order Items</h4>
                             <button 
                               onClick={() => downloadPDFLabel(order)}
-                              className="admin-btn-secondary"
-                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px', color: '#111d4a', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500, cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
                             >
-                              ⬇️ Download PDF Label
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                              Download PDF Label
                             </button>
                           </div>
                           {order.orderItems.map((item: OrderItem, idx: number) => (
                             <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                               {item.image && <Image src={item.image} alt={item.name} width={50} height={60} style={{ width: '50px', height: '60px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #e5e7eb' }} />}
                               <div>
-                                <div style={{ fontWeight: 600, color: '#111' }}>{item.name}</div>
+                                <div style={{ fontWeight: 600, color: '#111d4a' }}>{item.name}</div>
                                 <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>Qty: {item.quantity}</div>
                               </div>
-                              <div style={{ marginLeft: 'auto', fontWeight: 600, color: '#111' }}>₹{item.price * item.quantity}</div>
+                              <div style={{ marginLeft: 'auto', fontWeight: 600, color: '#111d4a' }}>₹{(item.price * item.quantity).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                             </div>
                           ))}
 
                           <div style={{ marginTop: '2rem' }}>
-                            <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>Fulfillment (Tracking & Notes)</h4>
+                            <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#111d4a' }}>Fulfillment (Tracking & Notes)</h4>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                               <input 
                                 type="text" 
                                 placeholder="Tracking Link (e.g. BlueDart URL)" 
                                 value={trackingLinks[order._id] || ''}
                                 onChange={(e) => setTrackingLinks({...trackingLinks, [order._id]: e.target.value})}
-                                style={{ padding: '0.6rem', border: '1px solid #d1d5db', borderRadius: '6px', width: '100%' }}
+                                style={{ padding: '0.6rem', border: '1px solid #e5e7eb', borderRadius: '6px', width: '100%', color: '#374151' }}
                               />
                               <textarea 
                                 placeholder="Admin Notes (Internal only)" 
                                 value={adminNotes[order._id] || ''}
                                 onChange={(e) => setAdminNotes({...adminNotes, [order._id]: e.target.value})}
-                                style={{ padding: '0.6rem', border: '1px solid #d1d5db', borderRadius: '6px', width: '100%', minHeight: '60px' }}
+                                style={{ padding: '0.6rem', border: '1px solid #e5e7eb', borderRadius: '6px', width: '100%', minHeight: '60px', color: '#374151' }}
                               />
                               <button 
                                 onClick={() => updateOrderStatus(order._id, order.status)}
@@ -384,12 +406,12 @@ export default function AdminOrdersPage() {
                         </div>
 
                         <div>
-                          <h4 style={{ marginBottom: '1rem', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#111' }}>Shipping Details</h4>
+                          <h4 style={{ marginBottom: '1rem', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#111d4a' }}>Shipping Details</h4>
                           <div style={{ padding: '1rem', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #e5e7eb', lineHeight: '1.6', fontSize: '0.9rem' }}>
-                            <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: '#111' }}>{order.user?.name || order.shippingAddress.fullName || 'Customer'}</div>
-                            <div>{order.shippingAddress.address}</div>
-                            <div>{order.shippingAddress.city}, {order.shippingAddress.postalCode}</div>
-                            <div>{order.shippingAddress.country}</div>
+                            <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: '#111d4a' }}>{order.user?.name || order.shippingAddress.fullName || 'Customer'}</div>
+                            <div style={{ color: '#4b5563' }}>{order.shippingAddress.address}</div>
+                            <div style={{ color: '#4b5563' }}>{order.shippingAddress.city}, {order.shippingAddress.postalCode}</div>
+                            <div style={{ color: '#4b5563' }}>{order.shippingAddress.country}</div>
                             <div style={{ marginTop: '0.5rem', color: '#6b7280' }}>Phone: {order.shippingAddress.phone || order.user?.phone || 'N/A'}</div>
                             <div style={{ color: '#6b7280' }}>Email: {order.user?.email || 'N/A'}</div>
                           </div>
@@ -418,7 +440,7 @@ export default function AdminOrdersPage() {
               <button 
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
                 disabled={currentPage === 1}
-                style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: '1px solid #e5e7eb', background: '#fff', color: currentPage === 1 ? '#d1d5db' : '#374151', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', border: '1px solid #e5e7eb', background: '#fff', color: currentPage === 1 ? '#d1d5db' : '#374151', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
               </button>
@@ -432,7 +454,7 @@ export default function AdminOrdersPage() {
                     <button 
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: pageNum === currentPage ? 'none' : '1px solid #e5e7eb', background: pageNum === currentPage ? '#5b21b6' : '#fff', color: pageNum === currentPage ? '#fff' : '#374151', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
+                      style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', border: pageNum === currentPage ? 'none' : '1px solid #e5e7eb', background: pageNum === currentPage ? '#111d4a' : '#fff', color: pageNum === currentPage ? '#fff' : '#374151', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
                     >
                       {pageNum}
                     </button>
@@ -446,7 +468,7 @@ export default function AdminOrdersPage() {
               <button 
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
                 disabled={currentPage === totalPages}
-                style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: '1px solid #e5e7eb', background: '#fff', color: currentPage === totalPages ? '#d1d5db' : '#374151', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', border: '1px solid #e5e7eb', background: '#fff', color: currentPage === totalPages ? '#d1d5db' : '#374151', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
               </button>

@@ -16,6 +16,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [notify, setNotify] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   if (!isOpen) return null;
 
@@ -85,50 +86,51 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           <button className="close-btn-mobile" onClick={onClose}>&times;</button>
           
           <div className="brand-header">
-            <h1 className="modal-logo">Suki</h1>
-          </div>
-          
-          <h2 className="welcome-text">Welcome! {isLogin ? 'Login' : 'Register'} to get best deals!</h2>
-          
-          <div className="features-grid">
-            <div className="feature-card">
-              <div className="feature-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-              </div>
-              <p>INDIA&apos;S MOST<br/>AFFORDABLE</p>
-            </div>
-            
-            <div className="feature-card">
-              <div className="feature-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
-              </div>
-              <p>PREMIUM<br/>QUALITY</p>
-            </div>
-            
-            <div className="feature-card">
-              <div className="feature-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              </div>
-              <p>EASY<br/>RETURNS</p>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textDecoration: 'none' }}>
+              <span style={{ fontFamily: 'var(--font-logo)', fontSize: '56px', lineHeight: '1', color: '#C2185B', textTransform: 'lowercase', fontWeight: 400, letterSpacing: '2px' }}>suki</span>
+              <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', letterSpacing: '12px', color: '#C2185B', textTransform: 'uppercase', marginTop: '4px', fontWeight: 400, marginLeft: '12px' }}>ETHNIC</span>
             </div>
           </div>
+          
+          <h2 className="welcome-text">{isLogin ? 'Welcome Back!' : 'Join Us!'}</h2>
+          <p className="welcome-subtext">
+            {isLogin 
+              ? 'Login to unlock exclusive deals\nand a delightful shopping experience.' 
+              : 'Sign up to unlock exclusive deals\nand a delightful shopping experience.'}
+          </p>
+
+          <div className="floral-divider-small">
+            <span></span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--color-primary)"><circle cx="12" cy="12" r="6"/></svg>
+            <span></span>
+          </div>
+          
+
+          
         </div>
 
         {/* Right Side - Login Form */}
+        <button className="close-btn-desktop" onClick={onClose}>&times;</button>
         <div className="modal-right">
-          <button className="close-btn-desktop" onClick={onClose}>&times;</button>
           
           <div className="login-form-container">
-            <h3 className="login-heading">{isLogin ? 'Login Now!' : 'Create Account'}</h3>
+            <h3 className="login-heading">{isLogin ? 'Login to Your Account' : 'Create Account'}</h3>
+            <p className="login-subheading">{isLogin ? 'Enter your details to continue' : 'Enter your details to sign up'}</p>
             
+            <div className="floral-divider-large">
+              <span></span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--color-primary)"><circle cx="12" cy="12" r="6"/></svg>
+              <span></span>
+            </div>
+
             {error && <div className="error-message" style={{ color: 'red', marginBottom: '1rem', fontSize: '0.85rem' }}>{error}</div>}
 
             <form onSubmit={handleSubmit} className="login-form">
               
               {!isLogin && (
                 <>
-                  <div className="input-group" style={{ marginBottom: '1rem' }}>
-                    <div className="input-prefix">
+                  <div className="auth-input-group" style={{ marginBottom: '1rem' }}>
+                    <div className="auth-input-prefix">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     </div>
                     <input 
@@ -140,8 +142,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     />
                   </div>
                   
-                  <div className="input-group" style={{ marginBottom: '1rem' }}>
-                    <div className="input-prefix">
+                  <div className="auth-input-group" style={{ marginBottom: '1rem' }}>
+                    <div className="auth-input-prefix">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                     </div>
                     <input 
@@ -154,8 +156,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 </>
               )}
 
-              <div className="input-group">
-                <div className="input-prefix">
+              <div className="auth-input-group">
+                <div className="auth-input-prefix">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                 </div>
                 <input 
@@ -167,17 +169,29 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 />
               </div>
 
-              <div className="input-group" style={{ marginTop: '1rem' }}>
-                <div className="input-prefix">
+              <div className="auth-input-group" style={{ marginTop: '1rem' }}>
+                <div className="auth-input-prefix">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                 </div>
                 <input 
-                  type="password" 
+                  type={showPassword ? "text" : "password"} 
                   placeholder="Enter Password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+                <button 
+                  type="button" 
+                  className="auth-input-suffix" 
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.75rem 1rem' }}
+                >
+                  {showPassword ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                  )}
+                </button>
               </div>
 
               {!isLogin && (
@@ -186,10 +200,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     type="checkbox" 
                     id="agreePolicies" 
                     required 
-                    style={{ marginTop: '0.25rem', accentColor: '#C2185B' }}
                   />
-                  <label htmlFor="agreePolicies" style={{ lineHeight: 1.4, fontSize: '0.85rem' }}>
-                    I agree to the <a href="/terms-and-conditions" target="_blank" style={{ color: '#C2185B', textDecoration: 'underline' }}>Terms & Conditions</a> and <a href="/privacy-policy" target="_blank" style={{ color: '#C2185B', textDecoration: 'underline' }}>Privacy Policy</a>. <span style={{color:'red'}}>*</span>
+                  <label htmlFor="agreePolicies">
+                    I agree to the <a href="/terms-and-conditions" target="_blank">Terms & Conditions</a> and <a href="/privacy-policy" target="_blank">Privacy Policy</a>. <span style={{color:'red'}}>*</span>
                   </label>
                 </div>
               )}
@@ -199,32 +212,41 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   id="notify" 
                   checked={notify}
                   onChange={(e) => setNotify(e.target.checked)}
-                  style={{ marginTop: '0.25rem', accentColor: '#C2185B' }}
                 />
-                <label htmlFor="notify" style={{ lineHeight: 1.4, fontSize: '0.85rem' }}>I agree to receive offers, updates, and promotional messages from Suki Ethnic.</label>
+                <label htmlFor="notify">I agree to receive offers, updates, and promotional messages from Suki Ethnic.</label>
               </div>
 
               <button type="submit" className="submit-btn" disabled={loading}>
-                {loading ? 'Processing...' : 'Submit'}
+                {loading ? 'Processing...' : (isLogin ? 'Login' : 'Register')}
               </button>
             </form>
 
-            <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.9rem' }}>
-              <span style={{ color: '#666' }}>
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
-              </span>
-              <button 
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontWeight: '600', cursor: 'pointer', padding: 0 }}
-              >
+            <div className="or-divider">
+              <span>OR</span>
+            </div>
+
+            <div className="social-buttons">
+              <button type="button" className="social-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="16" height="16">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                  <path fill="none" d="M0 0h48v48H0z"/>
+                </svg>
+                <span>Continue with Google</span>
+              </button>
+            </div>
+
+            <div className="switch-mode">
+              <span>{isLogin ? "Don't have an account? " : "Already have an account? "}</span>
+              <button type="button" onClick={() => setIsLogin(!isLogin)}>
                 {isLogin ? 'Register' : 'Login'}
               </button>
             </div>
 
-            <p className="terms-text" style={{ marginTop: '1.5rem' }}>
-              I accept that I have read & understood your<br/>
-              <a href="#">Privacy Policy</a> and <a href="#">T&Cs</a>.
+            <p className="terms-text-bottom">
+              By continuing, you agree to our <a href="#">Privacy Policy</a> and <a href="#">T&Cs</a>.
             </p>
           </div>
         </div>

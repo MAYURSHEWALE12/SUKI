@@ -75,7 +75,39 @@ exports.loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        isAdmin: user.isAdmin,
+        role: user.role,
+        addresses: user.addresses,
+        wishlist: user.wishlist || [],
+        token: generateToken(user._id),
+      });
+    } else {
+      res.status(401).json({ message: 'Invalid email or password' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Auth admin & get token
+// @route   POST /api/auth/admin-login
+// @access  Public
+exports.adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check for user email, but explicitly select password field
+    const user = await User.findOne({ email }).select('+password');
+
+    if (user && (await user.matchPassword(password))) {
+      if (user.role !== 'admin') {
+        return res.status(403).json({ message: 'Access Denied: You do not have administrator privileges.' });
+      }
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
         addresses: user.addresses,
         wishlist: user.wishlist || [],
         token: generateToken(user._id),
@@ -101,7 +133,7 @@ exports.getUserProfile = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        isAdmin: user.isAdmin,
+        role: user.role,
         addresses: user.addresses,
         wishlist: user.wishlist || [],
       });
@@ -162,7 +194,7 @@ exports.updateUserProfile = async (req, res) => {
         name: updatedUser.name,
         email: updatedUser.email,
         phone: updatedUser.phone,
-        isAdmin: updatedUser.isAdmin,
+        role: updatedUser.role,
         addresses: updatedUser.addresses,
         wishlist: updatedUser.wishlist || [],
         token: generateToken(updatedUser._id),

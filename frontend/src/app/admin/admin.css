@@ -38,14 +38,14 @@
   font-size: 1.4rem;
   font-weight: 700;
   letter-spacing: 2px;
-  color: #3b0764;
+  color: #111d4a;
   border-bottom: 1px solid #e5e7eb;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 .admin-logo-icon {
-  background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%);
+  background: #111d4a;
   color: white;
   padding: 0.3rem;
   border-radius: 6px;
@@ -80,19 +80,19 @@
   transition: all 0.2s;
   border-left: 3px solid transparent;
   margin: 0 0.5rem;
-  border-radius: 9999px;
+  border-radius: 8px;
 }
 
 .admin-nav-link:hover {
-  color: #3b0764;
+  color: #111d4a;
   background-color: #f3f4f6;
 }
 
 .admin-nav-link.active {
   color: #ffffff;
-  background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%);
+  background: #111d4a;
   border-left-color: transparent;
-  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+  box-shadow: 0 4px 10px rgba(17, 29, 74, 0.3);
 }
 
 .admin-sidebar-footer {
@@ -137,11 +137,11 @@
   cursor: pointer;
   padding: 0.5rem;
   transition: color 0.2s;
-  border-radius: 9999px;
+  border-radius: 8px;
 }
 
 .admin-site-link:hover {
-  color: #3b0764;
+  color: #111d4a;
   background-color: #f3f4f6;
 }
 
@@ -174,7 +174,7 @@
 }
 
 .admin-btn-primary {
-  background: linear-gradient(135deg, #5b21b6 0%, #8b5cf6 100%);
+  background: #111d4a;
   color: #ffffff;
   border: none;
   padding: 0.6rem 1.2rem;
@@ -191,8 +191,8 @@
 }
 
 .admin-btn-primary:hover {
-  background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%);
-  box-shadow: 0 4px 6px rgba(139, 92, 246, 0.25);
+  background: #111d4a;
+  box-shadow: 0 4px 6px rgba(17, 29, 74, 0.25);
 }
 
 .admin-card {
@@ -211,7 +211,7 @@
 
 .admin-card table th {
   border-bottom: 2px solid #e5e7eb;
-  background-color: #f9fafb !important;
+  background-color: #ffffff !important;
   color: #4b5563 !important;
   font-weight: 600;
   text-transform: uppercase;
@@ -378,7 +378,7 @@
 .status-badge {
   display: inline-block;
   padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
+  border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -446,7 +446,7 @@
 }
 .icon-purple {
   background-color: #f3e8ff;
-  color: #7c3aed;
+  color: #111d4a;
 }
 .icon-green {
   background-color: #dcfce7;
@@ -468,7 +468,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  background: #111d4a;
   color: white;
   display: flex;
   align-items: center;

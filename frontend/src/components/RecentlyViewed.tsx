@@ -74,7 +74,7 @@ export default function RecentlyViewed() {
         .continue {
           max-width: 100%;
           margin: 0 auto;
-          padding: 48px 16px 90px;
+          padding: 16px 16px 0px;
         }
         .continue-head {
           display: flex;

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import HeroCarousel from "@/components/HeroCarousel";
 import BestSellersGrid from "@/components/BestSellersGrid";
 import LehengasGrid from "@/components/LehengasGrid";
 import SareesGrid from "@/components/SareesGrid";
@@ -11,7 +10,20 @@ import YouMayAlsoLike from "@/components/YouMayAlsoLike";
 export default function Home() {
   return (
     <div className="homepage">
-      <HeroCarousel />
+      <section className="hero-banner-section" style={{ width: '100%', position: 'relative' }}>
+        <Link href="/collections/new-arrivals" style={{ display: 'block', width: '100%', cursor: 'pointer' }}>
+          <Image 
+            src="/images/banner_v2.png" 
+            alt="Suki Ethnic Hero Banner" 
+            width={1920}
+            height={800}
+            priority
+            sizes="100vw"
+            style={{ width: '100%', display: 'block', height: 'auto', maxHeight: '85vh', objectFit: 'cover', objectPosition: 'center' }} 
+          />
+        </Link>
+        <div className="hero-bottom-border"></div>
+      </section>
 
       <RecentlyViewed />
       <YouMayAlsoLike />

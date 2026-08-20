@@ -16,7 +16,7 @@ export default function AdminLoginPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -26,14 +26,8 @@ export default function AdminLoginPage() {
 
       if (response.ok) {
         // Logged in successfully
-        // Now check if user is actually admin
-        const profileRes = await fetch('/api/auth/profile', {
-          headers: { Authorization: `Bearer ${data.token}` }
-        });
-        
-        const profileData = await profileRes.json();
-        
-        if (profileRes.ok && profileData.isAdmin) {
+        // Check if user is actually admin directly from login response
+        if (data.role === 'admin') {
           localStorage.setItem('suki_admin_token', data.token);
           router.push('/admin');
         } else {

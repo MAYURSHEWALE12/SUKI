@@ -363,38 +363,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           <svg className="breadcrumb-separator" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
           <span className="breadcrumb-current">{product.name}</span>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginLeft: 'auto' }}>
-
-          <button onClick={handleShare} aria-label="Share" style={{ background: '#FDF2F8', border: '1px solid #FCE7F3', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#C2185B' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="18" cy="5" r="3"></circle>
-              <circle cx="6" cy="12" r="3"></circle>
-              <circle cx="18" cy="19" r="3"></circle>
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-            </svg>
-          </button>
-          <button 
-            onClick={() => {
-              const url = window.location.href;
-              const text = `Can I get more details about this ${product.name}?\n${url}`;
-              window.open(`https://wa.me/917768875524?text=${encodeURIComponent(text)}`, '_blank');
-            }}
-            aria-label="WhatsApp" style={{ background: '#FDF2F8', border: '1px solid #FCE7F3', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#C2185B' }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-            </svg>
-          </button>
-          <button 
-            onClick={() => toggleWishlist(product._id)}
-            aria-label="Toggle Wishlist" style={{ background: '#FDF2F8', border: '1px solid #FCE7F3', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#C2185B' }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill={isWishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-            </svg>
-          </button>
-        </div>
       </div>
 
       <div className="product-layout">
@@ -460,10 +428,45 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
         {/* Right Side: Info */}
         <div className="product-info">
-          <h1 className="pdp-title" style={{ textTransform: 'uppercase', margin: 0, marginBottom: '0.5rem', fontFamily: '"Poppins", sans-serif', fontWeight: 600, letterSpacing: '1px', color: '#4a1523' }}>{product.name}</h1>
-          {product.shortDescription && (
-            <p style={{ color: '#6b7280', fontSize: '1.05rem', marginTop: 0, marginBottom: '1rem', lineHeight: 1.5 }}>{product.shortDescription}</p>
-          )}
+          <div className="pdp-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', marginBottom: '1rem' }}>
+            <div style={{ flex: 1 }}>
+              <h1 className="pdp-title" style={{ textTransform: 'uppercase', margin: 0, marginBottom: '0.5rem', fontFamily: '"Poppins", sans-serif', fontWeight: 600, letterSpacing: '1px', color: '#111827', fontSize: '1.8rem' }}>{product.name}</h1>
+              {product.shortDescription && (
+                <p style={{ color: '#6b7280', fontSize: '1.05rem', marginTop: 0, marginBottom: '1rem', lineHeight: 1.5 }}>{product.shortDescription}</p>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <button onClick={handleShare} aria-label="Share" style={{ background: '#FDF2F8', border: '1px solid #FCE7F3', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#C2185B' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+              </button>
+              <button 
+                onClick={() => {
+                  const url = window.location.href;
+                  const text = `Can I get more details about this ${product.name}?\n${url}`;
+                  window.open(`https://wa.me/917768875524?text=${encodeURIComponent(text)}`, '_blank');
+                }}
+                aria-label="WhatsApp" style={{ background: '#FDF2F8', border: '1px solid #FCE7F3', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#C2185B' }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                </svg>
+              </button>
+              <button 
+                onClick={() => toggleWishlist(product._id)}
+                aria-label="Toggle Wishlist" style={{ background: '#FDF2F8', border: '1px solid #FCE7F3', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#C2185B' }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill={isWishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
 
           <div 
             style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', alignItems: 'center', fontSize: '0.85rem', cursor: 'pointer' }}
@@ -483,17 +486,17 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           </div>
 
           <div className="pdp-price" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-            <span style={{ fontSize: '2rem', fontWeight: 600, color: '#C2185B', fontFamily: 'Inter, sans-serif' }}>₹{product.price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span style={{ fontSize: '2rem', fontWeight: 600, color: '#C2185B', fontFamily: 'Inter, sans-serif' }}>₹{product.price.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
             {product.originalPrice && product.originalPrice > product.price && (
               <>
-                <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '1.25rem', fontFamily: 'Inter, sans-serif' }}>₹{product.originalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '1.25rem', fontFamily: 'Inter, sans-serif' }}>₹{product.originalPrice.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
               </>
             )}
           </div>
 
 
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '2rem', backgroundColor: '#FDF2F8', padding: '1.2rem', borderRadius: '12px', border: '1px solid #FCE7F3' }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: '#FCE7F3', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '2rem', backgroundColor: 'transparent', padding: '1rem', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C2185B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="1" y="3" width="15" height="13"></rect>
                 <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
@@ -514,7 +517,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <div className="pdp-cart-actions">
               {/* Quantity selector removed as per request */}
               <button 
-                className="btn-add-bag"
+                className="btn-add-bag" style={{ fontWeight: 600, height: "54px", borderRadius: "6px", fontSize: "1.05rem", letterSpacing: "0.5px" }}
                 disabled={isOutOfStock}
                 onClick={() => {
                   addToCart({

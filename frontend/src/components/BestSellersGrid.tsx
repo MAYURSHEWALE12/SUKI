@@ -65,7 +65,7 @@ export default function BestSellersGrid() {
         .best {
           max-width: 100%;
           margin: 0 auto;
-          padding: 48px 16px 90px;
+          padding: 0px 16px 60px;
         }
         .best-head {
           display: flex;
@@ -220,7 +220,7 @@ export default function BestSellersGrid() {
         @media (max-width: 640px) {
           .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
           .best-head { flex-direction: column; align-items: flex-start; gap: 16px; }
-          .best { padding: 32px 16px 60px; }
+          .best { padding: 0px 16px 40px; }
         }
       `}</style>
     </section>

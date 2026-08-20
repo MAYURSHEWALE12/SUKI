@@ -39,10 +39,8 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const currentCategoryObj = CATEGORIES.find(c => c.slug === category);
-  const displayCategory = currentCategoryObj ? currentCategoryObj.name : category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ');
-  // URL slugs (normal-sarees, navratri-ghagra, ...) differ from the category
-  // names stored on products (Normal Sarees, ...); always query by the real name.
-  const queryCategory = currentCategoryObj ? currentCategoryObj.name : category;
+  const displayCategory = currentCategoryObj ? currentCategoryObj.name : (category === 'new-arrivals' ? 'New Arrivals' : category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' '));
+  const queryCategory = currentCategoryObj ? currentCategoryObj.name : (category === 'new-arrivals' ? 'New Arrivals' : category);
 
   const [expandedFilters, setExpandedFilters] = useState<Record<string, boolean>>({
     price: true,
@@ -68,7 +66,14 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        let url = `/api/products?category=${encodeURIComponent(queryCategory)}`;
+        let url = '/api/products?';
+        
+        if (queryCategory !== 'New Arrivals') {
+          url += `category=${encodeURIComponent(queryCategory)}&`;
+        } else if (sort === 'recommended') {
+          // Force sort=newest for New Arrivals if no other sort is explicitly chosen
+          url += 'sort=newest&';
+        }
 
         if (priceFilter === 'under_5k') {
           url += '&maxPrice=5000';
@@ -305,7 +310,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
           ) : (
             <div className="empty-state">
               <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-              <h3>No matching celebrity looks found</h3>
+              <h3>No matching {displayCategory.toLowerCase()} found</h3>
               <p>Try changing your filters or explore our latest designer collections.</p>
               <div className="empty-actions">
                 <Link href="/collections/new-arrivals" className="btn-primary">Continue Shopping</Link>
