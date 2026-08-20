@@ -210,9 +210,22 @@
 
 /* Orders List Styles */
 .orders-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.orders-list.multi-order {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.orders-list.single-order {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 900px) {
+  .orders-list.multi-order {
+    grid-template-columns: 1fr;
+  }
 }
 
 .order-card {
@@ -225,7 +238,7 @@
 
 .order-header {
   background-color: white;
-  padding: 1.5rem 2rem;
+  padding: 1rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -241,7 +254,7 @@
 .order-id {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   color: var(--color-text-primary);
   letter-spacing: 0.5px;
 }
@@ -257,7 +270,7 @@
   background-color: rgba(244, 69, 134, 0.05);
   color: var(--color-primary);
   border: 1px solid rgba(244, 69, 134, 0.2);
-  padding: 0.4rem 1rem;
+  padding: 0.3rem 0.8rem;
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -268,14 +281,14 @@
 .order-items {
   display: flex;
   flex-direction: column;
-  padding: 0 2rem;
+  padding: 0 1.5rem;
 }
 
 .order-item-row {
   display: flex;
   gap: 1.5rem;
   align-items: center;
-  padding: 2rem 0;
+  padding: 1rem 0;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -284,8 +297,8 @@
 }
 
 .order-item-img {
-  width: 90px;
-  height: 110px;
+  width: 60px;
+  height: 80px;
   object-fit: cover;
   border-radius: 4px;
   background-color: var(--color-bg-soft);
@@ -313,11 +326,11 @@
 
 .order-item-price {
   font-weight: 500;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .order-footer {
-  padding: 1.5rem 2rem;
+  padding: 1rem 1.5rem;
   background-color: white;
   border-top: 1px solid var(--color-border);
   display: flex;
@@ -340,7 +353,7 @@
 
 .total-value {
   font-weight: 600;
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   color: var(--color-text-primary);
 }
 

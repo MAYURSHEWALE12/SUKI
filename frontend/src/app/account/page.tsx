@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
 
 
@@ -22,6 +23,7 @@ interface OrderItem {
   image?: string;
   price: number;
   quantity: number;
+  product?: string;
 }
 
 interface Order {
@@ -464,51 +466,64 @@ export default function AccountPage() {
                 <p>You haven&apos;t placed any orders yet.</p>
               </div>
             ) : (
-              <div className="orders-list">
+              <div className={`orders-list ${orders.length === 1 ? 'single-order' : 'multi-order'}`}>
                 {orders.map((order: Order) => (
-                  <div key={order._id} className="order-card">
-                    <div className="order-header">
-                      <div className="order-meta">
-                        <span className="order-id">Order #{order._id.substring(0, 8).toUpperCase()}</span>
-                        <span className="order-date">{new Date(order.createdAt).toLocaleDateString()}</span>
+                  <div key={order._id} className="order-card new-card-design">
+                    <div className="order-header" style={{ padding: '0.8rem 1rem', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', backgroundColor: '#fff' }}>
+                      <div className="order-meta" style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                        <span className="order-id" style={{ fontSize: '1.05rem', fontWeight: 600, color: '#2c2c2c', letterSpacing: '0' }}>Order #{order._id.substring(0, 8).toUpperCase()}</span>
+                        <span className="order-date" style={{ fontSize: '0.8rem', color: '#666', textTransform: 'none', letterSpacing: '0' }}>{new Date(order.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} &bull; {new Date(order.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
-                      <div className="order-status-badge" style={{
-                        backgroundColor: (order.status || 'Processing') === 'Processing' ? '#fff3cd' : ((order.status || 'Processing') === 'Shipped' ? '#cce5ff' : '#d4edda'),
-                        color: (order.status || 'Processing') === 'Processing' ? '#856404' : ((order.status || 'Processing') === 'Shipped' ? '#004085' : '#155724'),
-                        textTransform: 'uppercase',
-                        padding: '0.4rem 1rem',
-                        borderRadius: '50px',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        letterSpacing: '1px'
-                      }}>
-                        {order.status || 'Processing'}
+                      <div className="order-header-right" style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+                        <div className="order-status-badge" style={{
+                          backgroundColor: (order.status === 'Pending Payment' || order.status === 'Payment Failed') ? '#ffe8e8' : (order.status || 'Processing') === 'Processing' ? '#fcf5d2' : ((order.status || 'Processing') === 'Shipped' ? '#e0f1ff' : '#e2f5e9'),
+                          color: (order.status === 'Pending Payment' || order.status === 'Payment Failed') ? '#d32f2f' : (order.status || 'Processing') === 'Processing' ? '#8a6e00' : ((order.status || 'Processing') === 'Shipped' ? '#0056b3' : '#1e7534'),
+                          textTransform: 'uppercase',
+                          padding: '0.3rem 0.8rem',
+                          borderRadius: '50px',
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.5px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          border: 'none'
+                        }}>
+                          <span style={{ display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'currentColor' }}></span>
+                          {order.status || 'Processing'}
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="order-items">
+                    <div className="order-items" style={{ padding: '0 1rem' }}>
                       {order.orderItems.map((item: OrderItem, idx: number) => (
-                        <div key={idx} className="order-item-row">
-                          {item.image && <Image src={item.image} alt={item.name} className="order-item-img" width={90} height={110} />}
-                          <div className="order-item-info">
-                            <h4>{item.name}</h4>
-                            <p>Qty: {item.quantity}</p>
-                          </div>
-                          <div className="order-item-price">
-                            ₹{item.price * item.quantity}
+                        <div key={idx} className="order-item-row" style={{ display: 'flex', gap: '0.8rem', borderBottom: 'none', padding: '0.8rem 0' }}>
+                          {item.image && (
+                            <Link href={`/product/${item.product}`}>
+                              <Image src={item.image} alt={item.name} className="order-item-img" width={55} height={75} style={{ cursor: 'pointer', borderRadius: '6px', objectFit: 'cover' }} />
+                            </Link>
+                          )}
+                          <div className="order-item-info" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <Link href={`/product/${item.product}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                              <h4 style={{ cursor: 'pointer', fontSize: '1rem', fontWeight: 500, color: '#444', margin: '0 0 0.1rem 0', fontFamily: 'var(--font-display)' }}>{item.name}</h4>
+                            </Link>
+                            <p style={{ fontSize: '0.85rem', color: '#666', margin: '0', textTransform: 'none', letterSpacing: '0' }}>Size: Free Size &bull; QTY: {item.quantity}</p>
+                            <div className="order-item-price" style={{ color: '#D81B60', fontWeight: 600, fontSize: '1rem', marginTop: '0.2rem' }}>
+                              ₹{item.price}
+                            </div>
                           </div>
                         </div>
                       ))}
                     </div>
                     
-                    <div className="order-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <a href={`/success?orderId=${order._id}`} className="btn btn-outline" style={{ padding: '0.6rem 1.2rem', fontSize: '0.9rem', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', textDecoration: 'none', borderRadius: '4px' }}>
+                    <div className="order-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem 1rem', borderTop: '1px solid #f0f0f0', backgroundColor: '#fff' }}>
+                      <div className="order-total-block" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.2rem' }}>
+                        <span className="total-label" style={{ fontSize: '0.8rem', color: '#666', textTransform: 'none', fontWeight: 400, letterSpacing: '0' }}>Total Amount</span>
+                        <span className="total-value" style={{ fontSize: '1.2rem', fontWeight: 700, color: '#333' }}>₹{order.totalPrice}</span>
+                      </div>
+                      <a href={`/success?orderId=${order._id}`} className="btn btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', color: '#D81B60', border: '1px solid #ffccde', textDecoration: 'none', borderRadius: '4px', backgroundColor: '#fff5f8' }}>
                         View Receipt / Bill
                       </a>
-                      <div className="order-total-block">
-                        <span className="total-label">Total Amount:</span>
-                        <span className="total-value">₹{order.totalPrice}</span>
-                      </div>
                     </div>
                   </div>
                 ))}

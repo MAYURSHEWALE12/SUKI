@@ -11,7 +11,7 @@ let userToken;
 // Direct token minting keeps the rate-limited auth endpoints free for the
 // dedicated endpoint tests below (the brute-force 429 check lives in rateLimit.test.js).
 function mint(user) {
-  return jwt.sign({ id: user._id, isAdmin: user.isAdmin }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
 }
 
 before(async () => {
@@ -28,7 +28,7 @@ beforeEach(async () => {
     name: 'Admin',
     email: 'admin@test.com',
     password: 'adminpass123',
-    isAdmin: true,
+    role: 'admin',
   });
   const buyer = await User.create({
     name: 'Buyer',

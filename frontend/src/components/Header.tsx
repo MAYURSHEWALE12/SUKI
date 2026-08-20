@@ -271,7 +271,7 @@ export default function Header() {
             </Link>
             <button onClick={() => setIsCartOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, position: 'relative' }}>
               <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-              {cartTotalQuantity > 0 && (
+              {mounted && cartTotalQuantity > 0 && (
                 <span className="cart-count" style={{ position: 'absolute', top: '-6px', right: '-8px' }}>{cartTotalQuantity}</span>
               )}
             </button>

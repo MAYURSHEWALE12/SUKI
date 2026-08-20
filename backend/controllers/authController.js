@@ -292,7 +292,8 @@ exports.getAllUsers = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        isAdmin: user.isAdmin,
+        isAdmin: user.role === 'admin',
+        role: user.role,
         totalSpend: stats ? stats.totalSpend : 0,
         totalOrders: stats ? stats.totalOrders : 0,
         createdAt: user.createdAt

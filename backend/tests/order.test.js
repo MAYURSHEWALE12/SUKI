@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Product = require('../models/Product');
 const Discount = require('../models/Discount');
+const Order = require('../models/Order');
 const { start, json, form } = require('./helpers');
 
 let ctx;
@@ -15,7 +16,7 @@ let product;
 let orderBody;
 
 function mint(user) {
-  return jwt.sign({ id: user._id, isAdmin: user.isAdmin }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
 }
 
 before(async () => {
@@ -28,7 +29,7 @@ after(async () => {
 
 beforeEach(async () => {
   await ctx.reset();
-  const admin = await User.create({ name: 'Admin', email: 'admin@test.com', password: 'adminpass123', isAdmin: true });
+  const admin = await User.create({ name: 'Admin', email: 'admin@test.com', password: 'adminpass123', role: 'admin' });
   const buyer = await User.create({ name: 'Buyer', email: 'buyer@test.com', password: 'buyerpass123' });
   adminToken = mint(admin);
   userToken = mint(buyer);
@@ -113,6 +114,7 @@ test('orders list paginates with an envelope when page+limit are given', async (
   const a = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
   const b = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
   assert.notStrictEqual(a._id, b._id);
+  await Order.updateMany({}, { isPaid: true, status: 'Processing' });
 
   const res = await fetch(`${ctx.base}/api/orders?page=1&limit=1`, { headers: { Authorization: `Bearer ${adminToken}` } });
   assert.strictEqual(res.status, 200);
@@ -137,6 +139,7 @@ test('orders list still returns a plain array without page params', async () => 
 
 test('orders list keyword matches order id or customer name', async () => {
   const a = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody, { Authorization: `Bearer ${userToken}` })).json();
+  await Order.updateMany({}, { isPaid: true, status: 'Processing' });
   const byId = await (await fetch(`${ctx.base}/api/orders?page=1&limit=10&keyword=${a._id.substring(0, 8)}`, { headers: { Authorization: `Bearer ${adminToken}` } })).json();
   assert.strictEqual(byId.total, 1);
   assert.strictEqual(byId.data[0]._id, a._id);
@@ -172,6 +175,34 @@ test('failed payu callback writes no debug dump by default and a sanitized one w
     process.env.PAYU_DEBUG = 'false';
     if (fs.existsSync(dumpPath)) fs.unlinkSync(dumpPath);
   }
+});
+
+test('payu-failure only marks an order failed when the callback hash verifies', async () => {
+  const created = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
+  const { computeReverseHash } = require('../utils/payuHash');
+
+  const payload = (hash) => ({
+    txnid: created._id.toString(), status: 'failure', hash,
+    amount: created.totalPrice, productinfo: 'Silk Saree', firstname: 'Buyer', email: 'buyer@test.com',
+  });
+
+  // Forged callback without a valid hash must not flip the order
+  await form(`${ctx.base}/api/orders/payu-failure`, payload('deadbeef'));
+  let order = await Order.findById(created._id);
+  assert.strictEqual(order.status, 'Pending Payment');
+
+  // Valid hash (same reverse layout as the success handler) marks it failed
+  const validHash = computeReverseHash({ salt: 'test-salt', status: 'failure', email: 'buyer@test.com', firstname: 'Buyer', productinfo: 'Silk Saree', amount: created.totalPrice, txnid: created._id.toString(), key: 'test-key' });
+  await form(`${ctx.base}/api/orders/payu-failure`, payload(validHash));
+  order = await Order.findById(created._id);
+  assert.strictEqual(order.status, 'Payment Failed');
+
+  // A paid order is never demoted to failed
+  await Order.findByIdAndUpdate(created._id, { isPaid: true, status: 'Processing' });
+  const paidHash = computeReverseHash({ salt: 'test-salt', status: 'failure', email: 'buyer@test.com', firstname: 'Buyer', productinfo: 'Silk Saree', amount: created.totalPrice, txnid: created._id.toString(), key: 'test-key' });
+  await form(`${ctx.base}/api/orders/payu-failure`, payload(paidHash));
+  order = await Order.findById(created._id);
+  assert.strictEqual(order.status, 'Processing');
 });
 
 test('payu-hash refuses amounts that do not match the order total', async () => {

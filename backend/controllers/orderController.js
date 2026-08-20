@@ -49,7 +49,7 @@ exports.addOrderItems = async (req, res) => {
       return res.status(400).json({ message: 'No order items' });
     }
 
-    const validPaymentMethods = ['Credit Card', 'Debit Card', 'UPI', 'Cash On Delivery'];
+    const validPaymentMethods = ['Credit Card', 'Debit Card', 'UPI'];
     if (!validPaymentMethods.includes(paymentMethod)) {
       return res.status(400).json({ message: 'Invalid payment method' });
     }
@@ -137,7 +137,7 @@ exports.getOrderById = async (req, res) => {
     if (order) {
       const sessionToken = req.headers['x-session-token'];
       const isOwner = req.user && order.user && order.user.equals(req.user._id);
-      const isAdmin = req.user && req.user.isAdmin;
+      const isAdmin = req.user && req.user.role === 'admin';
       const isSessionValid = sessionToken && order.sessionToken === sessionToken;
 
       if (isOwner || isAdmin || isSessionValid) {
@@ -158,7 +158,7 @@ exports.getOrderById = async (req, res) => {
 // @access  Private
 exports.getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const orders = await Order.find({ user: req.user._id, status: { $nin: ['Pending Payment', 'Payment Failed'] } }).sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -183,6 +183,7 @@ exports.getAllOrders = async (req, res) => {
         { $addFields: { _idStr: { $toString: '$_id' } } },
         {
           $match: {
+            status: { $nin: ['Pending Payment', 'Payment Failed'] },
             $or: [
               { _idStr: { $regex: pattern, $options: 'i' } },
               { 'userInfo.name': { $regex: pattern, $options: 'i' } },
@@ -207,10 +208,10 @@ exports.getAllOrders = async (req, res) => {
       return res.json(await Order.aggregate(pipeline));
     }
 
-    const query = Order.find({}).populate('user', 'id name email').sort({ createdAt: -1 });
+    const query = Order.find({ status: { $nin: ['Pending Payment', 'Payment Failed'] } }).populate('user', 'id name email').sort({ createdAt: -1 });
 
     if (hasPagination) {
-      const total = await Order.countDocuments();
+      const total = await Order.countDocuments({ status: { $nin: ['Pending Payment', 'Payment Failed'] } });
       const orders = await query.skip((page - 1) * limit).limit(Math.min(limit, 100));
       return res.json({
         data: orders,
@@ -335,6 +336,7 @@ exports.handlePayuSuccess = async (req, res) => {
           const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
           return res.redirect(`${frontendUrl}/success?orderId=${txnid}`);
         }
+        order.status = 'Processing';
         order.isPaid = true;
         order.paidAt = Date.now();
         order.paymentResult = {
@@ -376,6 +378,26 @@ exports.handlePayuSuccess = async (req, res) => {
 // @route   POST /api/orders/payu-failure
 // @access  Public (Webhook)
 exports.handlePayuFailure = async (req, res) => {
+  try {
+    const { txnid, status, hash, amount, productinfo, firstname, email, additionalCharges, udf1, udf2, udf3, udf4, udf5 } = req.body;
+
+    const key = process.env.PAYU_MERCHANT_KEY;
+    const salt = process.env.PAYU_MERCHANT_SALT;
+
+    // Verify the callback with the same reverse-hash layout as the success
+    // handler, so a random POST cannot flip an order's status.
+    const calculatedHash = computeReverseHash({ additionalCharges, salt, status, email, firstname, productinfo, amount, txnid, key, udf1, udf2, udf3, udf4, udf5 });
+
+    if (calculatedHash === hash && status === 'failure' && txnid) {
+      const order = await Order.findById(txnid);
+      if (order && !order.isPaid) {
+        order.status = 'Payment Failed';
+        await order.save();
+      }
+    }
+  } catch (error) {
+    console.error('PayU Failure Error:', error);
+  }
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   res.redirect(`${frontendUrl}/checkout?error=PaymentFailed`);
 };

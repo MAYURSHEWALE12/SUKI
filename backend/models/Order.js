@@ -85,7 +85,7 @@ const orderSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      default: 'Processing',
+      default: 'Pending Payment',
     },
     trackingLink: {
       type: String,

@@ -28,7 +28,7 @@ const User = require('../models/User');
 
   const hash = await bcrypt.hash(password, 12);
   const res = await User.updateOne(
-    { email, isAdmin: true },
+    { email, role: 'admin' },
     { $set: { password: hash } }
   );
 

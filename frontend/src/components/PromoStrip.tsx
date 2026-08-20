@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 
 const announcements = [
-  "Free Shipping Over ₹1499 | COD Available",
+  "Free Shipping Over ₹1499",
   "Shipping Worldwide",
   "Easy Return & Exchange*"
 ];
