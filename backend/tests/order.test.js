@@ -205,6 +205,21 @@ test('payu-failure only marks an order failed when the callback hash verifies', 
   assert.strictEqual(order.status, 'Processing');
 });
 
+test('orders list hides pending/failed by default but shows them with includePending', async () => {
+  await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody);
+  await Order.updateOne({}, { status: 'Pending Payment' });
+
+  const hidden = await (await fetch(`${ctx.base}/api/orders?page=1&limit=10`, { headers: { Authorization: `Bearer ${adminToken}` } })).json();
+  assert.strictEqual(hidden.total, 0);
+
+  const shown = await (await fetch(`${ctx.base}/api/orders?page=1&limit=10&includePending=true`, { headers: { Authorization: `Bearer ${adminToken}` } })).json();
+  assert.strictEqual(shown.total, 1);
+  assert.strictEqual(shown.data[0].status, 'Pending Payment');
+
+  const byKeyword = await (await fetch(`${ctx.base}/api/orders?page=1&limit=10&keyword=buyer&includePending=true`, { headers: { Authorization: `Bearer ${adminToken}` } })).json();
+  assert.strictEqual(byKeyword.total, 1);
+});
+
 test('payu-hash refuses amounts that do not match the order total', async () => {
   const created = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
   const res = await json('POST', `${ctx.base}/api/orders/${created._id}/payu-hash`, ctx.base, {

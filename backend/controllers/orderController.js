@@ -3,6 +3,7 @@ const fs = require('fs');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const crypto = require('crypto');
+const sendEmail = require('../utils/sendEmail');
 const { validateDiscountCode, calculateDiscountAmount } = require('./discountController');
 const { computeForwardHash, computeReverseHash } = require('../utils/payuHash');
 const { isValidObjectId } = require('../utils/validation');
@@ -120,7 +121,38 @@ exports.addOrderItems = async (req, res) => {
     // Stock is unlimited; availability is a boolean flag managed by admin.
     // No inventory decrement on order creation.
 
+    
+    // If Cash on Delivery, send email right away
+    if (paymentMethod === 'Cash On Delivery' && req.user && req.user.email) {
+      try {
+        const emailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #D81B60;">Order Confirmed (Cash on Delivery)!</h2>
+            <p>Hi ${createdOrder.shippingAddress?.fullName || 'there'},</p>
+            <p>Thank you for your purchase. We've received your COD order <strong>#${createdOrder._id.toString().substring(0, 8).toUpperCase()}</strong> and are getting it ready to be shipped.</p>
+            <h3>Order Summary</h3>
+            <ul style="list-style: none; padding: 0;">
+              ${createdOrder.orderItems.map(item => `<li style="margin-bottom: 10px;">${item.quantity}x ${item.name} - ₹${item.price * item.quantity}</li>`).join('')}
+            </ul>
+            <p><strong>Total Amount to Pay: ₹${createdOrder.totalPrice}</strong></p>
+            <br/>
+            <p>We'll notify you once your order ships.</p>
+            <p>Best,<br/>Suki Ethnic</p>
+          </div>
+        `;
+
+        await sendEmail({
+          email: req.user.email,
+          subject: `Order Confirmation - Suki Ethnic #${createdOrder._id.toString().substring(0, 8).toUpperCase()}`,
+          html: emailHtml
+        });
+      } catch (emailError) {
+        console.error('Failed to send COD confirmation email:', emailError);
+      }
+    }
+
     res.status(201).json(createdOrder);
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -175,6 +207,13 @@ exports.getAllOrders = async (req, res) => {
     const hasPagination = Number.isInteger(page) && page > 0 && Number.isInteger(limit) && limit > 0;
     const keyword = (req.query.keyword || '').toString().trim();
 
+    // Unpaid/unconfirmed orders are hidden by default; admins can opt in via
+    // ?includePending=true to follow up on abandoned checkouts and failures.
+    const includePending = req.query.includePending === 'true';
+    const statusMatch = includePending
+      ? {}
+      : { status: { $nin: ['Pending Payment', 'Payment Failed'] } };
+
     if (keyword) {
       const pattern = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const pipeline = [
@@ -183,7 +222,7 @@ exports.getAllOrders = async (req, res) => {
         { $addFields: { _idStr: { $toString: '$_id' } } },
         {
           $match: {
-            status: { $nin: ['Pending Payment', 'Payment Failed'] },
+            ...statusMatch,
             $or: [
               { _idStr: { $regex: pattern, $options: 'i' } },
               { 'userInfo.name': { $regex: pattern, $options: 'i' } },
@@ -208,10 +247,10 @@ exports.getAllOrders = async (req, res) => {
       return res.json(await Order.aggregate(pipeline));
     }
 
-    const query = Order.find({ status: { $nin: ['Pending Payment', 'Payment Failed'] } }).populate('user', 'id name email').sort({ createdAt: -1 });
+    const query = Order.find(statusMatch).populate('user', 'id name email').sort({ createdAt: -1 });
 
     if (hasPagination) {
-      const total = await Order.countDocuments({ status: { $nin: ['Pending Payment', 'Payment Failed'] } });
+      const total = await Order.countDocuments(statusMatch);
       const orders = await query.skip((page - 1) * limit).limit(Math.min(limit, 100));
       return res.json({
         data: orders,
@@ -333,8 +372,39 @@ exports.handlePayuSuccess = async (req, res) => {
       if (order) {
         // Guard against duplicate PayU notifications double-decrementing stock
         if (order.isPaid) {
-          const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-          return res.redirect(`${frontendUrl}/success?orderId=${txnid}`);
+          
+        // Send Order Confirmation Email
+        try {
+          const emailHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #D81B60;">Order Confirmed!</h2>
+              <p>Hi ${order.shippingAddress?.fullName || 'there'},</p>
+              <p>Thank you for your purchase. We've received your order <strong>#${order._id.toString().substring(0, 8).toUpperCase()}</strong> and are getting it ready to be shipped.</p>
+              <h3>Order Summary</h3>
+              <ul style="list-style: none; padding: 0;">
+                ${order.orderItems.map(item => `<li style="margin-bottom: 10px;">${item.quantity}x ${item.name} - ₹${item.price * item.quantity}</li>`).join('')}
+              </ul>
+              <p><strong>Total Amount: ₹${order.totalPrice}</strong></p>
+              <br/>
+              <p>We'll notify you once your order ships.</p>
+              <p>Best,<br/>Suki Ethnic</p>
+            </div>
+          `;
+
+          if (order.paymentResult && order.paymentResult.email_address) {
+            await sendEmail({
+              email: order.paymentResult.email_address,
+              subject: `Order Confirmation - Suki Ethnic #${order._id.toString().substring(0, 8).toUpperCase()}`,
+              html: emailHtml
+            });
+          }
+        } catch (emailError) {
+          console.error('Failed to send confirmation email:', emailError);
+        }
+
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        return res.redirect(`${frontendUrl}/success?orderId=${txnid}`);
+
         }
         order.status = 'Processing';
         order.isPaid = true;

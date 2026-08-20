@@ -85,3 +85,37 @@ test('user list is admin-only', async () => {
   const asAdmin = await fetch(`${ctx.base}/api/auth/users`, { headers: { Authorization: `Bearer ${adminToken}` } });
   assert.strictEqual(asAdmin.status, 200);
 });
+
+test('forgotpassword for unknown email returns 404 without sending', async () => {
+  const res = await json('POST', `${ctx.base}/api/auth/forgotpassword`, ctx.base, { email: 'nobody@test.com' });
+  assert.strictEqual(res.status, 404);
+});
+
+test('forgotpassword generates a token even when SMTP is unavailable', async () => {
+  process.env.SMTP_HOST = 'smtp.invalid.invalid';
+  try {
+    const res = await json('POST', `${ctx.base}/api/auth/forgotpassword`, ctx.base, { email: 'buyer@test.com' });
+    assert.strictEqual(res.status, 500);
+    assert.strictEqual((await res.json()).message, 'Email could not be sent');
+  } finally {
+    delete process.env.SMTP_HOST;
+  }
+});
+
+test('resetpassword rejects invalid or expired tokens', async () => {
+  const res = await json('PUT', `${ctx.base}/api/auth/resetpassword/invalidtoken`, ctx.base, { password: 'newpass123' });
+  assert.strictEqual(res.status, 400);
+});
+
+test('resetpassword updates the password for a valid token', async () => {
+  const buyer = await User.findOne({ email: 'buyer@test.com' });
+  const token = buyer.getResetPasswordToken();
+  await buyer.save({ validateBeforeSave: false });
+
+  const res = await json('PUT', `${ctx.base}/api/auth/resetpassword/${token}`, ctx.base, { password: 'brandnew123' });
+  assert.strictEqual(res.status, 200);
+
+  const updated = await User.findOne({ email: 'buyer@test.com' }).select('+password');
+  assert.strictEqual(updated.resetPasswordToken, undefined);
+  assert.ok(await updated.matchPassword('brandnew123'));
+});

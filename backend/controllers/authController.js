@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const sendEmail = require('../utils/sendEmail');
+const crypto = require('crypto');
 const Order = require('../models/Order');
 const jwt = require('jsonwebtoken');
 const { isValidEmail, isValidPhone, isValidObjectId } = require('../utils/validation');
@@ -310,6 +312,95 @@ exports.getAllUsers = async (req, res) => {
     }
 
     res.json(usersWithStats);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+
+// @desc    Forgot password
+// @route   POST /api/auth/forgotpassword
+// @access  Public
+exports.forgotPassword = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
+      return res.status(404).json({ message: 'There is no user with that email' });
+    }
+
+    // Get reset token
+    const resetToken = user.getResetPasswordToken();
+    await user.save({ validateBeforeSave: false });
+
+    // Create reset url
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const resetUrl = `${frontendUrl}/resetpassword/${resetToken}`;
+
+    const message = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; text-align: center;">
+        <h2 style="color: #D81B60;">Reset Your Password</h2>
+        <p>You requested a password reset. Please click the button below to set a new password. This link will expire in 15 minutes.</p>
+        <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #D81B60; color: white; text-decoration: none; border-radius: 4px; margin-top: 20px;">Reset Password</a>
+        <p style="margin-top: 30px; font-size: 12px; color: #777;">If you did not request a password reset, please ignore this email.</p>
+      </div>
+    `;
+
+    try {
+      const sent = await sendEmail({
+        email: user.email,
+        subject: 'Password Reset Request - Suki Ethnic',
+        html: message,
+      });
+      if (!sent) {
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+        await user.save({ validateBeforeSave: false });
+        return res.status(500).json({ message: 'Email could not be sent' });
+      }
+      res.status(200).json({ success: true, message: 'Email sent' });
+    } catch (err) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save({ validateBeforeSave: false });
+      return res.status(500).json({ message: 'Email could not be sent' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Reset password
+// @route   PUT /api/auth/resetpassword/:resettoken
+// @access  Public
+exports.resetPassword = async (req, res) => {
+  try {
+    // Get hashed token
+    const resetPasswordToken = crypto
+      .createHash('sha256')
+      .update(req.params.resettoken)
+      .digest('hex');
+
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired token' });
+    }
+
+    if (!req.body.password || req.body.password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    // Set new password
+    user.password = req.body.password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    res.status(200).json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

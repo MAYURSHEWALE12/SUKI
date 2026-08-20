@@ -1,0 +1,78 @@
+.reset-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  padding: 2rem;
+  background-color: var(--color-bg-light);
+}
+
+.reset-card {
+  background: white;
+  padding: 3rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+}
+
+.reset-card h2 {
+  font-family: var(--font-display);
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.reset-card p {
+  color: var(--color-text-secondary);
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+}
+
+.reset-card .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.reset-card input {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  background-color: var(--color-bg-light);
+  transition: all 0.3s ease;
+}
+
+.reset-card input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background-color: white;
+  box-shadow: 0 0 0 4px rgba(216, 27, 96, 0.1);
+}
+
+.reset-card button {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.05rem;
+  margin-top: 1rem;
+}
+
+.reset-message {
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.reset-message.error {
+  background-color: #ffe8e8;
+  color: #d32f2f;
+  border: 1px solid rgba(211, 47, 47, 0.2);
+}
+
+.reset-message.success {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid rgba(46, 125, 50, 0.2);
+}

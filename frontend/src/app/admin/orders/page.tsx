@@ -44,6 +44,7 @@ export default function AdminOrdersPage() {
   const itemsPerPage = 10;
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [openActionDropdown, setOpenActionDropdown] = useState<string | null>(null);
+  const [includePending, setIncludePending] = useState(false);
   
   // Notes and Tracking state for inputs
   const [trackingLinks, setTrackingLinks] = useState<Record<string, string>>({});
@@ -111,6 +112,7 @@ export default function AdminOrdersPage() {
       const token = localStorage.getItem('suki_admin_token');
       const params = new URLSearchParams({ page: String(currentPage), limit: String(itemsPerPage) });
       if (debouncedSearch.trim()) params.set('keyword', debouncedSearch.trim());
+      if (includePending) params.set('includePending', 'true');
       const res = await fetch(`/api/orders?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -141,7 +143,7 @@ export default function AdminOrdersPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, [currentPage, debouncedSearch]);
+  }, [currentPage, debouncedSearch, includePending]);
 
   useEffect(() => {
     fetchOrders();
@@ -241,6 +243,15 @@ export default function AdminOrdersPage() {
               style={{ padding: '0.6rem 1rem 0.6rem 2.2rem', border: '1px solid #e5e7eb', borderRadius: '8px', minWidth: '320px', fontSize: '0.85rem' }}
             />
           </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#374151', cursor: 'pointer', whiteSpace: 'nowrap', userSelect: 'none' }}>
+            <input 
+              type="checkbox" 
+              checked={includePending}
+              onChange={(e) => { setIncludePending(e.target.checked); setCurrentPage(1); }}
+              style={{ accentColor: '#111d4a', cursor: 'pointer' }}
+            />
+            Show Pending &amp; Failed Payments
+          </label>
           <button className="admin-btn-primary" style={{ background: '#111d4a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Export Orders
@@ -310,8 +321,8 @@ export default function AdminOrdersPage() {
                       fontWeight: 700, 
                       letterSpacing: '0.5px',
                       textTransform: 'uppercase',
-                      backgroundColor: order.status === 'Processing' ? '#ffedd5' : order.status === 'Shipped' ? '#e0e7ff' : order.status === 'Delivered' ? '#dcfce3' : '#f3f4f6',
-                      color: order.status === 'Processing' ? '#ea580c' : order.status === 'Shipped' ? '#4338ca' : order.status === 'Delivered' ? '#15803d' : '#4b5563'
+                      backgroundColor: order.status === 'Processing' ? '#ffedd5' : order.status === 'Shipped' ? '#e0e7ff' : order.status === 'Delivered' ? '#dcfce3' : order.status === 'Pending Payment' ? '#fef3c7' : order.status === 'Payment Failed' ? '#fee2e2' : '#f3f4f6',
+                      color: order.status === 'Processing' ? '#ea580c' : order.status === 'Shipped' ? '#4338ca' : order.status === 'Delivered' ? '#15803d' : order.status === 'Pending Payment' ? '#b45309' : order.status === 'Payment Failed' ? '#b91c1c' : '#4b5563'
                     }}>
                       {order.status}
                     </span>

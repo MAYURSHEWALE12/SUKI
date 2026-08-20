@@ -8,7 +8,8 @@ interface LoginModalProps {
 }
 
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
-  const [isLogin, setIsLogin] = useState(true);
+  const [view, setView] = useState<'login' | 'register' | 'forgot'>('login');
+  const [resetMessage, setResetMessage] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -26,8 +27,22 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setLoading(true);
 
     try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const payload = isLogin ? { email, password } : { name, email, phone, password };
+      if (view === 'forgot') {
+        const resetRes = await fetch('/api/auth/forgotpassword', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+const resetData = await resetRes.json();
+        if (!resetRes.ok) throw new Error(resetData.message || 'Something went wrong');
+        setError('');
+        setResetMessage('Password reset link sent to your email.');
+        setLoading(false);
+        return;
+      }
+      
+      const endpoint = view === 'login' ? '/api/auth/login' : '/api/auth/register';
+      const payload = view === 'login' ? { email, password } : { name, email, phone, password };
       
       const res = await fetch(`${endpoint}`, {
         method: 'POST',
@@ -92,9 +107,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             </div>
           </div>
           
-          <h2 className="welcome-text">{isLogin ? 'Welcome Back!' : 'Join Us!'}</h2>
+          <h2 className="welcome-text">{view === 'login' ? 'Welcome Back!' : view === 'forgot' ? 'Reset Password' : 'Join Us!'}</h2>
           <p className="welcome-subtext">
-            {isLogin 
+            {view === 'login' 
               ? 'Login to unlock exclusive deals\nand a delightful shopping experience.' 
               : 'Sign up to unlock exclusive deals\nand a delightful shopping experience.'}
           </p>
@@ -114,8 +129,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         <div className="modal-right">
           
           <div className="login-form-container">
-            <h3 className="login-heading">{isLogin ? 'Login to Your Account' : 'Create Account'}</h3>
-            <p className="login-subheading">{isLogin ? 'Enter your details to continue' : 'Enter your details to sign up'}</p>
+            <h3 className="login-heading">{view === 'login' ? 'Login to Your Account' : view === 'forgot' ? 'Forgot Password' : 'Create Account'}</h3>
+            <p className="login-subheading">{view === 'login' ? 'Enter your details to continue' : view === 'forgot' ? 'We will send you a reset link' : 'Enter your details to sign up'}</p>
             
             <div className="floral-divider-large">
               <span></span>
@@ -124,10 +139,11 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             </div>
 
             {error && <div className="error-message" style={{ color: 'red', marginBottom: '1rem', fontSize: '0.85rem' }}>{error}</div>}
+            {resetMessage && <div className="error-message" style={{ color: 'green', marginBottom: '1rem', fontSize: '0.85rem' }}>{resetMessage}</div>}
 
             <form onSubmit={handleSubmit} className="login-form">
               
-              {!isLogin && (
+              {view === 'register' && (
                 <>
                   <div className="auth-input-group" style={{ marginBottom: '1rem' }}>
                     <div className="auth-input-prefix">
@@ -138,7 +154,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                       placeholder="Enter Full Name" 
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      required={!isLogin}
+                      required={true}
                     />
                   </div>
                   
@@ -169,7 +185,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 />
               </div>
 
-              <div className="auth-input-group" style={{ marginTop: '1rem' }}>
+              {view !== 'forgot' && (
+<div className="auth-input-group" style={{ marginTop: '1rem' }}>
                 <div className="auth-input-prefix">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                 </div>
@@ -178,7 +195,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   placeholder="Enter Password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
+                  required={true}
                 />
                 <button 
                   type="button" 
@@ -193,8 +210,14 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   )}
                 </button>
               </div>
+)}
+{view === 'login' && (
+              <div style={{ textAlign: 'right', marginTop: '0.5rem', marginBottom: '1.5rem' }}>
+                <span onClick={() => { setView('forgot'); setError(''); setResetMessage(''); }} style={{ color: 'var(--color-primary)', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}>Forgot Password?</span>
+              </div>
+            )}
 
-              {!isLogin && (
+              {view === 'register' && (
                 <div className="checkbox-group" style={{ alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                   <input 
                     type="checkbox" 
@@ -206,6 +229,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   </label>
                 </div>
               )}
+              {view !== 'forgot' && (
               <div className="checkbox-group" style={{ alignItems: 'flex-start' }}>
                 <input 
                   type="checkbox" 
@@ -215,33 +239,40 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 />
                 <label htmlFor="notify">I agree to receive offers, updates, and promotional messages from Suki Ethnic.</label>
               </div>
+            )}
 
               <button type="submit" className="submit-btn" disabled={loading}>
-                {loading ? 'Processing...' : (isLogin ? 'Login' : 'Register')}
+                {loading ? 'Processing...' : (view === 'login' ? 'Login' : view === 'forgot' ? 'Send Reset Link' : 'Register')}
               </button>
             </form>
 
-            <div className="or-divider">
-              <span>OR</span>
-            </div>
+            {view !== 'forgot' && (
+              <>
+                <div className="or-divider">
+                  <span></span>
+                  <span>OR</span>
+                  <span></span>
+                </div>
 
-            <div className="social-buttons">
-              <button type="button" className="social-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="16" height="16">
-                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                  <path fill="none" d="M0 0h48v48H0z"/>
-                </svg>
-                <span>Continue with Google</span>
-              </button>
-            </div>
+                <div className="social-buttons">
+                  <button type="button" className="social-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="16" height="16">
+                      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                      <path fill="none" d="M0 0h48v48H0z"/>
+                    </svg>
+                    <span>Continue with Google</span>
+                  </button>
+                </div>
+              </>
+            )}
 
             <div className="switch-mode">
-              <span>{isLogin ? "Don't have an account? " : "Already have an account? "}</span>
-              <button type="button" onClick={() => setIsLogin(!isLogin)}>
-                {isLogin ? 'Register' : 'Login'}
+              <span>{view === 'login' ? "Don't have an account? " : view === 'forgot' ? "Remember your password? " : "Already have an account? "}</span>
+              <button type="button" onClick={() => setView(view === 'login' ? 'register' : 'login')}>
+                {view === 'login' ? 'Register' : 'Login'}
               </button>
             </div>
 
