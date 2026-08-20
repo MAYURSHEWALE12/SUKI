@@ -121,47 +121,12 @@ exports.addOrderItems = async (req, res) => {
 
     const createdOrder = await order.save();
 
-    // Order placed (receipt) - email is advisory; never block the response on SMTP
-    if (createdOrder.email) {
-      sendEmail({
-        email: createdOrder.email,
-        subject: `Order Confirmed - #${createdOrder._id.toString().substring(0, 8).toUpperCase()}`,
-        html: orderReceipt({ order: createdOrder, frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000' }),
-      });
-    }
-
+    
     // Stock is unlimited; availability is a boolean flag managed by admin.
     // No inventory decrement on order creation.
 
     
-    // If Cash on Delivery, send email right away
-    if (paymentMethod === 'Cash On Delivery' && req.user && req.user.email) {
-      try {
-        const emailHtml = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #D81B60;">Order Confirmed (Cash on Delivery)!</h2>
-            <p>Hi ${createdOrder.shippingAddress?.fullName || 'there'},</p>
-            <p>Thank you for your purchase. We've received your COD order <strong>#${createdOrder._id.toString().substring(0, 8).toUpperCase()}</strong> and are getting it ready to be shipped.</p>
-            <h3>Order Summary</h3>
-            <ul style="list-style: none; padding: 0;">
-              ${createdOrder.orderItems.map(item => `<li style="margin-bottom: 10px;">${item.quantity}x ${item.name} - ₹${item.price * item.quantity}</li>`).join('')}
-            </ul>
-            <p><strong>Total Amount to Pay: ₹${createdOrder.totalPrice}</strong></p>
-            <br/>
-            <p>We'll notify you once your order ships.</p>
-            <p>Best,<br/>Suki Ethnic</p>
-          </div>
-        `;
-
-        await sendEmail({
-          email: req.user.email,
-          subject: `Order Confirmation - Suki Ethnic #${createdOrder._id.toString().substring(0, 8).toUpperCase()}`,
-          html: emailHtml
-        });
-      } catch (emailError) {
-        console.error('Failed to send COD confirmation email:', emailError);
-      }
-    }
+    
 
     res.status(201).json(createdOrder);
 
@@ -353,6 +318,68 @@ exports.updateOrderStatus = async (req, res) => {
     } else {
       res.status(404).json({ message: 'Order not found' });
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resume payment for an abandoned order (email link target)
+// @route   GET /api/orders/:id/pay?token=...
+// @access  Public (owner via session token, JWT owner, or admin)
+exports.resumeOrderPayment = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ message: 'Invalid Order ID' });
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    const queryToken = req.query.token;
+    const headerToken = req.headers['x-session-token'];
+    const isOwner = req.user && order.user && order.user.equals(req.user._id);
+    const isAdmin = req.user && req.user.role === 'admin';
+    const isSessionValid = (queryToken || headerToken) && order.sessionToken === (queryToken || headerToken);
+
+    if (!(isOwner || isAdmin || isSessionValid)) {
+      return res.status(401).json({ message: 'Not authorized to pay this order' });
+    }
+
+    if (order.isPaid) {
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      return res.redirect(`${frontendUrl}/success?orderId=${order._id}`);
+    }
+
+    const key = process.env.PAYU_MERCHANT_KEY;
+    const salt = process.env.PAYU_MERCHANT_SALT;
+    const gatewayUrl = process.env.PAYU_ENV === 'production'
+      ? 'https://secure.payu.in/_payment'
+      : 'https://test.payu.in/_payment';
+
+    const txnid = order._id.toString();
+    const amount = order.totalPrice;
+    const productinfo = 'Suki Ethnic Purchase';
+    const firstname = (order.shippingAddress?.fullName || 'Customer').split(' ')[0];
+    const email = order.email || '';
+
+    const hash = computeForwardHash({ key, txnid, amount, productinfo, firstname, email, salt });
+    const surl = `${req.protocol}://${req.get('host')}/api/orders/payu-success`;
+    const furl = `${req.protocol}://${req.get('host')}/api/orders/payu-failure`;
+
+    const hiddenFields = [
+      ['key', key], ['txnid', txnid], ['hash', hash], ['amount', amount],
+      ['productinfo', productinfo], ['firstname', firstname], ['email', email],
+      ['phone', order.shippingAddress?.phone || ''], ['surl', surl], ['furl', furl],
+    ].map(([name, value]) => `<input type="hidden" name="${name}" value="${String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" />`).join('\n');
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(`<!DOCTYPE html>
+<html>
+<head><title>Redirecting to payment…</title></head>
+<body style="font-family: Arial, sans-serif; background:#fafafa; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0;">
+  <form id="payuForm" method="POST" action="${gatewayUrl}">
+    ${hiddenFields}
+  </form>
+  <script>document.getElementById('payuForm').submit();</script>
+</body>
+</html>`);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

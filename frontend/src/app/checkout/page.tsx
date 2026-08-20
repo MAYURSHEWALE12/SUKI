@@ -47,13 +47,17 @@ export default function CheckoutPage() {
   
 
   // Discount State
-  const [deliveryDate] = useState(() =>
-    new Date(Date.now() + 4 * 86400000).toLocaleDateString('en-IN', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    }),
-  );
+  const [deliveryDate, setDeliveryDate] = useState('');
+
+  useEffect(() => {
+    setDeliveryDate(
+      new Date(Date.now() + 4 * 86400000).toLocaleDateString('en-IN', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      })
+    );
+  }, []);
   
   // Custom Address Dropdown State
   const [isAddressDropdownOpen, setIsAddressDropdownOpen] = useState(false);
@@ -174,13 +178,8 @@ export default function CheckoutPage() {
     }
 
     // Open popup synchronously to bypass popup blockers
-    const popup = window.open('', 'payu_window', 'width=500,height=600,left=200,top=100');
-    if (!popup) {
-      alert("Please allow popups for this site to complete the payment.");
-      setIsProcessing(false);
-      return;
-    }
-    popup.document.write('<div style="font-family:sans-serif; text-align:center; padding-top: 50px;"><h3>Loading Secure Payment Gateway...</h3><p>Please do not close this window.</p></div>');
+    // No popup needed anymore
+    
 
     try {
       const orderData = {
@@ -266,7 +265,7 @@ export default function CheckoutPage() {
       appendField('surl', payuData.surl);
       appendField('furl', payuData.furl);
 
-      form.target = 'payu_window';
+      form.target = '_self';
       document.body.appendChild(form);
       form.submit();
       document.body.removeChild(form);
@@ -276,8 +275,7 @@ export default function CheckoutPage() {
       setError(err instanceof Error ? err.message : 'An error occurred during checkout');
       setIsProcessing(false);
       // Close the popup if it fails
-      const popup = window.open('', 'payu_window');
-      if (popup) popup.close();
+      // No popup to close
     }
   };
 

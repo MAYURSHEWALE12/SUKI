@@ -26,25 +26,32 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    if (typeof window === 'undefined') return [];
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
     const savedCart = localStorage.getItem('suki_cart');
     if (savedCart) {
       try {
         const parsed = JSON.parse(savedCart);
-        return Array.isArray(parsed) ? (parsed as CartItem[]) : [];
+        if (Array.isArray(parsed)) {
+          setCartItems(parsed);
+        }
       } catch (error) {
         console.error("Could not parse cart from localStorage", error);
       }
     }
-    return [];
-  });
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem('suki_cart', JSON.stringify(cartItems));
+    }
+  }, [cartItems, isMounted]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Save to localStorage whenever cart changes
-  useEffect(() => {
-    localStorage.setItem('suki_cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+
 
   const addToCart = (item: CartItem) => {
     setCartItems(prevItems => {

@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
@@ -207,8 +209,43 @@ exports.deleteProduct = async (req, res) => {
     const product = await Product.findById(req.params.id);
 
     if (product) {
+      // Helper function to delete file if it's in the uploads directory
+      const deleteFile = (filePath) => {
+        if (!filePath) return;
+        // Only delete files from the uploads directory to be safe
+        if (filePath.startsWith('/uploads/')) {
+          const fullPath = path.join(__dirname, '..', filePath);
+          if (fs.existsSync(fullPath)) {
+            try {
+              fs.unlinkSync(fullPath);
+            } catch (err) {
+              console.error('Error deleting file:', fullPath, err);
+            }
+          }
+        }
+      };
+
+      // Delete main image
+      deleteFile(product.image);
+      
+      // Delete hover image
+      deleteFile(product.hoverImage);
+      
+      // Delete video
+      deleteFile(product.video);
+      
+      // Delete gallery images
+      if (product.images && Array.isArray(product.images)) {
+        product.images.forEach(img => deleteFile(img));
+      }
+      
+      // Delete variant images
+      if (product.variants && Array.isArray(product.variants)) {
+        product.variants.forEach(variant => deleteFile(variant.image));
+      }
+
       await Product.deleteOne({ _id: product._id });
-      res.json({ message: 'Product removed' });
+      res.json({ message: 'Product and associated files removed' });
     } else {
       res.status(404).json({ message: 'Product not found' });
     }

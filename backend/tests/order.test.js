@@ -310,3 +310,62 @@ test('tracking hides orders from other registered users', async () => {
   const res = await fetch(`${ctx.base}/api/orders/track/${created._id}`, { headers: { Authorization: `Bearer ${userToken}` } });
   assert.strictEqual(res.status, 401);
 });
+
+test('resume payment refuses without the order session token', async () => {
+  const created = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
+  const res = await fetch(`${ctx.base}/api/orders/${created._id}/pay`);
+  assert.strictEqual(res.status, 401);
+});
+
+test('resume payment renders a PayU auto-submit form with a valid hash', async () => {
+  const created = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
+  const res = await fetch(`${ctx.base}/api/orders/${created._id}/pay?token=${created.sessionToken}`);
+  assert.strictEqual(res.status, 200);
+  const html = await res.text();
+  assert.match(html, /test\.payu\.in\/_payment/);
+  assert.match(html, new RegExp(`name="txnid" value="${created._id}"`));
+  assert.match(html, /name="amount" value="9998"/);
+  assert.match(html, /name="hash" value="[0-9a-f]{128}"/);
+});
+
+test('resume payment redirects to success when the order is already paid', async () => {
+  const created = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
+  await Order.findByIdAndUpdate(created._id, { isPaid: true, status: 'Processing' });
+  const res = await fetch(`${ctx.base}/api/orders/${created._id}/pay?token=${created.sessionToken}`, { redirect: 'manual' });
+  assert.strictEqual(res.status, 302);
+  assert.match(res.headers.get('location'), /\/success\?orderId=/);
+});
+
+test('abandoned-cart reminder only emails unpaid orders older than the cutoff', async () => {
+  const { sendAbandonedCartReminders } = require('../utils/abandonedCart');
+  const now = new Date('2025-01-15T00:00:00Z');
+
+  const oldOrder = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, { ...orderBody, email: 'guest@test.com' })).json();
+  await Order.collection.updateOne({ _id: new (require('mongoose').Types.ObjectId)(oldOrder._id) }, { $set: { createdAt: new Date('2025-01-10T00:00:00Z') } });
+
+  const freshOrder = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, { ...orderBody, email: 'fresh@test.com' })).json();
+
+  const oldPaid = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, { ...orderBody, email: 'paid@test.com' })).json();
+  await Order.collection.updateOne({ _id: new (require('mongoose').Types.ObjectId)(oldPaid._id) }, { $set: { createdAt: new Date('2025-01-10T00:00:00Z'), isPaid: true, status: 'Processing' } });
+
+  const sent = await sendAbandonedCartReminders({ hours: 24, now, send: async () => true });
+  assert.strictEqual(sent, 1);
+
+  const reminded = await Order.findById(oldOrder._id);
+  assert.ok(reminded.abandonedReminderSentAt);
+
+  const second = await sendAbandonedCartReminders({ hours: 24, now, send: async () => true });
+  assert.strictEqual(second, 0);
+});
+
+test('abandoned-cart email links point at the resume-payment endpoint', async () => {
+  const { abandonedCart } = require('../utils/emailTemplates');
+  const created = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, { ...orderBody, email: 'guest@test.com' })).json();
+  const html = abandonedCart({
+    order: created,
+    frontendUrl: 'http://localhost:3000',
+    payUrl: `http://localhost:3000/api/orders/${created._id}/pay?token=${created.sessionToken}`,
+  });
+  assert.match(html, /Complete Your Payment/);
+  assert.match(html, new RegExp(`http://localhost:3000/api/orders/${created._id}/pay\\?token=${created.sessionToken}`));
+});

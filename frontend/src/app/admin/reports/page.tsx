@@ -1,5 +1,11 @@
 "use client";
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import {
+  ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis,
+  CartesianGrid, Tooltip,
+} from 'recharts';
+
+const PENDING_STATUSES = ['Pending Payment', 'Payment Failed'];
 
 interface OrderItem {
   name: string;
@@ -54,7 +60,7 @@ export default function AdminReportsPage() {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [ordersRes, customersRes] = await Promise.all([
-        fetch('/api/orders', { headers }),
+        fetch('/api/orders?includePending=true', { headers }),
         fetch('/api/auth/users', { headers })
       ]);
 
@@ -90,25 +96,38 @@ export default function AdminReportsPage() {
 
   // Aggregated stats
   const stats = useMemo(() => {
-    const totalRevenue = filteredOrders.reduce((acc: number, o: Order) => acc + o.totalPrice, 0);
+    const paidOrders = filteredOrders.filter((o: Order) => !PENDING_STATUSES.includes(o.status));
+    const totalRevenue = paidOrders.reduce((acc: number, o: Order) => acc + o.totalPrice, 0);
     const totalOrders = filteredOrders.length;
-    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    const paidOrderCount = paidOrders.length;
+    const avgOrderValue = paidOrderCount > 0 ? totalRevenue / paidOrderCount : 0;
+    const conversionRate = totalOrders > 0 ? (paidOrderCount / totalOrders) * 100 : 0;
 
     const statusCounts: Record<string, number> = {};
     filteredOrders.forEach((o: Order) => {
       statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
     });
 
-    // Revenue by day
+    // Revenue + order count by day, sorted chronologically for charts
+    const byDay = new Map<string, { date: string; revenue: number; orders: number }>();
+    [...filteredOrders]
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      .forEach((o: Order) => {
+        const key = new Date(o.createdAt).toISOString().split('T')[0];
+        const label = new Date(o.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+        const entry = byDay.get(key) || { date: label, revenue: 0, orders: 0 };
+        if (!PENDING_STATUSES.includes(o.status)) entry.revenue += o.totalPrice;
+        entry.orders += 1;
+        byDay.set(key, entry);
+      });
+    const dailySeries = [...byDay.values()];
+
     const revenueByDay: Record<string, number> = {};
-    filteredOrders.forEach((o: Order) => {
-      const day = new Date(o.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-      revenueByDay[day] = (revenueByDay[day] || 0) + o.totalPrice;
-    });
+    dailySeries.forEach((d) => { revenueByDay[d.date] = d.revenue; });
 
     // Top products
     const productSales: Record<string, { name: string; qty: number; revenue: number }> = {};
-    filteredOrders.forEach((o: Order) => {
+    paidOrders.forEach((o: Order) => {
       o.orderItems?.forEach((item: OrderItem) => {
         const key = item.name;
         if (!productSales[key]) productSales[key] = { name: key, qty: 0, revenue: 0 };
@@ -118,7 +137,7 @@ export default function AdminReportsPage() {
     });
     const topProducts = Object.values(productSales).sort((a, b) => b.revenue - a.revenue).slice(0, 10);
 
-    return { totalRevenue, totalOrders, avgOrderValue, statusCounts, revenueByDay, topProducts };
+    return { totalRevenue, totalOrders, paidOrderCount, avgOrderValue, conversionRate, statusCounts, revenueByDay, dailySeries, topProducts };
   }, [filteredOrders]);
 
   // CSV Export functions
@@ -196,7 +215,7 @@ export default function AdminReportsPage() {
       </div>
 
       {/* Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      <div className="reports-summary-grid">
         <div className="admin-card">
           <h3 style={{ color: '#4b5563', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '1px', margin: '0 0 0.75rem 0' }}>Total Revenue</h3>
           <div style={{ fontSize: '2rem', fontWeight: 700, color: '#111' }}>₹{stats.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
@@ -208,6 +227,11 @@ export default function AdminReportsPage() {
         <div className="admin-card">
           <h3 style={{ color: '#4b5563', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '1px', margin: '0 0 0.75rem 0' }}>Avg Order Value</h3>
           <div style={{ fontSize: '2rem', fontWeight: 700, color: '#111' }}>₹{stats.avgOrderValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+        </div>
+        <div className="admin-card">
+          <h3 style={{ color: '#4b5563', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '1px', margin: '0 0 0.75rem 0' }}>Conversion Rate</h3>
+          <div style={{ fontSize: '2rem', fontWeight: 700, color: '#111' }}>{stats.conversionRate.toFixed(1)}%</div>
+          <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>{stats.paidOrderCount} of {stats.totalOrders} orders paid</div>
         </div>
         <div className="admin-card">
           <h3 style={{ color: '#4b5563', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '1px', margin: '0 0 0.75rem 0' }}>Total Customers</h3>
@@ -238,6 +262,53 @@ export default function AdminReportsPage() {
         </div>
       </div>
 
+      {/* Revenue + Orders Charts */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+        <div className="admin-card">
+          <h3 style={{ color: '#111', fontSize: '1rem', fontWeight: 600, marginBottom: '1.5rem' }}>Revenue Trend</h3>
+          {stats.dailySeries.length > 0 ? (
+            <div style={{ width: '100%', height: 260 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={stats.dailySeries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#D81B60" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#D81B60" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} tickFormatter={(v) => `₹${Number(v).toLocaleString('en-IN')}`} width={80} />
+                  <Tooltip formatter={(value) => [`₹${Number(value).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 'Revenue']} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                  <Area type="monotone" dataKey="revenue" stroke="#D81B60" strokeWidth={2} fill="url(#revGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div style={{ color: '#6b7280', textAlign: 'center', padding: '3rem 0' }}>No revenue data in this range</div>
+          )}
+        </div>
+
+        <div className="admin-card">
+          <h3 style={{ color: '#111', fontSize: '1rem', fontWeight: 600, marginBottom: '1.5rem' }}>Orders Per Day</h3>
+          {stats.dailySeries.length > 0 ? (
+            <div style={{ width: '100%', height: 260 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stats.dailySeries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} allowDecimals={false} width={40} />
+                  <Tooltip formatter={(value) => [`${value}`, 'Orders']} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                  <Bar dataKey="orders" fill="#111d4a" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div style={{ color: '#6b7280', textAlign: 'center', padding: '3rem 0' }}>No orders in this range</div>
+          )}
+        </div>
+      </div>
+
       {/* Order Status Breakdown */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
         <div className="admin-card">
@@ -246,6 +317,12 @@ export default function AdminReportsPage() {
             {Object.entries(stats.statusCounts).map(([status, count]) => {
               const total = stats.totalOrders || 1;
               const percent = ((count as number) / total * 100).toFixed(1);
+              const barColor = status === 'Delivered' ? '#22c55e'
+                : status === 'Shipped' ? '#3b82f6'
+                : status === 'Processing' ? '#f59e0b'
+                : status === 'Pending Payment' ? '#a855f7'
+                : status === 'Payment Failed' ? '#ef4444'
+                : '#9ca3af';
               return (
                 <div key={status}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
@@ -253,7 +330,7 @@ export default function AdminReportsPage() {
                     <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>{count} ({percent}%)</span>
                   </div>
                   <div style={{ width: '100%', height: '8px', backgroundColor: '#f3f4f6', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ width: `${percent}%`, height: '100%', backgroundColor: status === 'Delivered' ? '#22c55e' : status === 'Shipped' ? '#3b82f6' : '#f59e0b', borderRadius: '4px', transition: 'width 0.5s ease' }}></div>
+                    <div style={{ width: `${percent}%`, height: '100%', backgroundColor: barColor, borderRadius: '4px', transition: 'width 0.5s ease' }}></div>
                   </div>
                 </div>
               );
@@ -296,6 +373,19 @@ export default function AdminReportsPage() {
         <div style={{ padding: '1.5rem 1.5rem 0' }}>
           <h3 style={{ color: '#111', fontSize: '1rem', fontWeight: 600, marginBottom: '0' }}>Top Selling Products</h3>
         </div>
+        {stats.topProducts.length > 0 && (
+          <div style={{ padding: '1.5rem 1.5rem 0.5rem', height: 220 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats.topProducts.slice(0, 6)} layout="vertical" margin={{ top: 0, right: 30, left: 40, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
+                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} tickFormatter={(v) => `₹${Number(v).toLocaleString('en-IN')}`} />
+                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#111', fontSize: 12 }} width={150} />
+                <Tooltip formatter={(value) => [`₹${Number(value).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 'Revenue']} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                <Bar dataKey="revenue" fill="#D81B60" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
         <table>
           <thead>
             <tr>

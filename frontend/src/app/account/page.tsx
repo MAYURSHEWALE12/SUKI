@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
+import StatusBadge from '@/components/StatusBadge';
 
 
 interface Address {
@@ -29,6 +30,7 @@ interface OrderItem {
 interface Order {
   _id: string;
   createdAt: string;
+  updatedAt?: string;
   status?: string;
   totalPrice: number;
   orderItems: OrderItem[];
@@ -45,6 +47,8 @@ interface WishlistItem {
   category?: string;
   countInStock?: number;
 }
+
+const lastWeekMs = Date.now() - 7 * 86400000;
 
 export default function AccountPage() {
   const router = useRouter();
@@ -466,6 +470,23 @@ export default function AccountPage() {
                 <p>You haven&apos;t placed any orders yet.</p>
               </div>
             ) : (
+              <>
+              <div className="orders-updates" style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {orders
+                  .filter((o: Order) => {
+                    const updated = o.updatedAt ? new Date(o.updatedAt).getTime() : 0;
+                    const created = new Date(o.createdAt).getTime();
+                    return updated > created && updated >= lastWeekMs && o.status !== 'Pending Payment' && o.status !== 'Payment Failed';
+                  })
+                  .slice(0, 3)
+                  .map((o: Order) => (
+                    <div key={o._id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#fff7fa', border: '1px solid #ffd9e6', borderRadius: '10px', padding: '0.7rem 1rem', fontSize: '0.9rem', color: '#6b1a3a' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D81B60" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                      <span style={{ flex: 1 }}>Order <strong>#{o._id.substring(0, 8).toUpperCase()}</strong> status updated to <StatusBadge status={o.status || 'Processing'} /> on {o.updatedAt ? new Date(o.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}</span>
+                      <Link href={`/track?orderId=${o._id}`} style={{ color: '#D81B60', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>Track →</Link>
+                    </div>
+                  ))}
+              </div>
               <div className={`orders-list ${orders.length === 1 ? 'single-order' : 'multi-order'}`}>
                 {orders.map((order: Order) => (
                   <div key={order._id} className="order-card new-card-design">
@@ -475,23 +496,7 @@ export default function AccountPage() {
                         <span className="order-date" style={{ fontSize: '0.8rem', color: '#666', textTransform: 'none', letterSpacing: '0' }}>{new Date(order.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} &bull; {new Date(order.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                       <div className="order-header-right" style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
-                        <div className="order-status-badge" style={{
-                          backgroundColor: (order.status === 'Pending Payment' || order.status === 'Payment Failed') ? '#ffe8e8' : (order.status || 'Processing') === 'Processing' ? '#fcf5d2' : ((order.status || 'Processing') === 'Shipped' ? '#e0f1ff' : '#e2f5e9'),
-                          color: (order.status === 'Pending Payment' || order.status === 'Payment Failed') ? '#d32f2f' : (order.status || 'Processing') === 'Processing' ? '#8a6e00' : ((order.status || 'Processing') === 'Shipped' ? '#0056b3' : '#1e7534'),
-                          textTransform: 'uppercase',
-                          padding: '0.3rem 0.8rem',
-                          borderRadius: '50px',
-                          fontSize: '0.65rem',
-                          fontWeight: 700,
-                          letterSpacing: '0.5px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          border: 'none'
-                        }}>
-                          <span style={{ display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'currentColor' }}></span>
-                          {order.status || 'Processing'}
-                        </div>
+                        <StatusBadge status={order.status || 'Processing'} />
                       </div>
                     </div>
                     
@@ -525,7 +530,7 @@ export default function AccountPage() {
                           <Link href={`/track?orderId=${order._id}`} className="btn btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', color: '#D81B60', border: '1px solid #ffccde', textDecoration: 'none', borderRadius: '4px', backgroundColor: '#fff5f8' }}>
                             Track Order
                           </Link>
-                          <a href={`/success?orderId=${order._id}`} className="btn btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', color: '#D81B60', border: '1px solid #ffccde', textDecoration: 'none', borderRadius: '4px', backgroundColor: '#fff5f8' }}>
+<a href={`/success?orderId=${order._id}`} className="btn btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', color: '#D81B60', border: '1px solid #ffccde', textDecoration: 'none', borderRadius: '4px', backgroundColor: '#fff5f8' }}>
                             View Receipt / Bill
                           </a>
                         </div>
@@ -533,6 +538,7 @@ export default function AccountPage() {
                   </div>
                 ))}
               </div>
+              </>
             )}
           </div>
         )}

@@ -99,6 +99,10 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    abandonedReminderSentAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
