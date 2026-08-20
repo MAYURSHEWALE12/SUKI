@@ -58,6 +58,14 @@ function ctaButton(label, url) {
     </div>`;
 }
 
+// Public tracking page link. Guest orders carry a session token so the
+// customer can view tracking without an account; registered orders fall back
+// to login via the track page.
+function trackLink(order, frontendUrl) {
+  const base = `${frontendUrl}/track?orderId=${order._id}`;
+  return order.sessionToken ? `${base}&token=${encodeURIComponent(order.sessionToken)}` : base;
+}
+
 // 1 & 2. Order placed (receipt) / payment confirmed
 function orderReceipt({ order, frontendUrl }) {
   const orderLink = `${frontendUrl}/success?orderId=${order._id}`;
@@ -70,6 +78,7 @@ function orderReceipt({ order, frontendUrl }) {
     </div>
     ${orderItemsTable(order.orderItems)}
     <p style="color: #555; font-size: 14px;">Status: <strong>${order.status}</strong></p>
+    ${ctaButton('Track Order', trackLink(order, frontendUrl))}
     ${ctaButton('View Order Details', orderLink)}
   `;
   return shell(`Order Confirmed &mdash; #${String(order._id).substring(0, 8).toUpperCase()}`, body);
@@ -99,6 +108,7 @@ function orderStatusUpdate({ order, frontendUrl, previousStatus }) {
     <p style="color: #555; font-size: 14px; line-height: 1.6;">Your order <strong>#${String(order._id).substring(0, 8).toUpperCase()}</strong> status changed from <strong>${escapeHtml(previousStatus)}</strong> to <strong>${escapeHtml(order.status)}</strong>.</p>
     ${trackingHtml}
     ${orderItemsTable(order.orderItems)}
+    ${ctaButton('Track Order', trackLink(order, frontendUrl))}
     ${ctaButton('View Order Details', orderLink)}
   `;
   return shell(`Order Update: ${order.status}`, body);

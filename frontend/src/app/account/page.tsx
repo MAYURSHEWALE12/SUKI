@@ -516,15 +516,20 @@ export default function AccountPage() {
                       ))}
                     </div>
                     
-                    <div className="order-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem 1rem', borderTop: '1px solid #f0f0f0', backgroundColor: '#fff' }}>
-                      <div className="order-total-block" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.2rem' }}>
-                        <span className="total-label" style={{ fontSize: '0.8rem', color: '#666', textTransform: 'none', fontWeight: 400, letterSpacing: '0' }}>Total Amount</span>
-                        <span className="total-value" style={{ fontSize: '1.2rem', fontWeight: 700, color: '#333' }}>₹{order.totalPrice}</span>
+<div className="order-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem 1rem', borderTop: '1px solid #f0f0f0', backgroundColor: '#fff' }}>
+                        <div className="order-total-block" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.2rem' }}>
+                          <span className="total-label" style={{ fontSize: '0.8rem', color: '#666', textTransform: 'none', fontWeight: 400, letterSpacing: '0' }}>Total Amount</span>
+                          <span className="total-value" style={{ fontSize: '1.2rem', fontWeight: 700, color: '#333' }}>₹{order.totalPrice}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <Link href={`/track?orderId=${order._id}`} className="btn btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', color: '#D81B60', border: '1px solid #ffccde', textDecoration: 'none', borderRadius: '4px', backgroundColor: '#fff5f8' }}>
+                            Track Order
+                          </Link>
+                          <a href={`/success?orderId=${order._id}`} className="btn btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', color: '#D81B60', border: '1px solid #ffccde', textDecoration: 'none', borderRadius: '4px', backgroundColor: '#fff5f8' }}>
+                            View Receipt / Bill
+                          </a>
+                        </div>
                       </div>
-                      <a href={`/success?orderId=${order._id}`} className="btn btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', color: '#D81B60', border: '1px solid #ffccde', textDecoration: 'none', borderRadius: '4px', backgroundColor: '#fff5f8' }}>
-                        View Receipt / Bill
-                      </a>
-                    </div>
                   </div>
                 ))}
               </div>

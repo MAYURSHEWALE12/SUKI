@@ -259,3 +259,54 @@ test('payu-hash returns a well-formed payload pointing at the test gateway', asy
   assert.strictEqual(body.surl, `${ctx.base}/api/orders/payu-success`);
   assert.strictEqual(body.furl, `${ctx.base}/api/orders/payu-failure`);
 });
+
+test('tracking rejects invalid order id', async () => {
+  const res = await fetch(`${ctx.base}/api/orders/track/not-an-id`);
+  assert.strictEqual(res.status, 400);
+});
+
+test('tracking requires the order session token for guest orders', async () => {
+  const created = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
+
+  const noToken = await fetch(`${ctx.base}/api/orders/track/${created._id}`);
+  assert.strictEqual(noToken.status, 401);
+
+  const wrongToken = await fetch(`${ctx.base}/api/orders/track/${created._id}?token=wrong`);
+  assert.strictEqual(wrongToken.status, 401);
+
+  const ok = await (await fetch(`${ctx.base}/api/orders/track/${created._id}?token=${created.sessionToken}`)).json();
+  assert.strictEqual(ok._id, created._id.toString());
+  assert.strictEqual(ok.status, 'Pending Payment');
+  assert.strictEqual(ok.orderItems.length, 1);
+  assert.strictEqual(ok.orderItems[0].name, 'Silk Saree');
+  assert.strictEqual(ok.shippingAddress, undefined);
+  assert.strictEqual(ok.paymentResult, undefined);
+});
+
+test('tracking works with x-session-token header and never leaks payment/address data', async () => {
+  const created = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
+  const res = await fetch(`${ctx.base}/api/orders/track/${created._id}`, { headers: { 'x-session-token': created.sessionToken } });
+  assert.strictEqual(res.status, 200);
+  const body = await res.json();
+  assert.strictEqual(body.sessionToken, undefined);
+  assert.strictEqual(body.shippingAddress, undefined);
+  assert.strictEqual(body.paymentResult, undefined);
+});
+
+test('tracking grants registered buyers access to their own orders via JWT', async () => {
+  const buyer = await User.findOne({ email: 'buyer@test.com' });
+  const created = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
+  await Order.findByIdAndUpdate(created._id, { user: buyer._id });
+  const res = await fetch(`${ctx.base}/api/orders/track/${created._id}`, { headers: { Authorization: `Bearer ${userToken}` } });
+  assert.strictEqual(res.status, 200);
+  const body = await res.json();
+  assert.strictEqual(body._id, created._id.toString());
+});
+
+test('tracking hides orders from other registered users', async () => {
+  const admin = await User.findOne({ email: 'admin@test.com' });
+  const created = await (await json('POST', `${ctx.base}/api/orders`, ctx.base, orderBody)).json();
+  await Order.findByIdAndUpdate(created._id, { user: admin._id });
+  const res = await fetch(`${ctx.base}/api/orders/track/${created._id}`, { headers: { Authorization: `Bearer ${userToken}` } });
+  assert.strictEqual(res.status, 401);
+});

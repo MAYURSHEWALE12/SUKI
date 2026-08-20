@@ -197,6 +197,49 @@ exports.getOrderById = async (req, res) => {
   }
 };
 
+// @desc    Get order tracking status (timeline-safe fields only)
+// @route   GET /api/orders/track/:id?token=...
+// @access  Public (owner via JWT, guest via order session token)
+exports.getOrderTracking = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ message: 'Invalid Order ID' });
+    const order = await Order.findById(req.params.id);
+
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    const queryToken = req.query.token;
+    const headerToken = req.headers['x-session-token'];
+    const isOwner = req.user && order.user && order.user.equals(req.user._id);
+    const isAdmin = req.user && req.user.role === 'admin';
+    const isSessionValid = (queryToken || headerToken) && order.sessionToken === (queryToken || headerToken);
+
+    if (!(isOwner || isAdmin || isSessionValid)) {
+      return res.status(401).json({ message: 'Not authorized to track this order' });
+    }
+
+    res.json({
+      _id: order._id,
+      status: order.status,
+      isPaid: order.isPaid,
+      paidAt: order.paidAt,
+      isDelivered: order.isDelivered,
+      deliveredAt: order.deliveredAt,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      trackingLink: order.trackingLink,
+      totalPrice: order.totalPrice,
+      orderItems: order.orderItems.map((item) => ({
+        name: item.name,
+        quantity: item.quantity,
+        image: item.image,
+        price: item.price,
+      })),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Get logged in user orders
 // @route   GET /api/orders/myorders
 // @access  Private
