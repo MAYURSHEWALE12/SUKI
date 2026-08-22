@@ -10,7 +10,7 @@ const { isValidObjectId, toFiniteNumber } = require('../utils/validation');
 // @access  Public
 exports.getProducts = async (req, res) => {
   try {
-    const { category, occasion, minPrice, maxPrice, minRating, sort, keyword, inStock, limit } = req.query;
+    const { category, occasion, minPrice, maxPrice, minRating, sort, keyword, inStock, limit, isBestSeller } = req.query;
     const filter = {};
 
     // Escape regex metacharacters so user input is matched literally (prevents
@@ -37,6 +37,10 @@ exports.getProducts = async (req, res) => {
 
     if (inStock === 'true') {
       filter.countInStock = { $gt: 0 };
+    }
+
+    if (isBestSeller === 'true') {
+      filter.isBestSeller = true;
     }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
@@ -111,7 +115,7 @@ exports.getProductById = async (req, res) => {
 // @access  Private/Admin
 exports.createProduct = async (req, res) => {
   try {
-    const { name, price, description, image, hoverImage, brand, category, occasion, countInStock, originalPrice, isNewArrival } = req.body;
+    const { name, price, description, image, hoverImage, brand, category, occasion, countInStock, originalPrice, isNewArrival, isBestSeller } = req.body;
 
     const numericPrice = toFiniteNumber(price);
     if (numericPrice === null || numericPrice < 0) {
@@ -136,6 +140,7 @@ exports.createProduct = async (req, res) => {
       description: description || 'Product description goes here',
       originalPrice: originalPrice !== undefined && originalPrice !== null ? toFiniteNumber(originalPrice) : null,
       isNewArrival: isNewArrival === true || isNewArrival === 'true',
+      isBestSeller: isBestSeller === true || isBestSeller === 'true',
     });
 
     const createdProduct = await product.save();
@@ -150,7 +155,7 @@ exports.createProduct = async (req, res) => {
 // @access  Private/Admin
 exports.updateProduct = async (req, res) => {
   try {
-    const { name, price, description, image, hoverImage, category, occasion, countInStock, originalPrice } = req.body;
+    const { name, price, description, image, hoverImage, category, occasion, countInStock, originalPrice, isNewArrival, isBestSeller } = req.body;
 
     if (!isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid Product ID' });
     const product = await Product.findById(req.params.id);
@@ -188,6 +193,14 @@ exports.updateProduct = async (req, res) => {
         product.originalPrice = numericOriginal;
       } else if (originalPrice === null) {
         product.originalPrice = null;
+      }
+
+      if (isNewArrival !== undefined) {
+        product.isNewArrival = isNewArrival === true || isNewArrival === 'true';
+      }
+
+      if (isBestSeller !== undefined) {
+        product.isBestSeller = isBestSeller === true || isBestSeller === 'true';
       }
 
       const updatedProduct = await product.save();

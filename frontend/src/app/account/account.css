@@ -167,36 +167,63 @@
 @media (max-width: 768px) {
   .account-page {
     flex-direction: column;
-    padding: 1.5rem 0.5rem; /* Significantly reduce page padding */
+    padding: 1rem 0.5rem;
+    gap: 0.8rem;
   }
   
   .account-sidebar {
     width: 100%;
     flex-direction: row;
-    overflow-x: auto;
+    display: flex;
     padding: 0;
-    border: none;
+    border: 1px solid #FCE4EC;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    margin-bottom: 0;
+    overflow: hidden;
   }
   
   .sidebar-btn {
     border-left: none;
+    border-right: 1px solid #FCE4EC;
     border-bottom: 3px solid transparent;
-    padding: 1rem;
+    padding: 0.8rem 0.4rem;
     white-space: nowrap;
+    justify-content: center;
+    flex: 1;
+    font-size: 0.8rem;
+    gap: 0.4rem;
+  }
+
+  .sidebar-btn:last-child {
+    border-right: none;
   }
   
   .sidebar-btn.active {
     border-left-color: transparent;
     border-bottom-color: var(--color-primary);
+    background-color: transparent;
+    color: var(--color-primary);
   }
   
   .account-content {
-    padding: 1.5rem 1rem; /* Reduce heavy internal padding on mobile */
-    border: none; /* Remove border on mobile to save space */
+    padding: 1.2rem 0.8rem;
+    border: 1px solid #FCE4EC;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+  }
+
+  .sidebar-btn svg {
+    width: 14px;
+    height: 14px;
   }
 
   .form-grid {
     grid-template-columns: 1fr;
+    gap: 0.8rem !important;
+    margin-bottom: 1.2rem !important;
   }
   
   .address-grid {
@@ -204,7 +231,28 @@
   }
 
   .address-card h4 {
-    word-break: break-word; /* Ensure long names wrap instead of breaking out */
+    word-break: break-word;
+  }
+
+  .form-group input {
+    padding-top: 0.65rem !important;
+    padding-bottom: 0.65rem !important;
+    font-size: 0.9rem !important;
+  }
+
+  .form-group label {
+    margin-bottom: 0.25rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  .profile-section button {
+    padding: 0.65rem 1.4rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  .form-group {
+    gap: 0.4rem !important;
+    margin-bottom: 0 !important;
   }
 }
 

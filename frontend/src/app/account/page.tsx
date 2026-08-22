@@ -312,73 +312,175 @@ export default function AccountPage() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
           My Orders
         </button>
-        <button 
-          className={`sidebar-btn ${activeTab === 'wishlist' ? 'active' : ''}`}
-          onClick={() => handleTabChange('wishlist')}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-          My Wishlist
-        </button>
-        <button 
-          className="sidebar-btn logout-btn"
-          onClick={handleLogout}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-          Logout
-        </button>
+        
       </div>
 
       <div className="account-content">
         {activeTab === 'profile' && (
           <div className="profile-section">
-            <h2 className="section-title">My Profile</h2>
+            {/* Header Block */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                background: '#FFF0F5',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C2185B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              </div>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: '600', color: '#111', fontFamily: 'var(--font-title)' }}>My Profile</h2>
+                <p style={{ margin: '2px 0 0 0', color: '#666', fontSize: 'clamp(12px, 2.5vw, 14px)', lineHeight: '1.2' }}>Manage your personal information and account details.</p>
+              </div>
+            </div>
+
+            {/* Floral Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '1.2rem' }}>
+              <div style={{ flex: 1, height: '1px', background: '#FCE4EC' }}></div>
+              <span style={{ color: '#C2185B', display: 'flex', alignItems: 'center' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C2185B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M12 5.5a3 3 0 1 0 0 6 3 3 0 1 0 0-6z" />
+                  <path d="M12 12.5a3 3 0 1 0 0 6 3 3 0 1 0 0-6z" />
+                  <path d="M5.5 12a3 3 0 1 0 6 0 3 3 0 1 0-6 0z" />
+                  <path d="M12.5 12a3 3 0 1 0 6 0 3 3 0 1 0-6 0z" />
+                  <path d="M7.4 7.4a3 3 0 1 0 4.2 4.2 3 3 0 1 0-4.2-4.2z" />
+                  <path d="M12.4 12.4a3 3 0 1 0 4.2 4.2 3 3 0 1 0-4.2-4.2z" />
+                  <path d="M7.4 16.6a3 3 0 1 0 4.2-4.2 3 3 0 1 0-4.2 4.2z" />
+                  <path d="M16.6 7.4a3 3 0 1 0-4.2 4.2 3 3 0 1 0 4.2-4.2z" />
+                </svg>
+              </span>
+              <div style={{ flex: 1, height: '1px', background: '#FCE4EC' }}></div>
+            </div>
+
             <div className="form-grid">
+              {/* Full Name */}
               <div className="form-group">
-                <label>Full Name</label>
-                <input 
-                  type="text" 
-                  name="name" 
-                  value={user.name} 
-                  onChange={handleChange} 
-                  placeholder="Enter your full name" 
-                />
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#111', fontWeight: '500', marginBottom: '8px' }}>
+                  <span style={{ color: '#C2185B', display: 'flex' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  </span>
+                  Full Name
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#C2185B', display: 'flex', alignItems: 'center' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  </span>
+                  <input 
+                    type="text" 
+                    name="name" 
+                    value={user.name} 
+                    onChange={handleChange} 
+                    placeholder="Enter your full name" 
+                    style={{ width: '100%', paddingLeft: '45px', borderRadius: '8px', border: '1px solid #FCE4EC' }}
+                  />
+                </div>
               </div>
+
+              {/* Phone Number */}
               <div className="form-group">
-                <label>Phone Number</label>
-                <input 
-                  type="text" 
-                  name="phone" 
-                  value={user.phone} 
-                  onChange={handleChange} 
-                  placeholder="Enter your phone number" 
-                />
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#111', fontWeight: '500', marginBottom: '8px' }}>
+                  <span style={{ color: '#C2185B', display: 'flex' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                  </span>
+                  Phone Number
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#C2185B', display: 'flex', alignItems: 'center' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                  </span>
+                  <input 
+                    type="text" 
+                    name="phone" 
+                    value={user.phone} 
+                    onChange={handleChange} 
+                    placeholder="Enter your phone number" 
+                    style={{ width: '100%', paddingLeft: '45px', borderRadius: '8px', border: '1px solid #FCE4EC' }}
+                  />
+                </div>
               </div>
+
+              {/* Email ID */}
               <div className="form-group full-width">
-                <label>Email ID</label>
-                <input 
-                  type="email" 
-                  name="email" 
-                  value={user.email} 
-                  disabled 
-                  className="disabled-input"
-                />
-                <span className="help-text">Email address cannot be changed.</span>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#111', fontWeight: '500', marginBottom: '8px' }}>
+                  <span style={{ color: '#C2185B', display: 'flex' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                  </span>
+                  Email ID
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#C2185B', display: 'flex', alignItems: 'center' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                  </span>
+                  <input 
+                    type="email" 
+                    name="email" 
+                    value={user.email} 
+                    disabled 
+                    className="disabled-input"
+                    style={{ width: '100%', paddingLeft: '45px', borderRadius: '8px', border: '1px solid #FCE4EC', background: '#fafafa' }}
+                  />
+                </div>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: '#FFF0F5',
+                  border: '1px solid #FCE4EC',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  color: '#C2185B',
+                  fontSize: '12px',
+                  marginTop: '8px'
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  <span>Email address cannot be changed.</span>
+                </div>
               </div>
             </div>
             
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '1rem' }}>
               <button 
-                className="btn btn-primary save-btn" 
+                className="btn btn-primary" 
+                style={{
+                  borderRadius: '6px',
+                  padding: '0.8rem 2rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: '#C2185B',
+                  border: 'none',
+                  color: '#fff',
+                  cursor: 'pointer'
+                }}
                 onClick={handleSave} 
                 disabled={saving}
               >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
               <button
                 className="btn"
-                style={{ background: '#fff', color: '#ef4444', border: '1px solid #ef4444', padding: '0.8rem 2rem', fontWeight: 600, borderRadius: '4px' }}
+                style={{
+                  background: '#fff',
+                  color: '#C2185B',
+                  border: '1px solid #C2185B',
+                  padding: '0.8rem 2rem',
+                  fontWeight: 600,
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer'
+                }}
                 onClick={handleDeleteAccount}
               >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                 Delete Account
               </button>
             </div>
@@ -386,53 +488,260 @@ export default function AccountPage() {
           </div>
         )}
 
-        {activeTab === 'addresses' && (
+                {activeTab === 'addresses' && (
           <div className="addresses-section">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-              <h2 className="section-title" style={{ margin: 0 }}>My Addresses</h2>
+            {/* Header Block */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  background: '#FFF0F5',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C2185B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                </div>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: '600', color: '#111', fontFamily: 'var(--font-title)' }}>My Addresses</h2>
+                  <p style={{ margin: '2px 0 0 0', color: '#666', fontSize: 'clamp(12px, 2.5vw, 14px)', lineHeight: '1.2' }}>Manage your shipping addresses.</p>
+                </div>
+              </div>
+              
               {!showAddressForm && (
-                <button className="btn btn-primary" style={{ padding: '0.6rem 1.2rem', fontSize: '0.95rem' }} onClick={() => openAddressForm()}>
+                <button 
+                  className="btn btn-primary" 
+                  style={{
+                    borderRadius: '6px',
+                    padding: '0.65rem 1.4rem',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: '#C2185B',
+                    border: 'none',
+                    color: '#fff',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => openAddressForm()}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                   Add New Address
                 </button>
               )}
             </div>
 
+            {/* Floral Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '1.2rem' }}>
+              <div style={{ flex: 1, height: '1px', background: '#FCE4EC' }}></div>
+              <span style={{ color: '#C2185B', display: 'flex', alignItems: 'center' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C2185B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M12 5.5a3 3 0 1 0 0 6 3 3 0 1 0 0-6z" />
+                  <path d="M12 12.5a3 3 0 1 0 0 6 3 3 0 1 0 0-6z" />
+                  <path d="M5.5 12a3 3 0 1 0 6 0 3 3 0 1 0-6 0z" />
+                  <path d="M12.5 12a3 3 0 1 0 6 0 3 3 0 1 0-6 0z" />
+                  <path d="M7.4 7.4a3 3 0 1 0 4.2 4.2 3 3 0 1 0-4.2-4.2z" />
+                  <path d="M12.4 12.4a3 3 0 1 0 4.2 4.2 3 3 0 1 0-4.2-4.2z" />
+                  <path d="M7.4 16.6a3 3 0 1 0 4.2-4.2 3 3 0 1 0-4.2 4.2z" />
+                  <path d="M16.6 7.4a3 3 0 1 0-4.2 4.2 3 3 0 1 0 4.2-4.2z" />
+                </svg>
+              </span>
+              <div style={{ flex: 1, height: '1px', background: '#FCE4EC' }}></div>
+            </div>
+
             {showAddressForm ? (
               <div className="address-form-container">
-                <h3>{editingAddressIndex !== null ? 'Edit Address' : 'Add New Address'}</h3>
+                <h3 style={{ fontFamily: 'var(--font-title)', fontSize: '20px', color: '#111', marginBottom: '1.5rem' }}>{editingAddressIndex !== null ? 'Edit Address' : 'Add New Address'}</h3>
                 <div className="form-grid">
+                  {/* Full Name */}
                   <div className="form-group full-width">
-                    <label>Full Name</label>
-                    <input type="text" name="fullName" value={addressForm.fullName} onChange={handleAddressChange} placeholder="John Doe" />
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#111', fontWeight: '500', marginBottom: '8px' }}>
+                      <span style={{ color: '#C2185B', display: 'flex' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      </span>
+                      Full Name
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#C2185B', display: 'flex', alignItems: 'center' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      </span>
+                      <input 
+                        type="text" 
+                        name="fullName" 
+                        value={addressForm.fullName} 
+                        onChange={handleAddressChange} 
+                        placeholder="John Doe" 
+                        style={{ width: '100%', paddingLeft: '45px', borderRadius: '8px', border: '1px solid #FCE4EC' }}
+                      />
+                    </div>
                   </div>
+
+                  {/* Address */}
                   <div className="form-group full-width">
-                    <label>Address</label>
-                    <input type="text" name="address" value={addressForm.address} onChange={handleAddressChange} placeholder="123 Luxury Lane" />
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#111', fontWeight: '500', marginBottom: '8px' }}>
+                      <span style={{ color: '#C2185B', display: 'flex' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                      </span>
+                      Address
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#C2185B', display: 'flex', alignItems: 'center' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                      </span>
+                      <input 
+                        type="text" 
+                        name="address" 
+                        value={addressForm.address} 
+                        onChange={handleAddressChange} 
+                        placeholder="123 Luxury Lane" 
+                        style={{ width: '100%', paddingLeft: '45px', borderRadius: '8px', border: '1px solid #FCE4EC' }}
+                      />
+                    </div>
                   </div>
+
+                  {/* City */}
                   <div className="form-group">
-                    <label>City</label>
-                    <input type="text" name="city" value={addressForm.city} onChange={handleAddressChange} placeholder="Mumbai" />
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#111', fontWeight: '500', marginBottom: '8px' }}>
+                      <span style={{ color: '#C2185B', display: 'flex' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="16"></line><line x1="15" y1="22" x2="15" y2="16"></line><line x1="9" y1="16" x2="15" y2="16"></line><path d="M8 6h3v3H8zm5 0h3v3h-3zm-5 5h3v3H8zm5 0h3v3h-3z"></path></svg>
+                      </span>
+                      City
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#C2185B', display: 'flex', alignItems: 'center' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="16"></line><line x1="15" y1="22" x2="15" y2="16"></line><line x1="9" y1="16" x2="15" y2="16"></line><path d="M8 6h3v3H8zm5 0h3v3h-3zm-5 5h3v3H8zm5 0h3v3h-3z"></path></svg>
+                      </span>
+                      <input 
+                        type="text" 
+                        name="city" 
+                        value={addressForm.city} 
+                        onChange={handleAddressChange} 
+                        placeholder="Mumbai" 
+                        style={{ width: '100%', paddingLeft: '45px', borderRadius: '8px', border: '1px solid #FCE4EC' }}
+                      />
+                    </div>
                   </div>
+
+                  {/* Postal Code */}
                   <div className="form-group">
-                    <label>Postal Code</label>
-                    <input type="text" name="postalCode" value={addressForm.postalCode} onChange={handleAddressChange} placeholder="400001" />
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#111', fontWeight: '500', marginBottom: '8px' }}>
+                      <span style={{ color: '#C2185B', display: 'flex' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M3 10h18"></path><path d="M8 10v4"></path><path d="M12 10v4"></path><path d="M16 10v4"></path></svg>
+                      </span>
+                      Postal Code
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#C2185B', display: 'flex', alignItems: 'center' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M3 10h18"></path><path d="M8 10v4"></path><path d="M12 10v4"></path><path d="M16 10v4"></path></svg>
+                      </span>
+                      <input 
+                        type="text" 
+                        name="postalCode" 
+                        value={addressForm.postalCode} 
+                        onChange={handleAddressChange} 
+                        placeholder="400001" 
+                        style={{ width: '100%', paddingLeft: '45px', borderRadius: '8px', border: '1px solid #FCE4EC' }}
+                      />
+                    </div>
                   </div>
+
+                  {/* Country */}
                   <div className="form-group">
-                    <label>Country</label>
-                    <input type="text" name="country" value={addressForm.country} onChange={handleAddressChange} placeholder="India" />
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#111', fontWeight: '500', marginBottom: '8px' }}>
+                      <span style={{ color: '#C2185B', display: 'flex' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                      </span>
+                      Country
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#C2185B', display: 'flex', alignItems: 'center' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                      </span>
+                      <input 
+                        type="text" 
+                        name="country" 
+                        value={addressForm.country} 
+                        onChange={handleAddressChange} 
+                        placeholder="India" 
+                        style={{ width: '100%', paddingLeft: '45px', borderRadius: '8px', border: '1px solid #FCE4EC' }}
+                      />
+                    </div>
                   </div>
+
+                  {/* Phone Number */}
                   <div className="form-group">
-                    <label>Phone Number</label>
-                    <input type="text" name="phone" value={addressForm.phone} onChange={handleAddressChange} placeholder="+91 9876543210" />
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#111', fontWeight: '500', marginBottom: '8px' }}>
+                      <span style={{ color: '#C2185B', display: 'flex' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                      </span>
+                      Phone Number
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#C2185B', display: 'flex', alignItems: 'center' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                      </span>
+                      <input 
+                        type="text" 
+                        name="phone" 
+                        value={addressForm.phone} 
+                        onChange={handleAddressChange} 
+                        placeholder="+91 9876543210" 
+                        style={{ width: '100%', paddingLeft: '45px', borderRadius: '8px', border: '1px solid #FCE4EC' }}
+                      />
+                    </div>
                   </div>
-                  <div className="form-group full-width" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input type="checkbox" id="isDefault" name="isDefault" checked={addressForm.isDefault} onChange={handleAddressChange} style={{ width: 'auto' }} />
-                    <label htmlFor="isDefault" style={{ marginBottom: 0, cursor: 'pointer' }}>Set as default shipping address</label>
+
+                  {/* Default Checkbox */}
+                  <div className="form-group full-width" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexDirection: 'row' }}>
+                    <input type="checkbox" id="isDefault" name="isDefault" checked={addressForm.isDefault} onChange={handleAddressChange} style={{ width: 'auto', accentColor: '#C2185B' }} />
+                    <label htmlFor="isDefault" style={{ marginBottom: 0, cursor: 'pointer', color: '#111', fontWeight: '500' }}>Set as default shipping address</label>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                  <button className="btn btn-primary" onClick={saveAddress}>Save Address</button>
-                  <button className="btn" style={{ background: '#f4f4f4', color: '#333' }} onClick={() => setShowAddressForm(false)}>Cancel</button>
+                
+                {/* Form Buttons */}
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                  <button 
+                    className="btn btn-primary" 
+                    style={{
+                      borderRadius: '6px',
+                      padding: '0.65rem 1.4rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: '#C2185B',
+                      border: 'none',
+                      color: '#fff',
+                      cursor: 'pointer'
+                    }}
+                    onClick={saveAddress}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Save Address
+                  </button>
+                  <button 
+                    className="btn" 
+                    style={{
+                      background: '#fff',
+                      color: '#C2185B',
+                      border: '1px solid #C2185B',
+                      padding: '0.65rem 1.4rem',
+                      fontWeight: 600,
+                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setShowAddressForm(false)}
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             ) : user.addresses.length === 0 ? (
@@ -449,9 +758,47 @@ export default function AccountPage() {
                     <p>{addr.city}, {addr.postalCode}</p>
                     <p>{addr.country}</p>
                     <p>Phone: {addr.phone}</p>
-                    <div className="address-actions">
-                      <button onClick={() => openAddressForm(index)}>Edit</button>
-                      <button onClick={() => deleteAddress(index)} style={{ color: '#ef4444' }}>Delete</button>
+                    
+                    {/* Card Actions */}
+                    <div className="address-actions" style={{ display: 'flex', gap: '0.8rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px dashed #FCE4EC' }}>
+                      <button 
+                        onClick={() => openAddressForm(index)}
+                        style={{
+                          background: '#fff',
+                          color: '#C2185B',
+                          border: '1px solid #C2185B',
+                          padding: '0.5rem 1rem',
+                          fontWeight: 600,
+                          fontSize: '0.8rem',
+                          borderRadius: '6px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        EDIT
+                      </button>
+                      <button 
+                        onClick={() => deleteAddress(index)} 
+                        style={{
+                          background: '#fff',
+                          color: '#ef4444',
+                          border: '1px solid #ef4444',
+                          padding: '0.5rem 1rem',
+                          fontWeight: 600,
+                          fontSize: '0.8rem',
+                          borderRadius: '6px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        DELETE
+                      </button>
                     </div>
                   </div>
                 ))}

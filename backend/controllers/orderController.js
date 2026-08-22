@@ -299,7 +299,20 @@ exports.updateOrderStatus = async (req, res) => {
 
     if (order) {
       const previousStatus = order.status;
-      order.status = req.body.status || order.status;
+      const newStatus = req.body.status || order.status;
+
+      // Enforce one-way progression: Processing → Shipped → Delivered
+      const STATUS_RANK = { 'Processing': 1, 'Shipped': 2, 'Delivered': 3 };
+      const currentRank = STATUS_RANK[previousStatus];
+      const targetRank = STATUS_RANK[newStatus];
+
+      if (currentRank !== undefined && targetRank !== undefined && targetRank < currentRank) {
+        return res.status(400).json({
+          message: `Cannot move order back from "${previousStatus}" to "${newStatus}". Status can only move forward: Processing → Shipped → Delivered.`
+        });
+      }
+
+      order.status = newStatus;
       if (req.body.trackingLink !== undefined) order.trackingLink = req.body.trackingLink;
       if (req.body.adminNotes !== undefined) order.adminNotes = req.body.adminNotes;
       

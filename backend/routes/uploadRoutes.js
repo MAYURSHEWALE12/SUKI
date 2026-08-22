@@ -3,6 +3,7 @@ const express = require('express');
 const multer = require('multer');
 const router = express.Router();
 const fs = require('fs');
+const sharp = require('sharp');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 // Ensure the uploads directory exists
@@ -85,6 +86,18 @@ const upload = multer({
   },
 });
 
+// Convert JPEG/PNG to WebP. Returns the new file path (or original if skipped).
+async function convertToWebp(filePath) {
+  const ext = path.extname(filePath).toLowerCase().replace('.', '');
+  const imageExts = ['jpg', 'jpeg', 'png'];
+  if (!imageExts.includes(ext)) return filePath; // skip videos, gif, already-webp
+
+  const webpPath = filePath.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+  await sharp(filePath).webp({ quality: 82 }).toFile(webpPath);
+  fs.unlinkSync(filePath); // remove original
+  return webpPath;
+}
+
 // Wrap multer so its errors (e.g. file too big) return clean 400s
 const handleUpload = (fields, handler) => (req, res, next) => {
   fields(req, res, (err) => {
@@ -102,12 +115,19 @@ router.post('/', protect, admin, handleUpload(upload.single('image'), async (req
     return res.status(400).send('No file uploaded or validation failed');
   }
   const ext = path.extname(req.file.originalname).toLowerCase().replace('.', '');
-  checkMagicBytes(req.file.path, ext, (err) => {
+  checkMagicBytes(req.file.path, ext, async (err) => {
     if (err) {
       fs.unlinkSync(req.file.path);
       return res.status(400).json({ message: err.message });
     }
-    res.send(`/${req.file.path.replace(/\\/g, '/')}`);
+    try {
+      const finalPath = await convertToWebp(req.file.path);
+      res.send(`/${finalPath.replace(/\\/g, '/')}`);
+    } catch (convErr) {
+      console.error('WebP conversion failed:', convErr);
+      // Fall back to original file if conversion fails
+      res.send(`/${req.file.path.replace(/\\/g, '/')}`);
+    }
   });
 }));
 
@@ -131,7 +151,16 @@ router.post('/multiple', protect, admin, handleUpload(upload.array('images', 3),
     return res.status(400).json({ message: failed.error });
   }
 
-  const paths = checked.map(({ file }) => `/${file.path.replace(/\\/g, '/')}`);
+  // Convert valid images to WebP
+  const paths = await Promise.all(checked.map(async ({ file }) => {
+    try {
+      const finalPath = await convertToWebp(file.path);
+      return `/${finalPath.replace(/\\/g, '/')}`;
+    } catch {
+      return `/${file.path.replace(/\\/g, '/')}`;
+    }
+  }));
+
   res.json(paths);
 }));
 

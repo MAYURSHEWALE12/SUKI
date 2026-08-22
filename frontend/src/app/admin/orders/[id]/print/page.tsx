@@ -47,19 +47,35 @@ export default function PrintOrderLabel({ params }: { params: Promise<{ id: stri
     fetchOrder();
   }, [id]);
 
-  useEffect(() => {
-    if (order && !loading) {
-      setTimeout(() => {
-        window.print();
-      }, 500);
-    }
-  }, [order, loading]);
+  
 
   if (loading) return <div style={{ padding: '2rem', color: 'black', background: 'white', minHeight: '100vh' }}>Loading label...</div>;
   if (!order) return <div style={{ padding: '2rem', color: 'black', background: 'white', minHeight: '100vh' }}>Order not found.</div>;
 
   return (
-    <div style={{ background: 'white', color: 'black', minHeight: '100vh', padding: '2rem' }}>
+    <div style={{ background: '#f4f4f5', color: 'black', minHeight: '100vh', padding: '2rem' }}>
+      <div style={{ maxWidth: '4in', margin: '0 auto 2rem auto', display: 'flex', justifyContent: 'flex-end' }} className="no-print">
+        <button 
+          onClick={() => window.print()}
+          style={{
+            background: '#C2185B',
+            color: 'white',
+            border: 'none',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '8px',
+            fontSize: '1rem',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            boxShadow: '0 4px 12px rgba(194, 24, 91, 0.2)'
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Save / Print Receipt
+        </button>
+      </div>
       <div className="print-label-container" style={{
         width: '4in',
         height: '6in',

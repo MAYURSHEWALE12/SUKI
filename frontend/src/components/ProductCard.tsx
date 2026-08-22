@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useWishlist } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
-import QuickViewModal from '@/components/QuickViewModal';
 import './suki-card.css';
 
 interface Product {
@@ -41,7 +40,6 @@ function hashString(str: string): number {
 export default function ProductCard({ product }: { product: Product }) {
   const { wishlist, toggleWishlist } = useWishlist();
   const { addToCart } = useCart();
-  const [quickViewOpen, setQuickViewOpen] = useState(false);
   const productId = product._id || (product.id ? product.id.toString() : '');
   const isWishlisted = wishlist.includes(productId);
   const isOutOfStock = product.countInStock !== undefined && product.countInStock <= 0;
@@ -120,19 +118,6 @@ export default function ProductCard({ product }: { product: Product }) {
             </div>
           )}
 
-          {/* Hover Quick View button */}
-          <button 
-            className="luxury-quickview-btn" 
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setQuickViewOpen(true);
-            }}
-            aria-label={`Quick view ${product.name}`}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-          </button>
-
           {/* Hover Add to Cart button */}
           <button 
             className="luxury-atc-btn" 
@@ -173,14 +158,6 @@ export default function ProductCard({ product }: { product: Product }) {
           )}
         </div>
       </div>
-
-      {quickViewOpen && (
-        <QuickViewModal
-          productId={productId}
-          fallback={{ name: product.name, image: product.image || product.imageUrl || '/placeholder.jpg', price: currentPrice }}
-          onClose={() => setQuickViewOpen(false)}
-        />
-      )}
     </div>
   );
 }

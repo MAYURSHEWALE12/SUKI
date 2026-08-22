@@ -430,7 +430,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         <div className="product-info">
           <div className="pdp-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', marginBottom: '1rem' }}>
             <div style={{ flex: 1 }}>
-              <h1 className="pdp-title" style={{ textTransform: 'uppercase', margin: 0, marginBottom: '0.5rem', fontFamily: '"Poppins", sans-serif', fontWeight: 600, letterSpacing: '1px', color: '#111827', fontSize: '1.8rem' }}>{product.name}</h1>
+              <h1 className="pdp-title" style={{ textTransform: 'uppercase', margin: 0, marginBottom: '0.5rem', fontFamily: '"Poppins", sans-serif', fontWeight: 600, letterSpacing: '1px', color: '#111827', fontSize: 'clamp(1.2rem, 3.5vw, 1.6rem)' }}>{product.name}</h1>
               {product.shortDescription && (
                 <p style={{ color: '#6b7280', fontSize: '1.05rem', marginTop: 0, marginBottom: '1rem', lineHeight: 1.5 }}>{product.shortDescription}</p>
               )}
@@ -486,10 +486,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           </div>
 
           <div className="pdp-price" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-            <span style={{ fontSize: '2rem', fontWeight: 600, color: '#C2185B', fontFamily: 'Inter, sans-serif' }}>₹{product.price.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+            <span style={{ fontSize: '2rem', fontWeight: 600, color: '#C2185B', fontFamily: 'Poppins, sans-serif' }}>₹{product.price.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
             {product.originalPrice && product.originalPrice > product.price && (
               <>
-                <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '1.25rem', fontFamily: 'Inter, sans-serif' }}>₹{product.originalPrice.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '1.25rem', fontFamily: 'Poppins, sans-serif' }}>₹{product.originalPrice.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
               </>
             )}
           </div>
@@ -770,7 +770,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 padding: '1rem', 
                 border: '1px solid #FDF2F8', 
                 borderRadius: '8px',
-                fontFamily: 'Inter',
+                fontFamily: 'Poppins, sans-serif',
                 fontSize: '0.95rem',
                 outline: 'none',
                 resize: 'vertical',

@@ -227,20 +227,20 @@ export default function AdminOrdersPage() {
 
   return (
     <div>
-      <div className="admin-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
+      <div className="admin-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
         <div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111d4a', marginBottom: '0.25rem' }}>Orders Management</h1>
           <p style={{ color: '#6b7280', fontSize: '0.9rem', margin: 0 }}>View and manage all customer orders efficiently.</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div style={{ position: 'relative' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap', width: '100%', maxWidth: '650px' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
             <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <input 
               type="text" 
               placeholder="Search Order ID or Customer..." 
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              style={{ padding: '0.6rem 1rem 0.6rem 2.2rem', border: '1px solid #e5e7eb', borderRadius: '8px', minWidth: '320px', fontSize: '0.85rem' }}
+              style={{ padding: '0.6rem 1rem 0.6rem 2.2rem', border: '1px solid #e5e7eb', borderRadius: '8px', width: '100%', fontSize: '0.85rem' }}
             />
           </div>
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#374151', cursor: 'pointer', whiteSpace: 'nowrap', userSelect: 'none' }}>
@@ -250,12 +250,8 @@ export default function AdminOrdersPage() {
               onChange={(e) => { setIncludePending(e.target.checked); setCurrentPage(1); }}
               style={{ accentColor: '#111d4a', cursor: 'pointer' }}
             />
-            Show Pending &amp; Failed Payments
+            Show Pending / Failed
           </label>
-          <button className="admin-btn-primary" style={{ background: '#111d4a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            Export Orders
-          </button>
         </div>
       </div>
 
@@ -263,7 +259,7 @@ export default function AdminOrdersPage() {
         
         {/* Bulk Actions Toolbar */}
         {selectedOrders.size > 0 && (
-          <div style={{ padding: '1rem 1.5rem', backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div style={{ padding: '0.85rem 1.25rem', backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{selectedOrders.size} selected</span>
             <select onChange={(e) => { if(e.target.value) handleBulkUpdate(e.target.value); e.target.value = ''; }} style={{ padding: '0.4rem', borderRadius: '4px', border: '1px solid #d1d5db' }}>
               <option value="">Bulk Actions...</option>
@@ -274,7 +270,7 @@ export default function AdminOrdersPage() {
           </div>
         )}
 
-        <table>
+        <table className="admin-orders-desktop-table">
           <thead>
             <tr>
               <th style={{ width: '40px', paddingLeft: '1.5rem' }}>
@@ -346,17 +342,45 @@ export default function AdminOrdersPage() {
                       </div>
                       {openActionDropdown === order._id && (
                         <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #111d4a', borderTop: 'none', borderRadius: '0 0 6px 6px', zIndex: 10, overflow: 'hidden' }}>
-                          {['Processing', 'Shipped', 'Delivered'].map(status => (
-                            <div 
-                              key={status}
-                              onClick={() => { updateOrderStatus(order._id, status); setOpenActionDropdown(null); }}
-                              style={{ padding: '0.6rem 1rem', cursor: 'pointer', fontSize: '0.85rem', background: order.status === status ? '#111d4a' : '#fff', color: order.status === status ? '#fff' : '#111d4a', transition: 'background 0.2s', textAlign: 'left' }}
-                              onMouseEnter={(e) => { if (order.status !== status) { e.currentTarget.style.background = '#f3f4f6'; } }}
-                              onMouseLeave={(e) => { if (order.status !== status) { e.currentTarget.style.background = '#fff'; } }}
-                            >
-                              {status}
-                            </div>
-                          ))}
+                          {(() => {
+                            const STATUS_RANK: Record<string, number> = { 'Processing': 1, 'Shipped': 2, 'Delivered': 3 };
+                            const currentRank = STATUS_RANK[order.status] ?? 0;
+                            return ['Processing', 'Shipped', 'Delivered'].map(status => {
+                              const targetRank = STATUS_RANK[status] ?? 0;
+                              const isDisabled = targetRank < currentRank;
+                              const isCurrent = order.status === status;
+                              return (
+                                <div
+                                  key={status}
+                                  onClick={() => {
+                                    if (!isDisabled && !isCurrent) {
+                                      updateOrderStatus(order._id, status);
+                                      setOpenActionDropdown(null);
+                                    }
+                                  }}
+                                  title={isDisabled ? `Cannot go back to "${status}" from "${order.status}"` : undefined}
+                                  style={{
+                                    padding: '0.6rem 1rem',
+                                    cursor: isDisabled ? 'not-allowed' : isCurrent ? 'default' : 'pointer',
+                                    fontSize: '0.85rem',
+                                    background: isCurrent ? '#111d4a' : '#fff',
+                                    color: isCurrent ? '#fff' : isDisabled ? '#c0c0c0' : '#111d4a',
+                                    transition: 'background 0.2s',
+                                    textAlign: 'left',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    opacity: isDisabled ? 0.5 : 1,
+                                  }}
+                                  onMouseEnter={(e) => { if (!isDisabled && !isCurrent) e.currentTarget.style.background = '#f3f4f6'; }}
+                                  onMouseLeave={(e) => { if (!isDisabled && !isCurrent) e.currentTarget.style.background = '#fff'; }}
+                                >
+                                  {status}
+                                  {isDisabled && <span style={{ fontSize: '0.7rem', color: '#c0c0c0', marginLeft: 'auto' }}>🔒</span>}
+                                </div>
+                              );
+                            });
+                          })()}
                         </div>
                       )}
                     </div>
@@ -440,6 +464,209 @@ export default function AdminOrdersPage() {
             )}
           </tbody>
         </table>
+
+        {/* Dedicated Mobile Order Cards (shown only on mobile) */}
+        <div className="admin-orders-mobile-list" style={{ padding: '0.75rem' }}>
+          {currentOrders.map((order: Order) => (
+            <div
+              key={order._id}
+              className={`admin-order-mobile-card ${selectedOrders.has(order._id) ? 'selected' : ''}`}
+            >
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedOrders.has(order._id)}
+                    onChange={() => toggleSelectOrder(order._id)}
+                    style={{ width: '16px', height: '16px', accentColor: '#111d4a', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontWeight: 700, color: '#111d4a', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#111d4a" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    #{order._id.substring(0, 8).toUpperCase()}
+                  </span>
+                </div>
+                <span style={{ fontSize: '0.75rem', color: '#6b7280', background: '#f3f4f6', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                  {new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}, {new Date(order.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                </span>
+              </div>
+
+              {/* Customer & Total */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderTop: '1px solid #f3f4f6', paddingTop: '0.5rem' }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1f2937' }}>
+                    {order.user?.name || order.shippingAddress?.fullName || 'Customer'}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.15rem' }}>
+                    <span>📍 {order.shippingAddress?.city || 'India'}</span>
+                    {order.shippingAddress?.phone && (
+                      <a href={`tel:${order.shippingAddress.phone}`} style={{ color: '#111d4a', textDecoration: 'none', fontWeight: 500 }}>
+                        • 📞 {order.shippingAddress.phone}
+                      </a>
+                    )}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: 700, fontSize: '1rem', color: '#111d4a' }}>
+                    ₹{order.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+                    {(order.orderItems || []).reduce((acc, i) => acc + (i.quantity || 1), 0)} items
+                  </div>
+                </div>
+              </div>
+
+              {/* Status & Actions */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', borderTop: '1px solid #f3f4f6', paddingTop: '0.5rem' }}>
+                <span style={{ 
+                  padding: '0.3rem 0.65rem', 
+                  borderRadius: '9999px', 
+                  fontSize: '0.7rem', 
+                  fontWeight: 700, 
+                  letterSpacing: '0.5px',
+                  textTransform: 'uppercase',
+                  backgroundColor: order.status === 'Processing' ? '#ffedd5' : order.status === 'Shipped' ? '#e0e7ff' : order.status === 'Delivered' ? '#dcfce3' : order.status === 'Pending Payment' ? '#fef3c7' : order.status === 'Payment Failed' ? '#fee2e2' : '#f3f4f6',
+                  color: order.status === 'Processing' ? '#ea580c' : order.status === 'Shipped' ? '#4338ca' : order.status === 'Delivered' ? '#15803d' : order.status === 'Pending Payment' ? '#b45309' : order.status === 'Payment Failed' ? '#b91c1c' : '#4b5563'
+                }}>
+                  {order.status}
+                </span>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div 
+                    style={{ position: 'relative' }} 
+                    tabIndex={0} 
+                    onBlur={(e) => {
+                      if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                        setOpenActionDropdown(null);
+                      }
+                    }}
+                  >
+                    <button 
+                      onClick={() => { if (!updating) setOpenActionDropdown(openActionDropdown === order._id ? null : order._id); }}
+                      style={{ background: '#fff', border: '1px solid #111d4a', padding: '0.35rem 0.65rem', borderRadius: '6px', color: '#111d4a', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                    >
+                      Update
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    {openActionDropdown === order._id && (
+                      <div style={{ position: 'absolute', right: 0, top: '100%', width: '150px', background: '#fff', border: '1px solid #111d4a', borderRadius: '6px', zIndex: 30, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', marginTop: '4px' }}>
+                        {(() => {
+                          const STATUS_RANK: Record<string, number> = { 'Processing': 1, 'Shipped': 2, 'Delivered': 3 };
+                          const currentRank = STATUS_RANK[order.status] ?? 0;
+                          return ['Processing', 'Shipped', 'Delivered'].map(status => {
+                            const targetRank = STATUS_RANK[status] ?? 0;
+                            const isDisabled = targetRank < currentRank;
+                            const isCurrent = order.status === status;
+                            return (
+                              <div
+                                key={status}
+                                onClick={() => {
+                                  if (!isDisabled && !isCurrent) {
+                                    updateOrderStatus(order._id, status);
+                                    setOpenActionDropdown(null);
+                                  }
+                                }}
+                                style={{
+                                  padding: '0.6rem 0.85rem',
+                                  cursor: isDisabled ? 'not-allowed' : isCurrent ? 'default' : 'pointer',
+                                  fontSize: '0.8rem',
+                                  background: isCurrent ? '#111d4a' : '#fff',
+                                  color: isCurrent ? '#fff' : isDisabled ? '#c0c0c0' : '#111d4a',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  opacity: isDisabled ? 0.5 : 1,
+                                }}
+                              >
+                                {status}
+                                {isDisabled && <span style={{ fontSize: '0.7rem' }}>🔒</span>}
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => setExpandedOrderId(expandedOrderId === order._id ? null : order._id)}
+                    style={{ background: expandedOrderId === order._id ? '#111d4a' : '#f3f4f6', border: 'none', color: expandedOrderId === order._id ? '#fff' : '#374151', padding: '0.35rem 0.65rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                  >
+                    {expandedOrderId === order._id ? 'Hide' : 'Details'}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: expandedOrderId === order._id ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Expanded details */}
+              {expandedOrderId === order._id && (
+                <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#111d4a', textTransform: 'uppercase' }}>Items</span>
+                      <button
+                        onClick={() => downloadPDFLabel(order)}
+                        style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '4px', color: '#111d4a', display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer', fontWeight: 500 }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        PDF Label
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {order.orderItems.map((item: OrderItem, idx: number) => (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', background: '#f9fafb', padding: '0.5rem', borderRadius: '6px' }}>
+                          {item.image && <Image src={item.image} alt={item.name} width={36} height={44} style={{ width: '36px', height: '44px', objectFit: 'cover', borderRadius: '4px' }} />}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.8rem', color: '#111d4a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+                            <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>Qty: {item.quantity} × ₹{item.price.toLocaleString('en-IN')}</div>
+                          </div>
+                          <div style={{ fontWeight: 600, fontSize: '0.8rem', color: '#111d4a' }}>
+                            ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#f9fafb', padding: '0.65rem', borderRadius: '6px', fontSize: '0.8rem', lineHeight: '1.4' }}>
+                    <div style={{ fontWeight: 700, color: '#111d4a', marginBottom: '0.2rem' }}>Shipping Address</div>
+                    <div style={{ color: '#374151' }}>{order.shippingAddress?.fullName}</div>
+                    <div style={{ color: '#4b5563' }}>{order.shippingAddress?.address}, {order.shippingAddress?.city} - {order.shippingAddress?.postalCode}</div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <input
+                      type="text"
+                      placeholder="Tracking URL / AWB"
+                      value={trackingLinks[order._id] || ''}
+                      onChange={(e) => setTrackingLinks({ ...trackingLinks, [order._id]: e.target.value })}
+                      style={{ padding: '0.5rem', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '0.8rem', width: '100%' }}
+                    />
+                    <textarea
+                      placeholder="Internal Notes"
+                      value={adminNotes[order._id] || ''}
+                      onChange={(e) => setAdminNotes({ ...adminNotes, [order._id]: e.target.value })}
+                      style={{ padding: '0.5rem', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '0.8rem', width: '100%', minHeight: '45px' }}
+                    />
+                    <button
+                      onClick={() => updateOrderStatus(order._id, order.status)}
+                      className="admin-btn-primary"
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', alignSelf: 'flex-start' }}
+                      disabled={updating === order._id}
+                    >
+                      {updating === order._id ? 'Saving...' : 'Save Notes'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          {currentOrders.length === 0 && (
+            <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+              No orders found matching your criteria.
+            </div>
+          )}
+        </div>
         
         {/* Pagination Controls */}
         {totalPages > 0 && (

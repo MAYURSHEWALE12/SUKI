@@ -164,8 +164,8 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!agreePolicies) {
-      setError('You must agree to the Terms & Conditions and Privacy Policy to proceed.');
+    if (!agreePolicies || !agreeMarketing) {
+      setError('You must agree to the policies and opt-in to updates to proceed.');
       return;
     }
     setIsProcessing(true);
@@ -420,39 +420,16 @@ export default function CheckoutPage() {
             {expandedSections['payment'] && (
               <div className="checkout-accordion-body" style={{ marginTop: '1.5rem' }}>
                 <div className="payment-options">
-                  <label className={`payment-option ${paymentMethod === 'Credit Card' ? 'selected' : ''}`}>
-                    <input 
-                      type="radio" 
-                      name="paymentMethod" 
-                      value="Credit Card" 
-                      checked={paymentMethod === 'Credit Card'} 
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                    />
-                    <span className="payment-option-icon">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
-                    </span>
-                    <div className="payment-option-content">
-                      <span className="payment-option-title">Credit / Debit Card</span>
-                      <span className="payment-option-desc">Simulated Payment Gateway</span>
+                  <div className="payu-notice" style={{ padding: '1rem', backgroundColor: '#F8F9FA', borderRadius: '8px', border: '1px solid #E9ECEF', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-primary)' }}>
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    <div>
+                      <h4 style={{ margin: '0 0 0.25rem', fontFamily: 'var(--font-body)', fontSize: '0.95rem', fontWeight: 600 }}>Secure Payment by PayU</h4>
+                      <p style={{ margin: 0, fontSize: '0.85rem', color: '#6C757D' }}>All major Credit Cards, Debit Cards, UPI, and Netbanking are supported. You will be redirected to PayU securely to complete your purchase.</p>
                     </div>
-                  </label>
-
-                  <label className={`payment-option ${paymentMethod === 'UPI' ? 'selected' : ''}`}>
-                    <input 
-                      type="radio" 
-                      name="paymentMethod" 
-                      value="UPI" 
-                      checked={paymentMethod === 'UPI'} 
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                    />
-                    <span className="payment-option-icon">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
-                    </span>
-                    <div className="payment-option-content">
-                      <span className="payment-option-title">UPI</span>
-                      <span className="payment-option-desc">GPay, PhonePe, Paytm & more</span>
-                    </div>
-                  </label>
+                  </div>
                 </div>
               </div>
             )}
@@ -551,6 +528,7 @@ export default function CheckoutPage() {
               type="submit"
               className="place-order-btn" 
               disabled={isProcessing}
+              style={{ opacity: (agreePolicies && agreeMarketing) ? 1 : 0.5, transition: 'opacity 0.3s ease' }}
               form="checkout-form"
             >
               {isProcessing ? 'Processing Order...' : 'Place Order →'}
@@ -562,7 +540,7 @@ export default function CheckoutPage() {
               </label>
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.85rem', color: '#4b5563', cursor: 'pointer', lineHeight: 1.4 }}>
                 <input type="checkbox" checked={agreeMarketing} onChange={(e) => setAgreeMarketing(e.target.checked)} style={{ marginTop: '0.2rem', accentColor: '#C2185B' }} />
-                <span>I agree to receive offers, updates, and promotional messages from Suki Ethnic via Email, SMS, or WhatsApp.</span>
+                <span>I agree to receive offers, updates, and promotional messages from Suki Ethnic via Email, SMS, or WhatsApp. <span style={{color:'red'}}>*</span></span>
               </label>
             </div>
 

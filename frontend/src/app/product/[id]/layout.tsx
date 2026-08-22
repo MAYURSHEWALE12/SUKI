@@ -1,22 +1,50 @@
 import { Metadata } from 'next';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sukiethnic.com';
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     const res = await fetch(`${apiUrl}/api/products/${id}`, { next: { revalidate: 60 } });
-    
+
     if (!res.ok) return { title: 'Product | Suki Ethnic' };
-    
+
     const product = await res.json();
+    const title = `${product.name} | Suki Ethnic`;
+    const description = product.shortDescription
+      || (product.description ? product.description.substring(0, 160) : 'Premium ethnic wear from Suki Ethnic.');
+    const productUrl = `${siteUrl}/product/${id}`;
+    const toAbsolute = (src: string) => src?.startsWith('http') ? src : `${siteUrl}${src}`;
+    const imageUrl = toAbsolute(product.image);
+
     return {
-      title: `${product.name} | Suki Ethnic`,
-      description: product.description ? product.description.substring(0, 160) : 'Premium ethnic wear from Suki Ethnic.',
+      title,
+      description,
+      alternates: {
+        canonical: productUrl,
+      },
       openGraph: {
-        images: [product.image],
-        title: `${product.name} | Suki Ethnic`,
-        description: product.description ? product.description.substring(0, 160) : '',
-      }
+        type: 'website',
+        url: productUrl,
+        siteName: 'Suki Ethnic',
+        title,
+        description,
+        images: [
+          {
+            url: imageUrl,
+            width: 800,
+            height: 1000,
+            alt: product.name,
+          },
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [imageUrl],
+      },
     };
   } catch {
     return {
@@ -24,6 +52,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     };
   }
 }
+
 
 export default async function ProductLayout({ children, params }: { children: React.ReactNode, params: Promise<{ id: string }> }) {
   const { id } = await params;

@@ -23,7 +23,7 @@ const POLICY_LINKS = [
 const SOCIALS = [
   {
     label: 'Instagram',
-    href: '#',
+    href: 'https://www.instagram.com/suki__ethnic/',
     icon: <FaInstagram size={20} />,
   },
   {

@@ -20,7 +20,7 @@
   padding: 1.5rem 4% 6rem;
   background: #fdf6f7;
   color: var(--pdp-ink);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -41,7 +41,7 @@
   align-items: center;
   gap: 0.6rem;
   margin-bottom: 2.5rem;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 14px;
   color: var(--pdp-muted);
   flex-wrap: wrap;
@@ -358,7 +358,7 @@
 
 /* Title — editorial serif */
 .pdp-title {
-  font-family: 'Philosopher', serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 32px;
   font-weight: 700;
   color: #111;
@@ -438,7 +438,7 @@
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 0.85rem;
   padding: 0;
   transition: color 0.25s ease;
@@ -461,7 +461,7 @@
   border-radius: 999px;
   border: 1px solid #E4E4E7;
   background: #fff;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 0.95rem;
   font-weight: 500;
   color: var(--pdp-ink);
@@ -607,7 +607,7 @@
   height: 56px;
   width: 100%;
   border-radius: 999px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -828,7 +828,7 @@
   border-radius: 999px;
   padding: 0 1.25rem;
   font-size: 0.95rem;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
   outline: none;
   background: #fff;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -846,7 +846,7 @@
   border: 1px solid var(--pdp-primary);
   background: #fff;
   color: var(--pdp-primary);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -1010,7 +1010,7 @@
 }
 
 .pdp-accordion-title {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 0.95rem;
   font-weight: 400;
   letter-spacing: 0.02em;
@@ -1167,7 +1167,7 @@
   background: #fff;
   border: 1.5px solid var(--pdp-primary);
   color: var(--pdp-primary);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
@@ -1303,7 +1303,7 @@
 
 .pdp-modal-title {
   text-align: center;
-  font-family: 'Philosopher', serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 1.8rem;
   color: var(--pdp-primary);
   margin-bottom: 2rem;
@@ -1472,7 +1472,7 @@
 
 .pdp-review-name {
   font-weight: 600;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
   color: var(--pdp-ink);
   font-size: 0.95rem;
   flex: 1;
@@ -1502,7 +1502,7 @@
   margin: 0 auto;
   padding: 8rem 3rem;
   text-align: center;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
   color: var(--pdp-muted);
 }
 

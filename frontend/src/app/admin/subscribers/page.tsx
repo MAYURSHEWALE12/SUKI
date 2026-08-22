@@ -67,32 +67,54 @@ export default function AdminSubscribersPage() {
             No one has subscribed to the newsletter yet.
           </div>
         ) : (
-          <div className="admin-table-container">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Email Address</th>
-                  <th>Subscribed Date</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {subscribers.map((sub: Subscriber) => (
-                  <tr key={sub._id}>
-                    <td>
-                      <div style={{ fontWeight: 500, color: '#222' }}>{sub.email}</div>
-                    </td>
-                    <td>{new Date(sub.createdAt).toLocaleDateString()}</td>
-                    <td>
-                      <span className={`admin-badge ${sub.active ? 'badge-success' : 'badge-danger'}`}>
-                        {sub.active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {/* Desktop Table */}
+            <div className="admin-subscribers-desktop">
+              <div className="admin-table-container">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Email Address</th>
+                      <th>Subscribed Date</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subscribers.map((sub: Subscriber) => (
+                      <tr key={sub._id}>
+                        <td>
+                          <div style={{ fontWeight: 500, color: '#222', overflowWrap: 'anywhere' }}>{sub.email}</div>
+                        </td>
+                        <td>{new Date(sub.createdAt).toLocaleDateString()}</td>
+                        <td>
+                          <span className={`admin-badge ${sub.active ? 'badge-success' : 'badge-danger'}`}>
+                            {sub.active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Mobile Card List */}
+            <div className="admin-subscribers-mobile-list">
+              {subscribers.map((sub: Subscriber) => (
+                <div key={sub._id} className="admin-subscriber-mobile-card">
+                  <div className="admin-subscriber-card-top">
+                    <span className="admin-subscriber-card-email">{sub.email}</span>
+                    <span className={`admin-badge ${sub.active ? 'badge-success' : 'badge-danger'}`} style={{ flexShrink: 0 }}>
+                      {sub.active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  <div className="admin-subscriber-card-meta">
+                    Subscribed: {new Date(sub.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

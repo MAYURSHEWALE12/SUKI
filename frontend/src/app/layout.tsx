@@ -34,8 +34,17 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://sukiethnic.com'),
   title: "Suki Ethnic | Wear the trend. Own the moment.",
   description: "Trendy, festive, affordable-premium ethnic fashion for young Indian women. Shop lehengas, sarees, and party wear.",
+  openGraph: {
+    siteName: 'Suki Ethnic',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@sukiethnic',
+  },
 };
 
 import { CartProvider } from "@/context/CartContext";

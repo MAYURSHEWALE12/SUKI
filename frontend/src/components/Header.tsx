@@ -256,7 +256,6 @@ export default function Header() {
                 {isDropdownOpen && (
                   <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '10px', background: 'white', border: '1px solid var(--line)', borderRadius: '8px', padding: '10px 0', minWidth: '150px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 10 }}>
                     <div style={{ padding: '8px 16px', fontSize: '0.9rem', cursor: 'pointer', color: 'var(--wine)' }} onClick={() => setIsDropdownOpen(false)}><Link href="/account" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>Profile</Link></div>
-                    <div style={{ padding: '8px 16px', fontSize: '0.9rem', cursor: 'pointer', color: 'var(--wine)' }} onClick={() => setIsDropdownOpen(false)}>My Orders</div>
                     <div style={{ padding: '8px 16px', fontSize: '0.9rem', cursor: 'pointer', color: 'var(--rose)', borderTop: '1px solid var(--line)', marginTop: '4px', paddingTop: '12px' }} onClick={handleLogout}>Logout</div>
                   </div>
                 )}
@@ -389,7 +388,7 @@ export default function Header() {
           <li className="nav-item"><Link href="/collections/navratri-ghagra">Navratri Ghagra</Link></li>
           <li className="nav-item"><Link href="/collections/best-sellers">Best Sellers</Link></li>
           <li className="nav-item"><Link href="/collections/celeb-styles">Celeb & Influencer Edit</Link></li>
-          <li className="nav-item"><Link href="/occasions">Occasions</Link></li>
+          
         </ul>
       </nav>
       
@@ -427,7 +426,7 @@ export default function Header() {
             <li style={{ animationDelay: '0.25s' }}><Link href="/collections/navratri-ghagra" onClick={() => setIsMobileMenuOpen(false)}>Navratri Ghagra</Link></li>
             <li style={{ animationDelay: '0.3s' }}><Link href="/collections/best-sellers" onClick={() => setIsMobileMenuOpen(false)}>Best Sellers</Link></li>
             <li style={{ animationDelay: '0.4s' }}><Link href="/collections/celeb-styles" onClick={() => setIsMobileMenuOpen(false)}>Celeb & Influencer Edit</Link></li>
-            <li style={{ animationDelay: '0.45s' }}><Link href="/occasions" onClick={() => setIsMobileMenuOpen(false)}>Occasions</Link></li>
+            
           </ul>
           
           <div className="mobile-drawer-bottom" style={{ animationDelay: '0.8s' }}>

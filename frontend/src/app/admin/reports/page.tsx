@@ -7,6 +7,20 @@ import {
 
 const PENDING_STATUSES = ['Pending Payment', 'Payment Failed'];
 
+// Compact axis labels: 5000 -> ₹5k, 150000 -> ₹1.5L, 25000000 -> ₹2.5Cr
+const formatCompactINR = (value: number) => {
+  if (value >= 10000000) return `₹${(value / 10000000).toFixed(1).replace(/\.0$/, '')}Cr`;
+  if (value >= 100000) return `₹${(value / 100000).toFixed(1).replace(/\.0$/, '')}L`;
+  if (value >= 1000) {
+    const k = value / 1000;
+    return `₹${Number.isInteger(k) ? k : k.toFixed(1)}k`;
+  }
+  return `₹${value}`;
+};
+
+const truncateLabel = (label: string, max: number) =>
+  label.length > max ? `${label.slice(0, max - 1).trimEnd()}…` : label;
+
 interface OrderItem {
   name: string;
   quantity: number;
@@ -36,6 +50,15 @@ export default function AdminReportsPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isNarrowScreen, setIsNarrowScreen] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const update = () => setIsNarrowScreen(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   // Date range state
   const [startDate, setStartDate] = useState(() => {
@@ -142,12 +165,14 @@ export default function AdminReportsPage() {
 
   // CSV Export functions
   const downloadCSV = (data: string[][], filename: string) => {
-    const csvContent = data.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csvContent = '\uFEFF' + data.map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = filename;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
   };
 
@@ -194,18 +219,18 @@ export default function AdminReportsPage() {
 
   return (
     <div>
-      <div className="admin-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="admin-page-header">
         <h1>Sales Reports</h1>
       </div>
 
       {/* Date Range Filter */}
       <div className="admin-card" style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+        <div className="admin-reports-filter-row">
           <span style={{ fontWeight: 600, color: '#111', fontSize: '0.9rem' }}>Date Range:</span>
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '6px' }} />
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="admin-reports-date-input" />
           <span style={{ color: '#6b7280' }}>to</span>
-          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '6px' }} />
-          <div style={{ display: 'flex', gap: '0.5rem', marginLeft: '1rem' }}>
+          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="admin-reports-date-input" />
+          <div className="admin-reports-quick-ranges">
             <button onClick={() => setQuickRange(7)} className="admin-btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Last 7 Days</button>
             <button onClick={() => setQuickRange(30)} className="admin-btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Last 30 Days</button>
             <button onClick={() => setQuickRange(90)} className="admin-btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Last 90 Days</button>
@@ -218,44 +243,44 @@ export default function AdminReportsPage() {
       <div className="reports-summary-grid">
         <div className="admin-card">
           <h3 style={{ color: '#4b5563', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '1px', margin: '0 0 0.75rem 0' }}>Total Revenue</h3>
-          <div style={{ fontSize: '2rem', fontWeight: 700, color: '#111' }}>₹{stats.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+          <div className="admin-stat-value">₹{stats.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
         </div>
         <div className="admin-card">
           <h3 style={{ color: '#4b5563', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '1px', margin: '0 0 0.75rem 0' }}>Total Orders</h3>
-          <div style={{ fontSize: '2rem', fontWeight: 700, color: '#111' }}>{stats.totalOrders}</div>
+          <div className="admin-stat-value">{stats.totalOrders}</div>
         </div>
         <div className="admin-card">
           <h3 style={{ color: '#4b5563', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '1px', margin: '0 0 0.75rem 0' }}>Avg Order Value</h3>
-          <div style={{ fontSize: '2rem', fontWeight: 700, color: '#111' }}>₹{stats.avgOrderValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+          <div className="admin-stat-value">₹{stats.avgOrderValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
         </div>
         <div className="admin-card">
           <h3 style={{ color: '#4b5563', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '1px', margin: '0 0 0.75rem 0' }}>Conversion Rate</h3>
-          <div style={{ fontSize: '2rem', fontWeight: 700, color: '#111' }}>{stats.conversionRate.toFixed(1)}%</div>
+          <div className="admin-stat-value">{stats.conversionRate.toFixed(1)}%</div>
           <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>{stats.paidOrderCount} of {stats.totalOrders} orders paid</div>
         </div>
         <div className="admin-card">
           <h3 style={{ color: '#4b5563', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '1px', margin: '0 0 0.75rem 0' }}>Total Customers</h3>
-          <div style={{ fontSize: '2rem', fontWeight: 700, color: '#111' }}>{customers.length}</div>
+          <div className="admin-stat-value">{customers.length}</div>
         </div>
       </div>
 
       {/* Export Buttons */}
       <div className="admin-card" style={{ marginBottom: '2rem' }}>
         <h3 style={{ color: '#111', fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>Export Reports as CSV</h3>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <button onClick={exportOrdersCSV} className="admin-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="admin-reports-export-grid">
+          <button onClick={exportOrdersCSV} className="admin-btn-primary">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Orders Report
           </button>
-          <button onClick={exportRevenueCSV} className="admin-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button onClick={exportRevenueCSV} className="admin-btn-primary">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Revenue Report
           </button>
-          <button onClick={exportCustomersCSV} className="admin-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button onClick={exportCustomersCSV} className="admin-btn-primary">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Customers Report
           </button>
-          <button onClick={exportProductsCSV} className="admin-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button onClick={exportProductsCSV} className="admin-btn-primary">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Product Sales Report
           </button>
@@ -263,7 +288,7 @@ export default function AdminReportsPage() {
       </div>
 
       {/* Revenue + Orders Charts */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+      <div className="admin-reports-grid-2">
         <div className="admin-card">
           <h3 style={{ color: '#111', fontSize: '1rem', fontWeight: 600, marginBottom: '1.5rem' }}>Revenue Trend</h3>
           {stats.dailySeries.length > 0 ? (
@@ -277,8 +302,8 @@ export default function AdminReportsPage() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} tickFormatter={(v) => `₹${Number(v).toLocaleString('en-IN')}`} width={80} />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: isNarrowScreen ? 10 : 11 }} dy={10} interval="preserveStartEnd" minTickGap={24} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} tickFormatter={(v) => formatCompactINR(Number(v))} width={isNarrowScreen ? 52 : 80} />
                   <Tooltip formatter={(value) => [`₹${Number(value).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 'Revenue']} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                   <Area type="monotone" dataKey="revenue" stroke="#D81B60" strokeWidth={2} fill="url(#revGrad)" />
                 </AreaChart>
@@ -310,7 +335,7 @@ export default function AdminReportsPage() {
       </div>
 
       {/* Order Status Breakdown */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+      <div className="admin-reports-grid-2">
         <div className="admin-card">
           <h3 style={{ color: '#111', fontSize: '1rem', fontWeight: 600, marginBottom: '1.5rem' }}>Order Status Breakdown</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -369,17 +394,32 @@ export default function AdminReportsPage() {
       </div>
 
       {/* Top Products Table */}
-      <div className="admin-card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="admin-card" style={{ padding: 0 }}>
         <div style={{ padding: '1.5rem 1.5rem 0' }}>
           <h3 style={{ color: '#111', fontSize: '1rem', fontWeight: 600, marginBottom: '0' }}>Top Selling Products</h3>
         </div>
         {stats.topProducts.length > 0 && (
-          <div style={{ padding: '1.5rem 1.5rem 0.5rem', height: 220 }}>
+          <div style={{ padding: '1.5rem 1.5rem 0.5rem', height: isNarrowScreen ? 280 : 220 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.topProducts.slice(0, 6)} layout="vertical" margin={{ top: 0, right: 30, left: 40, bottom: 0 }}>
+              <BarChart data={stats.topProducts.slice(0, 6)} layout="vertical" margin={{ top: 0, right: isNarrowScreen ? 12 : 30, left: isNarrowScreen ? 0 : 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
-                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 11 }} tickFormatter={(v) => `₹${Number(v).toLocaleString('en-IN')}`} />
-                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#111', fontSize: 12 }} width={150} />
+                <XAxis
+                  type="number"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#6b7280', fontSize: isNarrowScreen ? 10 : 11 }}
+                  tickFormatter={(v) => formatCompactINR(Number(v))}
+                  tickCount={isNarrowScreen ? 4 : 5}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#111', fontSize: isNarrowScreen ? 10 : 12 }}
+                  width={isNarrowScreen ? 96 : 150}
+                  tickFormatter={(name) => truncateLabel(String(name), isNarrowScreen ? 12 : 20)}
+                />
                 <Tooltip formatter={(value) => [`₹${Number(value).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 'Revenue']} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                 <Bar dataKey="revenue" fill="#D81B60" radius={[0, 4, 4, 0]} />
               </BarChart>

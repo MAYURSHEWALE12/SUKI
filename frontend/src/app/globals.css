@@ -20,13 +20,13 @@
   --color-base-charcoal: var(--wine);
 
   /* Neutral / Background Palette */
-  --color-bg: var(--blush);
-  --color-bg-soft: var(--blush-2);
+  --color-bg: #FFFFFF;
+  --color-bg-soft: #FDFDFD;
   --color-cream: #FAFAF8;
   --color-cream-soft: #FDFBF7;
-  --color-border: var(--line);
-  --color-text-primary: var(--wine);
-  --color-text-secondary: #B78098;
+  --color-border: #EEEEEE;
+  --color-text-primary: #333333;
+  --color-text-secondary: #666666;
   --color-text-inverse: #FFFFFF;
 
   /* Functional / Feedback Colors */
@@ -2202,9 +2202,9 @@ a {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 0;
+    padding: 12px 0;
     font-family: 'Poppins', sans-serif;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 400;
     color: var(--color-text-primary);
     text-decoration: none;
@@ -2230,8 +2230,8 @@ a {
   }
   
   .accordion-body a {
-    padding: 10px 0;
-    font-size: 1rem;
+    padding: 8px 0;
+    font-size: 0.85rem;
     color: var(--color-text-secondary);
     border-bottom: none;
   }
@@ -2589,5 +2589,14 @@ a {
   .hero-bottom-border {
     height: 24px;
     background-size: auto 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .luxury-footer {
+    margin-top: 0;
+  }
+  .luxury-footer-content {
+    padding-top: 40px;
   }
 }

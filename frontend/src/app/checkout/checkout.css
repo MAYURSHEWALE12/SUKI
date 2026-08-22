@@ -998,3 +998,94 @@
   }
 }
 
+
+
+.coupon-applied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background-color: rgba(194, 24, 91, 0.05); /* very light tint of primary color */
+  border: 1px dashed var(--color-primary);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.coupon-applied-label {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--color-primary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.coupon-remove-btn {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.coupon-remove-btn:hover {
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 768px) {
+  .checkout-page {
+    padding-top: 1rem;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .checkout-card-title, .form-group-title {
+    font-size: 1rem !important;
+  }
+  .card-step-number {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 0.8rem !important;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .form-grid {
+    gap: 0.8rem;
+  }
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .checkout-summary-card {
+    padding: 1.25rem !important;
+  }
+  .summary-card-title {
+    font-size: 1.25rem !important;
+    margin-bottom: 1rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+  .summary-item-img {
+    width: 64px !important;
+    height: 80px !important;
+  }
+  .summary-item {
+    gap: 0.8rem !important;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .total-subtext {
+    font-size: 0.75rem !important; /* Make it small on mobile too */
+    color: #71717A !important;
+  }
+}

@@ -39,8 +39,19 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const currentCategoryObj = CATEGORIES.find(c => c.slug === category);
-  const displayCategory = currentCategoryObj ? currentCategoryObj.name : (category === 'new-arrivals' ? 'New Arrivals' : category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' '));
-  const queryCategory = currentCategoryObj ? currentCategoryObj.name : (category === 'new-arrivals' ? 'New Arrivals' : category);
+  const displayCategory = currentCategoryObj
+    ? currentCategoryObj.name
+    : category === 'new-arrivals'
+      ? 'New Arrivals'
+      : category === 'best-sellers'
+        ? 'Best Sellers'
+        : category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ');
+
+  const queryCategory = currentCategoryObj
+    ? currentCategoryObj.name
+    : category === 'new-arrivals'
+      ? 'New Arrivals'
+      : category;
 
   const [expandedFilters, setExpandedFilters] = useState<Record<string, boolean>>({
     price: true,
@@ -67,8 +78,10 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
       setLoading(true);
       try {
         let url = '/api/products?';
-        
-        if (queryCategory !== 'New Arrivals') {
+
+        if (category === 'best-sellers') {
+          url += 'isBestSeller=true&';
+        } else if (queryCategory !== 'New Arrivals') {
           url += `category=${encodeURIComponent(queryCategory)}&`;
         } else if (sort === 'recommended') {
           // Force sort=newest for New Arrivals if no other sort is explicitly chosen
@@ -108,7 +121,7 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
     };
 
     fetchProducts();
-  }, [queryCategory, priceFilter, ratingFilter, sort]);
+  }, [category, queryCategory, priceFilter, ratingFilter, sort]);
 
   useEffect(() => {
     const timeout = setTimeout(() => setMobileFiltersOpen(false), 0);
@@ -133,12 +146,12 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
         <div className="filter-group-content" style={{ maxHeight: isOpen ? '500px' : '0', opacity: isOpen ? 1 : 0, marginTop: isOpen ? '0.5rem' : '0' }}>
           {options.map((opt) => (
             <label key={opt.value} className={selectedValue === opt.value ? 'active' : ''}>
-              <input 
-                type={type} 
-                name={id} 
-                checked={selectedValue === opt.value} 
-                onChange={() => onChange(opt.value)} 
-              /> 
+              <input
+                type={type}
+                name={id}
+                checked={selectedValue === opt.value}
+                onChange={() => onChange(opt.value)}
+              />
               {opt.label}
             </label>
           ))}
@@ -149,12 +162,11 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
 
   const sidebarContent = (
     <div className="filter-block">
-      <div className="filter-header">
-        <h3>Filters</h3>
-        {hasActiveFilters && (
-          <button className="clear-filters-btn" onClick={clearFilters}>Clear all</button>
-        )}
-      </div>
+      {hasActiveFilters && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
+          <button className="clear-filters-btn" onClick={clearFilters} style={{ color: '#C2185B', fontWeight: 600 }}>Clear All</button>
+        </div>
+      )}
 
       {renderFilterGroup('price', 'Price', [
         { value: '', label: 'All Prices' },
@@ -164,36 +176,9 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
         { value: 'over_25k', label: 'Above ₹25,000' }
       ], priceFilter, setPriceFilter)}
 
-      {renderFilterGroup('category', 'Category', [
-        { value: 'lehengas', label: 'Lehengas' },
-        { value: 'sarees', label: 'Sarees' },
-        { value: 'half-sarees', label: 'Half Sarees' },
-        { value: 'navratri-ghagra', label: 'Navratri Ghagra' }
-      ], '', () => {}, 'checkbox')}
-
-      {renderFilterGroup('celebrity', 'Celebrity', [
-        { value: 'deepika', label: 'Deepika Inspired' },
-        { value: 'alia', label: 'Alia Inspired' },
-        { value: 'kiara', label: 'Kiara Inspired' },
-        { value: 'kriti', label: 'Kriti Inspired' },
-        { value: 'mrunal', label: 'Mrunal Inspired' }
-      ], '', () => {}, 'checkbox')}
-
-      {renderFilterGroup('occasion', 'Occasion', [
-        { value: 'wedding', label: 'Wedding' },
-        { value: 'reception', label: 'Reception' },
-        { value: 'haldi', label: 'Haldi' },
-        { value: 'mehendi', label: 'Mehendi' },
-        { value: 'festive', label: 'Festive' },
-        { value: 'party', label: 'Party Wear' }
-      ], '', () => {}, 'checkbox')}
-
-      {renderFilterGroup('fabric', 'Fabric', [
-        { value: 'silk', label: 'Silk' },
-        { value: 'organza', label: 'Organza' },
-        { value: 'georgette', label: 'Georgette' },
-        { value: 'velvet', label: 'Velvet' },
-        { value: 'net', label: 'Net' }
+      {renderFilterGroup('availability', 'Availability', [
+        { value: 'in_stock', label: 'In Stock' },
+        { value: 'out_of_stock', label: 'Out of Stock' }
       ], '', () => {}, 'checkbox')}
     </div>
   );
@@ -203,32 +188,34 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
       {category === 'celeb-styles' ? (
         <div className="celeb-banner">
           <div className="celeb-banner-content">
-            <h1 className="celeb-banner-title">Celeb & Influencer Edit</h1>
+            <h1 className="celeb-banner-title">Celeb &amp; Influencer Edit</h1>
             <div className="celeb-banner-divider"></div>
             <p className="celeb-banner-subtitle">Iconic looks spotted on your favorite stars</p>
           </div>
         </div>
       ) : category === 'sarees' ? (
-        <section className="banner-section" style={{ width: '100%' }}>
-          <Image 
-            src="/images/sarees_banner.png" 
-            alt="Sarees Banner" 
+        <section className="banner-section" style={{ width: '100%', position: 'relative' }}>
+          <Image
+            src="/images/sarees_banner.png"
+            alt="Sarees Banner"
             width={1774}
             height={887}
             sizes="100vw"
-            style={{ width: '100%', display: 'block', height: 'auto' }} 
+            style={{ width: '100%', display: 'block', height: 'auto' }}
           />
+          <div className="hero-bottom-border"></div>
         </section>
       ) : category === 'lehengas' ? (
-        <section className="banner-section" style={{ width: '100%' }}>
-          <Image 
-            src="/images/banner.png" 
-            alt="Lehengas Banner" 
+        <section className="banner-section" style={{ width: '100%', position: 'relative' }}>
+          <Image
+            src="/images/banner.png"
+            alt="Lehengas Banner"
             width={1717}
             height={677}
             sizes="100vw"
-            style={{ width: '100%', display: 'block', height: 'auto' }} 
+            style={{ width: '100%', display: 'block', height: 'auto' }}
           />
+          <div className="hero-bottom-border"></div>
         </section>
       ) : (
         <div className="category-header">
@@ -237,11 +224,6 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
         </div>
       )}
       <div className="category-container">
-        {/* Sidebar Filters (desktop) */}
-        <aside className="category-sidebar">
-          {sidebarContent}
-        </aside>
-
         {/* Mobile filter backdrop */}
         {mobileFiltersOpen && (
           <div className="mobile-filter-backdrop" onClick={() => setMobileFiltersOpen(false)} />
@@ -263,35 +245,45 @@ export default function CategoryPage({ params }: { params: Promise<{ category: s
         <main className="category-main">
           <div className="category-toolbar">
             <div className="toolbar-left">
-              <button className="mobile-filter-toggle" onClick={() => setMobileFiltersOpen(true)}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="8" y1="12" x2="20" y2="12"></line><line x1="12" y1="18" x2="20" y2="18"></line></svg>
-                Filters
-                {hasActiveFilters && <span className="filter-badge" />}
-              </button>
               <span className="results-count">{products.length} result{products.length !== 1 ? 's' : ''}</span>
             </div>
-            <div className="custom-dropdown" tabIndex={0} onBlur={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsSortOpen(false);
-            }}>
-              <div className={`custom-dropdown-header ${isSortOpen ? 'open' : ''}`} onClick={() => setIsSortOpen(!isSortOpen)}>
-                <span>
-                  {sort === 'recommended' && 'Sort: Recommended'}
-                  {sort === 'price_asc' && 'Price: Low to High'}
-                  {sort === 'price_desc' && 'Price: High to Low'}
-                  {sort === 'newest' && 'Newest Arrivals'}
-                  {sort === 'rating' && 'Highest Rated'}
-                </span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`dropdown-arrow ${isSortOpen ? 'open' : ''}`}><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </div>
-              {isSortOpen && (
-                <div className="custom-dropdown-menu">
-                  <div className={`custom-dropdown-item ${sort === 'recommended' ? 'active' : ''}`} onClick={() => { setSort('recommended'); setIsSortOpen(false); }}>Sort: Recommended</div>
-                  <div className={`custom-dropdown-item ${sort === 'price_asc' ? 'active' : ''}`} onClick={() => { setSort('price_asc'); setIsSortOpen(false); }}>Price: Low to High</div>
-                  <div className={`custom-dropdown-item ${sort === 'price_desc' ? 'active' : ''}`} onClick={() => { setSort('price_desc'); setIsSortOpen(false); }}>Price: High to Low</div>
-                  <div className={`custom-dropdown-item ${sort === 'newest' ? 'active' : ''}`} onClick={() => { setSort('newest'); setIsSortOpen(false); }}>Newest Arrivals</div>
-                  <div className={`custom-dropdown-item ${sort === 'rating' ? 'active' : ''}`} onClick={() => { setSort('rating'); setIsSortOpen(false); }}>Highest Rated</div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button onClick={() => setMobileFiltersOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', padding: '0.5rem', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--color-text-primary)' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="8" cy="8" r="3"></circle>
+                  <line x1="2" y1="8" x2="5" y2="8"></line>
+                  <line x1="11" y1="8" x2="22" y2="8"></line>
+                  <circle cx="16" cy="16" r="3"></circle>
+                  <line x1="2" y1="16" x2="13" y2="16"></line>
+                  <line x1="19" y1="16" x2="22" y2="16"></line>
+                </svg>
+                Filter
+                {hasActiveFilters && <span style={{ background: '#C2185B', width: '6px', height: '6px', borderRadius: '50%', marginLeft: '2px', alignSelf: 'flex-start', marginTop: '4px' }} />}
+              </button>
+              <div className="custom-dropdown" tabIndex={0} onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsSortOpen(false);
+              }}>
+                <div className={`custom-dropdown-header ${isSortOpen ? 'open' : ''}`} onClick={() => setIsSortOpen(!isSortOpen)}>
+                  <span>
+                    {sort === 'recommended' && 'Sort: Recommended'}
+                    {sort === 'price_asc' && 'Price: Low to High'}
+                    {sort === 'price_desc' && 'Price: High to Low'}
+                    {sort === 'newest' && 'Newest Arrivals'}
+                    {sort === 'rating' && 'Highest Rated'}
+                  </span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`dropdown-arrow ${isSortOpen ? 'open' : ''}`}><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
-              )}
+                {isSortOpen && (
+                  <div className="custom-dropdown-menu">
+                    <div className={`custom-dropdown-item ${sort === 'recommended' ? 'active' : ''}`} onClick={() => { setSort('recommended'); setIsSortOpen(false); }}>Sort: Recommended</div>
+                    <div className={`custom-dropdown-item ${sort === 'price_asc' ? 'active' : ''}`} onClick={() => { setSort('price_asc'); setIsSortOpen(false); }}>Price: Low to High</div>
+                    <div className={`custom-dropdown-item ${sort === 'price_desc' ? 'active' : ''}`} onClick={() => { setSort('price_desc'); setIsSortOpen(false); }}>Price: High to Low</div>
+                    <div className={`custom-dropdown-item ${sort === 'newest' ? 'active' : ''}`} onClick={() => { setSort('newest'); setIsSortOpen(false); }}>Newest Arrivals</div>
+                    <div className={`custom-dropdown-item ${sort === 'rating' ? 'active' : ''}`} onClick={() => { setSort('rating'); setIsSortOpen(false); }}>Highest Rated</div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

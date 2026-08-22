@@ -40,7 +40,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {/* Toast Container */}
       <div style={{
         position: 'fixed',
-        bottom: '2rem',
+        top: '6rem',
         right: '2rem',
         zIndex: 99999,
         display: 'flex',
@@ -57,9 +57,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               alignItems: 'center',
               gap: '0.75rem',
               padding: '1rem 1.25rem',
-              borderRadius: '12px',
-              backgroundColor: toast.type === 'success' ? '#111' : toast.type === 'error' ? '#dc2626' : '#2563eb',
-              color: '#fff',
+              borderRadius: '4px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E5E7EB',
+              borderLeft: toast.type === 'success' ? '4px solid #C2185B' : toast.type === 'error' ? '4px solid #dc2626' : '4px solid #2563eb',
+              color: '#111827',
               fontSize: '0.9rem',
               fontWeight: 500,
               fontFamily: 'var(--font-body)',
@@ -73,7 +75,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           >
             {/* Icon */}
             {toast.type === 'success' && (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C2185B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 6L9 17l-5-5"></path>
               </svg>
             )}

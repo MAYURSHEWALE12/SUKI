@@ -1,6 +1,295 @@
 "use client";
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
+import { useToast } from '@/context/ToastContext';
+
+// ── Custom dropdown (fully styleable, matches admin navy theme) ──────────────
+interface SelectOption { value: string; label: string; }
+function AdminSelect({ value, onChange, options, placeholder }: {
+  value: string;
+  onChange: (val: string) => void;
+  options: SelectOption[];
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = options.find(o => o.value === value);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} style={{ position: 'relative', width: '100%' }}>
+      {/* Trigger */}
+      <div
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0.55rem 0.85rem', background: '#fff',
+          border: open ? '1.5px solid #111d4a' : '1px solid #e5e7eb',
+          borderRadius: open ? '8px 8px 0 0' : '8px',
+          cursor: 'pointer', fontSize: '0.9rem',
+          color: selected ? '#111827' : '#9ca3af',
+          boxShadow: open ? '0 0 0 3px rgba(17,29,74,0.08)' : '0 1px 2px rgba(0,0,0,0.02) inset',
+          transition: 'border-color 0.15s, box-shadow 0.15s',
+          userSelect: 'none',
+        }}
+      >
+        <span>{selected ? selected.label : (placeholder || 'Select…')}</span>
+        <svg
+          width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="#6b7280" strokeWidth="2"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </div>
+
+      {/* Dropdown panel */}
+      {open && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 9999,
+          background: '#fff', border: '1.5px solid #111d4a', borderTop: 'none',
+          borderRadius: '0 0 8px 8px',
+          boxShadow: '0 8px 24px rgba(17,29,74,0.12)',
+          overflow: 'hidden',
+        }}>
+          {options.map((opt) => {
+            const isSelected = opt.value === value;
+            return (
+              <div
+                key={opt.value}
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+                style={{
+                  padding: '0.7rem 1rem',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: isSelected ? 600 : 400,
+                  background: isSelected ? '#111d4a' : '#fff',
+                  color: isSelected ? '#fff' : '#111827',
+                  display: 'flex', alignItems: 'center', gap: '0.5rem',
+                  transition: 'background 0.15s',
+                  borderLeft: isSelected ? '3px solid #4f6eff' : '3px solid transparent',
+                }}
+                onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = '#f0f2ff'; }}
+                onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = '#fff'; }}
+              >
+                {isSelected && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+                {opt.label}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Custom Image Upload Field (Buttons Only, No text input) ──────────────────
+function AdminImageField({
+  label,
+  value,
+  onChange,
+  onUpload,
+  isUploading,
+  isMain = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  isUploading: boolean;
+  isMain?: boolean;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div
+      style={{
+        border: value ? '1px solid #cbd5e1' : '1px solid #e5e7eb',
+        borderRadius: '10px',
+        padding: '0.85rem 1rem',
+        background: isMain ? '#f8fafc' : '#ffffff',
+        borderLeft: isMain ? '3px solid #111d4a' : (value ? '3px solid #16a34a' : '1px solid #e5e7eb'),
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.65rem',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
+      }}
+    >
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={onUpload}
+        disabled={isUploading}
+        accept="image/*"
+        style={{ display: 'none' }}
+      />
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#111827' }}>
+          {label}
+        </span>
+        {value && (
+          <span style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '3px' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Uploaded
+          </span>
+        )}
+      </div>
+
+      {value ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* Thumbnail preview */}
+          <div
+            style={{
+              width: '52px',
+              height: '52px',
+              borderRadius: '8px',
+              backgroundColor: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              flexShrink: 0,
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={value}
+              alt="Preview"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none';
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', flex: 1, gap: '0.5rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              disabled={isUploading}
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                padding: '0.5rem 0.85rem',
+                background: '#111d4a',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '0.8rem',
+                fontWeight: 500,
+                cursor: isUploading ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                opacity: isUploading ? 0.7 : 1,
+              }}
+            >
+              {isUploading ? (
+                'Uploading...'
+              ) : (
+                <>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  Change
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onChange('')}
+              style={{
+                padding: '0.5rem 0.75rem',
+                background: '#fee2e2',
+                color: '#b91c1c',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '0.8rem',
+                fontWeight: 500,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+              Remove
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={isUploading}
+          onClick={() => fileInputRef.current?.click()}
+          style={{
+            width: '100%',
+            padding: '0.75rem 1rem',
+            border: '1.5px dashed #cbd5e1',
+            borderRadius: '8px',
+            background: '#f8fafc',
+            color: '#111d4a',
+            cursor: isUploading ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            transition: 'all 0.2s',
+          }}
+          onMouseEnter={(e) => {
+            if (!isUploading) {
+              e.currentTarget.style.borderColor = '#111d4a';
+              e.currentTarget.style.background = '#f0f4ff';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isUploading) {
+              e.currentTarget.style.borderColor = '#cbd5e1';
+              e.currentTarget.style.background = '#f8fafc';
+            }
+          }}
+        >
+          {isUploading ? (
+            'Uploading...'
+          ) : (
+            <>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              Upload Image
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  );
+}
+// ────────────────────────────────────────────────────────────────────────────
+
+
 
 interface Product {
   _id: string;
@@ -16,6 +305,7 @@ interface Product {
   celebrity?: string;
   occasion?: string;
   isNewArrival?: boolean;
+  isBestSeller?: boolean;
   shortDescription?: string;
   highlights?: string;
   careInstructions?: string;
@@ -27,14 +317,15 @@ interface ProductForm {
   brand: string;
   category: string;
   description: string;
-  price: number;
-  originalPrice: number;
+  price: number | string;
+  originalPrice: number | string;
   countInStock: number;
   image: string;
   images: string[];
   celebrity: string;
   occasion: string;
   isNewArrival: boolean;
+  isBestSeller: boolean;
   shortDescription: string;
   highlights: string;
   careInstructions: string;
@@ -42,6 +333,7 @@ interface ProductForm {
 }
 
 export default function AdminProductsPage() {
+  const { showToast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -57,14 +349,15 @@ export default function AdminProductsPage() {
     brand: 'Suki Ethnic',
     category: 'lehengas',
     description: '',
-    price: 0,
-    originalPrice: 0,
+    price: '',
+    originalPrice: '',
     countInStock: 0,
     image: '',
     images: ['', '', '', ''],
     celebrity: '',
     occasion: '',
     isNewArrival: false,
+    isBestSeller: false,
     shortDescription: '',
     highlights: '',
     careInstructions: '',
@@ -106,7 +399,7 @@ export default function AdminProductsPage() {
     setEditingProduct(null);
     setPrimaryCategory('lehengas');
     setFormData({
-      name: '', brand: 'Suki Ethnic', category: 'lehengas', celebrity: '', occasion: '', description: '', shortDescription: '', highlights: '', careInstructions: '', whatsIncluded: '', price: 0, originalPrice: 0, countInStock: 0, image: '', images: ['', '', '', ''], isNewArrival: false
+      name: '', brand: 'Suki Ethnic', category: 'lehengas', celebrity: '', occasion: '', description: '', shortDescription: '', highlights: '', careInstructions: '', whatsIncluded: '', price: '', originalPrice: '', countInStock: 0, image: '', images: ['', '', '', ''], isNewArrival: false, isBestSeller: false
     });
     setShowModal(true);
   };
@@ -122,14 +415,15 @@ export default function AdminProductsPage() {
       brand: product.brand || 'Suki Ethnic',
       category: cat,
       description: product.description || '',
-      price: product.price || 0,
-      originalPrice: product.originalPrice || 0,
+      price: product.price ?? '',
+      originalPrice: product.originalPrice ?? '',
       countInStock: product.countInStock || 0,
       celebrity: product.celebrity || '',
       occasion: product.occasion || '',
       image: product.image || '',
       images: product.images || ['', '', '', ''],
       isNewArrival: product.isNewArrival || false,
+      isBestSeller: product.isBestSeller || false,
       shortDescription: product.shortDescription || '',
       highlights: product.highlights || '',
       careInstructions: product.careInstructions || '',
@@ -143,7 +437,8 @@ export default function AdminProductsPage() {
     const checked = 'checked' in e.target ? e.target.checked : false;
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? checked : (type === 'number' ? Number(value) : value)
+      // For number inputs: keep empty string when cleared, otherwise store as number
+      [name]: type === 'checkbox' ? checked : (type === 'number' ? (value === '' ? '' : Number(value)) : value)
     });
   };
 
@@ -174,17 +469,17 @@ export default function AdminProductsPage() {
           }
           return { ...prev, [imageField]: imageUrl };
         });
-        alert(`File uploaded successfully!`);
+        showToast('Image uploaded successfully!', 'success');
       } else {
         console.error('Upload failed:', xhr.responseText);
-        alert(`Error uploading file: ${xhr.responseText || 'Internal Server Error'}`);
+        showToast(`Error uploading file: ${xhr.responseText || 'Internal Server Error'}`, 'error');
       }
     };
     
     xhr.onerror = () => {
       setUploadingField(null);
       console.error('XHR network error');
-      alert('Network error while uploading file.');
+      showToast('Network error while uploading file.', 'error');
     };
     
     xhr.send(uploadData);
@@ -195,6 +490,8 @@ export default function AdminProductsPage() {
     
     const payload = {
       ...formData,
+      price: formData.price === '' ? 0 : Number(formData.price),
+      originalPrice: formData.originalPrice === '' ? 0 : Number(formData.originalPrice),
     };
     
     try {
@@ -213,15 +510,16 @@ export default function AdminProductsPage() {
         body: JSON.stringify(payload)
       });
       if (res.ok) {
+        showToast(editingProduct ? 'Product updated successfully!' : 'Product created successfully!', 'success');
         fetchProducts();
         setShowModal(false);
       } else {
         const err = await res.json();
-        alert('Error saving product: ' + err.message);
+        showToast('Error saving product: ' + (err.message || 'Unknown error'), 'error');
       }
     } catch (error) {
       console.error('Error saving product:', error);
-      alert('Network error while saving product.');
+      showToast('Network error while saving product.', 'error');
     } finally {
       setSaving(false);
     }
@@ -297,16 +595,16 @@ export default function AdminProductsPage() {
   if (loading && products.length === 0) return <div>Loading products...</div>;
 
   return (
-    <div>
-      <div className="admin-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="admin-products-page">
+      <div className="admin-page-header">
         <h1>Products Management</h1>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div className="admin-list-header-actions">
           <input 
             type="text" 
             placeholder="Search products..." 
             value={searchTerm}
             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-            style={{ padding: '0.6rem 1rem', border: '1px solid #e5e7eb', borderRadius: '8px', minWidth: '250px' }}
+            className="admin-search-input"
           />
           <button className="admin-btn-primary" onClick={openAddModal}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -319,7 +617,7 @@ export default function AdminProductsPage() {
         
         {/* Bulk Actions Toolbar */}
         {selectedProducts.size > 0 && (
-          <div style={{ padding: '1rem 1.5rem', backgroundColor: '#fef2f2', borderBottom: '1px solid #fee2e2', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div style={{ padding: '1rem 1.5rem', backgroundColor: '#fef2f2', borderBottom: '1px solid #fee2e2', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#b91c1c' }}>{selectedProducts.size} selected</span>
             <button 
               onClick={handleBulkDelete}
@@ -333,36 +631,32 @@ export default function AdminProductsPage() {
         {/* Product List */}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {/* Header Row */}
-          <div style={{ display: 'flex', alignItems: 'center', padding: '1rem 1.5rem', borderBottom: '1px solid #e5e7eb', backgroundColor: '#f9fafb', fontSize: '0.85rem', fontWeight: 600, color: '#4b5563' }}>
+          <div className="admin-products-list-header">
             <input 
               type="checkbox" 
               checked={currentProducts.length > 0 && selectedProducts.size === currentProducts.length}
               onChange={toggleSelectAll}
               style={{ marginRight: '1rem' }}
             />
-            <div style={{ flex: 1 }}>Product</div>
-            <div style={{ width: '100px', textAlign: 'center' }}>Status</div>
-            <div style={{ width: '100px', textAlign: 'right' }}>Actions</div>
+            <div className="admin-col-product">Product</div>
+            <div className="admin-col-status">Status</div>
+            <div className="admin-col-actions">Actions</div>
           </div>
 
           {/* Product Rows */}
           {currentProducts.map((product: Product) => (
             <div 
               key={product._id} 
+              className="admin-product-row"
               style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                padding: '1rem 1.5rem', 
-                borderBottom: '1px solid #f1f1f1',
                 backgroundColor: selectedProducts.has(product._id) ? '#f0f9ff' : 'transparent',
-                transition: 'background-color 0.2s'
               }}
             >
               <input 
                 type="checkbox" 
                 checked={selectedProducts.has(product._id)} 
                 onChange={() => toggleSelectProduct(product._id)} 
-                style={{ marginRight: '1.5rem' }} 
+                style={{ marginRight: '1.5rem', flexShrink: 0 }} 
               />
               
               {product.image && (
@@ -371,39 +665,54 @@ export default function AdminProductsPage() {
                 alt={product.name} 
                 width={56}
                 height={56}
-                style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '8px', marginRight: '1rem', border: '1px solid #f3f4f6' }} 
+                className="admin-product-thumb"
               />
             )}
               
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, color: '#1f2937', fontSize: '0.95rem' }}>{product.name}</div>
+              <div className="admin-product-info">
+                <div className="admin-product-name">
+                  {product.name}
+                  {product.isBestSeller && (
+                    <span style={{ background: '#FFF3CD', color: '#92400E', fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                      ⭐ Best Seller
+                    </span>
+                  )}
+                  {product.isNewArrival && (
+                    <span style={{ background: '#D1FAE5', color: '#065F46', fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: '12px' }}>
+                      New
+                    </span>
+                  )}
+                </div>
                 <div style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '0.2rem', fontWeight: 500 }}>
                   {product.countInStock > 0 ? <span style={{color: '#166534'}}>Available</span> : <span style={{color: '#ef4444'}}>Not Available</span>} &middot; {product.category}
                 </div>
               </div>
               
-              <div style={{ width: '100px', display: 'flex', justifyContent: 'center' }}>
+              <div className="admin-col-status">
                 <span style={{ 
                   padding: '0.35rem 0.75rem', 
                   backgroundColor: '#bbf7d0', 
                   color: '#166534', 
                   borderRadius: '20px', 
                   fontSize: '0.8rem', 
-                  fontWeight: 700 
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap'
                 }}>
                   Active
                 </span>
               </div>
 
-              <div style={{ width: '100px', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+              <div className="admin-col-actions">
                 <button 
                   onClick={() => openEditModal(product)}
+                  aria-label="Edit product"
                   style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', padding: '0.5rem' }}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                 </button>
                 <button 
                   onClick={() => deleteProduct(product._id)}
+                  aria-label="Delete product"
                   style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.5rem' }}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -421,7 +730,7 @@ export default function AdminProductsPage() {
 
         {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="admin-pagination">
             <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>
               Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredProducts.length)} of {filteredProducts.length} products
             </span>
@@ -466,30 +775,34 @@ export default function AdminProductsPage() {
               </div>
               <div className="form-group">
                 <label>Category</label>
-                <select 
-                  value={primaryCategory} 
-                  onChange={(e) => {
-                    const val = e.target.value;
+                <AdminSelect
+                  value={primaryCategory}
+                  onChange={(val) => {
                     setPrimaryCategory(val);
                     setFormData({ ...formData, category: val });
                   }}
-                >
-                  <option value="lehengas">Lehengas</option>
-                  <option value="sarees">Sarees</option>
-                  <option value="half-sarees">Half Sarees</option>
-                  <option value="navratri-ghagra">Navratri Ghagra</option>
-                </select>
+                  options={[
+                    { value: 'lehengas', label: 'Lehengas' },
+                    { value: 'sarees', label: 'Sarees' },
+                    { value: 'half-sarees', label: 'Half Sarees' },
+                    { value: 'navratri-ghagra', label: 'Navratri Ghagra' },
+                  ]}
+                />
               </div>
 
               {primaryCategory === 'sarees' && (
                 <div className="form-group">
                   <label>Saree Subcategory</label>
-                  <select name="category" value={formData.category} onChange={handleChange}>
-                    <option value="sarees">All Sarees (No subcategory)</option>
-                    <option value="normal-sarees">Normal Sarees</option>
-                    <option value="party-sarees">Party Sarees</option>
-                    <option value="silk-sarees">Silk Sarees</option>
-                  </select>
+                  <AdminSelect
+                    value={formData.category as string}
+                    onChange={(val) => setFormData({ ...formData, category: val })}
+                    options={[
+                      { value: 'sarees', label: 'All Sarees (No subcategory)' },
+                      { value: 'normal-sarees', label: 'Normal Sarees' },
+                      { value: 'party-sarees', label: 'Party Sarees' },
+                      { value: 'silk-sarees', label: 'Silk Sarees' },
+                    ]}
+                  />
                 </div>
               )}
               <div className="form-group">
@@ -498,47 +811,51 @@ export default function AdminProductsPage() {
               </div>
               <div className="form-group">
                 <label>Occasion</label>
-                <select name="occasion" value={formData.occasion} onChange={handleChange}>
-                  <option value="">None</option>
-                  <option value="Diwali">Diwali</option>
-                  <option value="Wedding">Wedding</option>
-                  <option value="Party">Party</option>
-                  <option value="Daily Wear">Daily Wear</option>
-                  <option value="Festive">Festive</option>
-                </select>
+                <AdminSelect
+                  value={formData.occasion}
+                  onChange={(val) => setFormData({ ...formData, occasion: val })}
+                  options={[
+                    { value: '', label: 'None' },
+                    { value: 'Diwali', label: 'Diwali' },
+                    { value: 'Wedding', label: 'Wedding' },
+                    { value: 'Party', label: 'Party' },
+                    { value: 'Daily Wear', label: 'Daily Wear' },
+                    { value: 'Festive', label: 'Festive' },
+                  ]}
+                />
               </div>
 
               <div className="form-group full-width" style={{ marginTop: '1rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
-                <label>Images (Exact 5 Required: 1 Main + 4 Gallery)</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  {/* Main Image */}
-                  <div style={{ gridColumn: '1 / -1', border: '1px solid #ddd', padding: '1rem', borderRadius: '8px' }}>
-                    <label style={{ fontSize: '0.85rem', color: '#666' }}>Main Hero Image</label>
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem' }}>
-                      <input type="text" name="image" value={formData.image} onChange={handleChange} placeholder="/images/..." style={{ flex: 1 }} />
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <input type="file" onChange={(e) => uploadFileHandler(e, 'image')} disabled={uploadingField === 'image'} style={{ width: '100px' }} />
-                        {uploadingField === 'image' && <span style={{ fontSize: '0.85rem', color: '#C2185B' }}>Uploading...</span>}
-                      </div>
-                    </div>
+                <label style={{ fontSize: '0.9rem', fontWeight: 600, color: '#111827', marginBottom: '0.5rem' }}>
+                  Product Images (5 Required: 1 Hero + 4 Gallery)
+                </label>
+                <div className="admin-image-grid">
+                  {/* Main Image - Spans full width */}
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <AdminImageField
+                      label="Main Hero Image (Primary)"
+                      value={formData.image}
+                      onChange={(val) => setFormData({ ...formData, image: val })}
+                      onUpload={(e) => uploadFileHandler(e, 'image')}
+                      isUploading={uploadingField === 'image'}
+                      isMain={true}
+                    />
                   </div>
 
-                  {/* 4 Additional Images in 2x2 Grid */}
+                  {/* 4 Gallery Images in 2x2 Grid */}
                   {[0, 1, 2, 3].map((index) => (
-                    <div key={index} style={{ border: '1px solid #ddd', padding: '1rem', borderRadius: '8px' }}>
-                      <label style={{ fontSize: '0.85rem', color: '#666' }}>Gallery Image {index + 1}</label>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-                        <input type="text" value={formData.images[index] || ''} onChange={(e) => {
-                          const newImages = [...formData.images];
-                          newImages[index] = e.target.value;
-                          setFormData({ ...formData, images: newImages });
-                        }} placeholder="/images/..." />
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <input type="file" onChange={(e) => uploadFileHandler(e, 'images', index)} disabled={uploadingField === `images${index}`} />
-                          {uploadingField === `images${index}` && <span style={{ fontSize: '0.85rem', color: '#C2185B' }}>Uploading...</span>}
-                        </div>
-                      </div>
-                    </div>
+                    <AdminImageField
+                      key={index}
+                      label={`Gallery Image ${index + 1}`}
+                      value={formData.images[index] || ''}
+                      onChange={(val) => {
+                        const newImages = [...(formData.images || ['', '', '', ''])];
+                        newImages[index] = val;
+                        setFormData({ ...formData, images: newImages });
+                      }}
+                      onUpload={(e) => uploadFileHandler(e, 'images', index)}
+                      isUploading={uploadingField === `images${index}`}
+                    />
                   ))}
                 </div>
               </div>
@@ -567,6 +884,10 @@ export default function AdminProductsPage() {
               <div className="form-group full-width" style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <input type="checkbox" name="isNewArrival" checked={formData.isNewArrival} onChange={handleChange} style={{ width: 'auto', accentColor: '#C2185B' }} />
                 <label style={{ margin: 0, cursor: 'pointer' }}>Mark as New Arrival</label>
+              </div>
+              <div className="form-group full-width" style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <input type="checkbox" name="isBestSeller" checked={formData.isBestSeller} onChange={handleChange} style={{ width: 'auto', accentColor: '#C2185B' }} />
+                <label style={{ margin: 0, cursor: 'pointer' }}>⭐ Mark as Best Seller</label>
               </div>
               <div className="form-group full-width" style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <input 

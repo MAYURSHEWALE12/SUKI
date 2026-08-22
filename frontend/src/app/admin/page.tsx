@@ -1,13 +1,34 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useToast } from '@/context/ToastContext';
+
+interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+}
 
 interface Order {
   _id: string;
   totalPrice: number;
+  itemsPrice?: number;
+  discountAmount?: number;
+  shippingPrice?: number;
   createdAt?: string;
   status?: string;
-  user?: { name?: string } | null;
+  isPaid?: boolean;
+  paymentMethod?: string;
+  email?: string;
+  user?: { name?: string; email?: string } | null;
+  shippingAddress?: {
+    fullName?: string;
+    phone?: string;
+    city?: string;
+    address?: string;
+    postalCode?: string;
+  } | null;
+  orderItems?: OrderItem[];
 }
 
 interface ChartDatum {
@@ -54,6 +75,7 @@ const formatDelta = (delta: number | null, label: string) => {
 };
 
 export default function AdminDashboardPage() {
+  const { showToast } = useToast();
   const [rawOrders, setRawOrders] = useState<Order[]>([]);
   const [rawProducts, setRawProducts] = useState<{ _id: string }[]>([]);
   const [dateRange, setDateRange] = useState(7);
@@ -128,29 +150,179 @@ export default function AdminDashboardPage() {
   }));
 
   const handleExport = () => {
-    if (!rawOrders.length) return alert('No data to export');
+    if (!rawOrders.length) {
+      showToast('No orders available to export', 'info');
+      return;
+    }
 
     const rangeOrders = filterByRange(rawOrders, dateRange);
 
-    const headers = ['Order ID', 'Date', 'Total Price', 'Status', 'Customer'];
-    const rows = rangeOrders.map(order => [
-      order._id || 'N/A',
-      order.createdAt ? new Date(order.createdAt).toLocaleString() : 'N/A',
-      order.totalPrice,
-      order.status || 'Processing',
-      order.user?.name || 'Guest'
-    ]);
-    
-    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    if (!rangeOrders.length) {
+      showToast(`No orders found in the last ${dateRange} days`, 'info');
+      return;
+    }
+
+    const headers = [
+      'Order ID',
+      'Date',
+      'Time',
+      'Customer Name',
+      'Customer Email',
+      'Customer Phone',
+      'City',
+      'Items Purchased',
+      'Total Qty',
+      'Payment Method',
+      'Payment Status',
+      'Order Status',
+      'Subtotal (INR)',
+      'Discount (INR)',
+      'Shipping (INR)',
+      'Total Amount (INR)'
+    ];
+
+    // Build styled HTML Excel Spreadsheet (.xls) with colors
+    const getStatusStyle = (status: string) => {
+      switch (status) {
+        case 'Delivered':
+          return 'background-color: #dcfce7; color: #15803d; font-weight: bold; text-align: center; border-radius: 4px; padding: 4px 8px;';
+        case 'Shipped':
+          return 'background-color: #dbeafe; color: #1d4ed8; font-weight: bold; text-align: center; border-radius: 4px; padding: 4px 8px;';
+        case 'Processing':
+          return 'background-color: #fef3c7; color: #b45309; font-weight: bold; text-align: center; border-radius: 4px; padding: 4px 8px;';
+        case 'Cancelled':
+          return 'background-color: #fee2e2; color: #b91c1c; font-weight: bold; text-align: center; border-radius: 4px; padding: 4px 8px;';
+        default:
+          return 'text-align: center;';
+      }
+    };
+
+    const getPaymentStyle = (isPaid: boolean) => {
+      return isPaid
+        ? 'background-color: #ecfdf5; color: #047857; font-weight: bold; text-align: center; padding: 4px 8px;'
+        : 'background-color: #fffbeb; color: #b45309; font-weight: bold; text-align: center; padding: 4px 8px;';
+    };
+
+    let sumQty = 0;
+    let sumSubtotal = 0;
+    let sumDiscount = 0;
+    let sumShipping = 0;
+    let sumTotal = 0;
+
+    const tableRowsHtml = rangeOrders.map((order, idx) => {
+      const isEven = idx % 2 === 0;
+      const bg = isEven ? '#ffffff' : '#f8fafc';
+      const dateObj = order.createdAt ? new Date(order.createdAt) : null;
+      const formattedDate = dateObj ? dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+      const formattedTime = dateObj ? dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
+      
+      const customerName = order.shippingAddress?.fullName || order.user?.name || 'Guest Customer';
+      const customerEmail = order.email || order.user?.email || 'N/A';
+      const customerPhone = order.shippingAddress?.phone || 'N/A';
+      const city = order.shippingAddress?.city || 'N/A';
+      
+      const itemsList = (order.orderItems || []).map(i => `${i.quantity}x ${i.name}`).join(' | ') || '1x Item';
+      const itemsQty = (order.orderItems || []).reduce((acc, i) => acc + (i.quantity || 1), 0) || 1;
+      
+      const subtotal = order.itemsPrice ?? (order.totalPrice - (order.shippingPrice || 0) + (order.discountAmount || 0));
+      const discount = order.discountAmount || 0;
+      const shipping = order.shippingPrice || 0;
+      const total = order.totalPrice || 0;
+
+      sumQty += itemsQty;
+      sumSubtotal += subtotal;
+      sumDiscount += discount;
+      sumShipping += shipping;
+      sumTotal += total;
+
+      return `
+        <tr style="background-color: ${bg};">
+          <td style="mso-number-format:'\\@'; padding: 8px 12px; border: 1px solid #e2e8f0; font-weight: 600; color: #111d4a; text-align: center;">#${order._id.substring(0, 8).toUpperCase()}</td>
+          <td style="padding: 8px 12px; border: 1px solid #e2e8f0; text-align: center;">${formattedDate}</td>
+          <td style="padding: 8px 12px; border: 1px solid #e2e8f0; text-align: center;">${formattedTime}</td>
+          <td style="padding: 8px 12px; border: 1px solid #e2e8f0; font-weight: 500;">${customerName}</td>
+          <td style="padding: 8px 12px; border: 1px solid #e2e8f0; color: #4b5563;">${customerEmail}</td>
+          <td style="mso-number-format:'\\@'; padding: 8px 12px; border: 1px solid #e2e8f0; text-align: center;">${customerPhone}</td>
+          <td style="padding: 8px 12px; border: 1px solid #e2e8f0;">${city}</td>
+          <td style="padding: 8px 12px; border: 1px solid #e2e8f0;">${itemsList}</td>
+          <td style="padding: 8px 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: 600;">${itemsQty}</td>
+          <td style="padding: 8px 12px; border: 1px solid #e2e8f0; text-align: center;">${order.paymentMethod || 'Online'}</td>
+          <td style="padding: 8px 12px; border: 1px solid #e2e8f0; ${getPaymentStyle(!!order.isPaid)}">${order.isPaid ? 'Paid' : 'Pending'}</td>
+          <td style="padding: 8px 12px; border: 1px solid #e2e8f0; ${getStatusStyle(order.status || 'Processing')}">${order.status || 'Processing'}</td>
+          <td style="padding: 8px 12px; border: 1px solid #e2e8f0; text-align: right;">₹${subtotal.toFixed(2)}</td>
+          <td style="padding: 8px 12px; border: 1px solid #e2e8f0; text-align: right; color: ${discount > 0 ? '#dc2626' : '#6b7280'};">${discount > 0 ? `-₹${discount.toFixed(2)}` : '₹0.00'}</td>
+          <td style="padding: 8px 12px; border: 1px solid #e2e8f0; text-align: right;">₹${shipping.toFixed(2)}</td>
+          <td style="padding: 8px 12px; border: 1px solid #e2e8f0; text-align: right; font-weight: bold; color: #111d4a;">₹${total.toFixed(2)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const headersHtml = headers.map(h => `
+      <th style="background-color: #111d4a; color: #ffffff; padding: 12px 14px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #0b1333;">${h}</th>
+    `).join('');
+
+    const summaryRowHtml = `
+      <tr style="background-color: #111d4a; color: #ffffff; font-weight: bold; font-size: 13px;">
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; text-align: center; color: #ffffff;">GRAND TOTAL</td>
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; text-align: center; color: #ffffff;">${rangeOrders.length} Orders</td>
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; color: #ffffff;"></td>
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; color: #ffffff;"></td>
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; color: #ffffff;"></td>
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; color: #ffffff;"></td>
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; color: #ffffff;"></td>
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; color: #ffffff;"></td>
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; text-align: center; font-size: 14px; color: #ffffff;">${sumQty}</td>
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; color: #ffffff;"></td>
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; color: #ffffff;"></td>
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; color: #ffffff;"></td>
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; text-align: right; color: #ffffff;">₹${sumSubtotal.toFixed(2)}</td>
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; text-align: right; color: #fca5a5;">${sumDiscount > 0 ? `-₹${sumDiscount.toFixed(2)}` : '₹0.00'}</td>
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; text-align: right; color: #ffffff;">₹${sumShipping.toFixed(2)}</td>
+        <td style="padding: 12px 14px; border: 1px solid #0b1333; text-align: right; font-size: 14px; color: #4ade80;">₹${sumTotal.toFixed(2)}</td>
+      </tr>
+    `;
+
+    const excelHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8">
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; }
+          table { border-collapse: collapse; width: 100%; }
+        </style>
+      </head>
+      <body>
+        <table>
+          <thead>
+            <tr>
+              <th colspan="${headers.length}" style="background-color: #111d4a; color: #ffffff; font-size: 16px; font-weight: bold; padding: 14px; text-align: left;">
+                ✨ SUKI ETHNIC - SALES & ORDERS REPORT (Last ${dateRange} Days)
+              </th>
+            </tr>
+            <tr>${headersHtml}</tr>
+          </thead>
+          <tbody>
+            ${tableRowsHtml}
+            ${summaryRowHtml}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `suki_orders_${dateRange}days.csv`);
+    link.href = url;
+    link.download = `Suki_Sales_Report_${dateRange}Days_${new Date().toISOString().split('T')[0]}.xls`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast('Styled Excel report downloaded successfully!', 'success');
   };
+
 
   if (loading) return <div>Loading dashboard...</div>;
 

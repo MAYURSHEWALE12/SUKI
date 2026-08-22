@@ -14,3 +14,7 @@ lint-results.json
 temp.txt
 payu-debug.json
 payu-error.json
+
+# Local dev server logs
+frontend/dev-err.txt
+frontend/dev-out.txt

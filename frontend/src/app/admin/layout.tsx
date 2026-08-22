@@ -9,6 +9,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    // Auto-close mobile drawer when route changes
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     // Exclude login page from auth check layout
@@ -58,8 +64,52 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="admin-layout">
+      {/* Mobile Top Navigation Header */}
+      <header className="admin-mobile-header">
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="admin-hamburger-btn"
+          aria-label="Toggle navigation menu"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        <div className="admin-mobile-logo">
+          <div className="admin-logo-icon" style={{ padding: '0.25rem' }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+          </div>
+          <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#111d4a', letterSpacing: '1px' }}>
+            SUKI <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: '0.9rem' }}>ADMIN</span>
+          </span>
+        </div>
+
+        <Link href="/" className="admin-mobile-store-btn" title="View Store">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111d4a" strokeWidth="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </Link>
+      </header>
+
+      {/* Mobile Drawer Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="admin-mobile-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className={`admin-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
+      <aside className={`admin-sidebar ${isCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="admin-logo">
           <div className="admin-logo-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
@@ -78,6 +128,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <polyline points="18 17 13 12 18 7"></polyline>
                 </>
               )}
+            </svg>
+          </div>
+          <div className="admin-mobile-close-btn" onClick={() => setMobileMenuOpen(false)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
           </div>
         </div>
